@@ -49,7 +49,7 @@ def main():
              batch_size=192)
     # nn.inspect_weights_and_biases()
 
-    # use it only when there is only output
+    # use it only when there is only one output
     # nn.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
 
     format_width = len(showcase_o[0]) * 8
