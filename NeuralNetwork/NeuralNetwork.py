@@ -341,8 +341,10 @@ class NeuralNetwork:
                 lambda_b_old: np.ndarray = self.biases[i] * self.lambda_parem
                 self.velocity_b[i] = self.momentum_beta * self.velocity_b[i] + (1 - self.momentum_beta) * (b_gradient_layers[i] + lambda_b_old)
                 self.biases[i] += -1 * self.velocity_b[i] * self.learn_rate
+            
             p: float = (100.0 * _ / epoch)
-            print(f"Progress: {_+1} / {epoch} [{p:.2f}%]  ", end='\r')
+            print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
+        
         print("===== ===== Training Completed ===== =====               ")
     
     def check_accuracy_binary_classification(self, test_input: list, test_output: list) -> None:

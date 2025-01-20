@@ -13,12 +13,15 @@ def data_generator(n: int):
         i4: float = random.uniform(-6, 6)
         o1: float = 0.0
         o2: float = 0.0
+        o3: float = 0.0
 
         # Make your own Data Here
         if i1*i1 - 5*i2 < 2*i1*i3 - i4:
             o1 = 1.0
-        if 4*i1 - 2*i2*i3 + 0.4*i4/i1 < -3*i3:
+        if 4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3:
             o2 = 1.0
+        if i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4:
+            o3 = 1.0
 
         # noise for inputs
         i1 += random.uniform(-0.2, 0.2)
@@ -27,11 +30,11 @@ def data_generator(n: int):
         i4 += random.uniform(-0.2, 0.2)
 
         input_list.append([i1, i2, i3, i4])
-        output_list.append([o1, o2])
+        output_list.append([o1, o2, o3])
     return input_list, output_list
 
 def main():
-    nn = NeuralNetwork(layers=[4, 8, 8, 8, 2],
+    nn = NeuralNetwork(layers=[4, 12, 12, 3],
                        activation_hidden='leaky_relu',
                        activation_output='sigmoid',
                        loss_function="BCE",
