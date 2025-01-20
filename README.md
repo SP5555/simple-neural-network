@@ -2,7 +2,7 @@
 # Simple Neural Network
 
 ## Overview
-This is the a very simple, yet powerful example of a fully functional neural network implemented from scratch in Python (with numpy).
+This is the very simple, yet powerful example of a fully functional neural network implemented from scratch in Python (with numpy).
 
 ## Features
 - **Fully connected layers**: Customizable layer sizes.
@@ -17,7 +17,6 @@ git clone https://github.com/SP5555/simple-neural-network.git
 cd simple-neural-network
 pip install -r requirements.txt
 ```
-
 
 ## Usage
 
