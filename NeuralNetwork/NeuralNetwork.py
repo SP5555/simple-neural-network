@@ -124,15 +124,16 @@ class NeuralNetwork:
 
     def _softmax_derivative(self, np_array: np.ndarray) -> np.ndarray:
         dim, batch_size = np_array.shape
-        softmax = self._softmax(np_array)
+        softmax = self._softmax(np_array) # Shape: (dim, batch_size)
 
-        jacobians = np.zeros((dim, dim, batch_size))
+        softmax_expanded = softmax.T[:, :, None]  # Shape: (batch_size, dim, 1)
 
-        for i in range(batch_size):
-            s = softmax[:, i] # i-th sample
-            jacobians[:, :, i] = np.diag(s) - np.outer(s, s)
+        # Shape: (batch_size, dim, dim)
+        # matmul perform matrix multiplication on the last two dimensions here
+        # each sample "slice" on 0-th axis is: I * M_softmax(dim, 1) - np.dot(M_softmax, M_softmax.T)
+        jacobians = np.eye(dim)[None, :, :] * softmax_expanded - np.matmul(softmax_expanded, softmax_expanded.transpose(0, 2, 1))
 
-        return jacobians
+        return jacobians.transpose(1, 2, 0) # Shape: (dim, dim, batch_size)
 
     # LOSS FUNCTIONS
     # ===== Mean Squared Error =====
@@ -312,6 +313,19 @@ class NeuralNetwork:
             # y is desired output
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
             a_gradient_idv_layer: np.ndarray = self._loss_derivative(a, y)
+
+            # important component for LAST LAYER backpropagation
+            # term_2_3 = da(n)/dz(n) * dL/da(n)
+            if self._activation_last_layer == self._softmax:
+                softmax_derivative = self._softmax_derivative(z_layers[-1]) # (dim, dim, batch_size)
+
+                a_gradient_idv_layer_reshaped = a_gradient_idv_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
+                softmax_derivative_reshaped = softmax_derivative.transpose(2, 0, 1) # (batch_size, dim, dim)
+                
+                term_2_3 = np.matmul(softmax_derivative_reshaped, a_gradient_idv_layer_reshaped) # (batch_size, dim, 1)
+                term_2_3 = term_2_3.squeeze(axis=-1).T # (dim, batch_size)
+            else:
+                term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[-1]) * a_gradient_idv_layer
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):
@@ -320,20 +334,15 @@ class NeuralNetwork:
                 # z(n) = w(n)*a(n-1) + b(n)
                 # a(n) = activation(z(n))
 
+                # important component for HIDDEN LAYER backpropagations
+                # term_2_3 = da(n)/dz(n) * dL/da(n)
+                if i < self._layer_count - 2:
+                    term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
+
                 # derivative of costs with respect to weights
                 # dL/dw(n)
                 # = dz(n)/dw(n) * da(n)/dz(n) * dL/da(n)
                 # = a(n-1) * actv'(z(n)) * dL/da(n)
-                if i < self._layer_count - 2:
-                    term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
-                else:
-                    if self._activation_last_layer == self._softmax:
-                        term_2_3: np.ndarray = np.zeros_like(a_gradient_idv_layer)
-                        for lll in range(a_gradient_idv_layer.shape[1]):
-                            dotp = np.dot(self._softmax_derivative(z_layers[i])[:, :, lll], a_gradient_idv_layer[:, lll].reshape(-1, 1))
-                            term_2_3[:, lll] = dotp.flatten()
-                    else:
-                        term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
                 w_gradient_idv_layer = np.matmul(term_2_3, a_layers[i].T)
                 w_gradient_layers.insert(0, w_gradient_idv_layer / batch_size)
 
@@ -341,17 +350,7 @@ class NeuralNetwork:
                 # dL/db(n)
                 # = dz(n)/db(n) * da(n)/dz(n) * dL/da(n)
                 # = 1 * actv'(z(n)) * dL/da(n)
-                if i < self._layer_count - 2:
-                    b_gradient_idv_layer = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
-                else:
-                    if self._activation_last_layer == self._softmax:
-                        b_gradient_idv_layer: np.ndarray = np.zeros_like(a_gradient_idv_layer)
-                        for lll in range(a_gradient_idv_layer.shape[1]):
-                            dotp = np.dot(self._softmax_derivative(z_layers[i])[:, :, lll], a_gradient_idv_layer[:, lll].reshape(-1, 1))
-                            b_gradient_idv_layer[:, lll] = dotp.flatten()
-                    else:
-                        b_gradient_idv_layer = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
-                b_gradient_aggregated = np.sum(b_gradient_idv_layer, axis=1, keepdims=True)
+                b_gradient_aggregated = np.sum(term_2_3, axis=1, keepdims=True)
                 b_gradient_layers.insert(0, b_gradient_aggregated / batch_size)
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
@@ -360,10 +359,6 @@ class NeuralNetwork:
                 # dL/da(n-1)
                 # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
                 # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
-                # if i < self._layer_count - 2:
-                #     term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
-                # else:
-                #     term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
                 new_a_gradient_idv_layer = np.matmul(self.weights[i].T, term_2_3)
                 a_gradient_idv_layer = new_a_gradient_idv_layer
 
