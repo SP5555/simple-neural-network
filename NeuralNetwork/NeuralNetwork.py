@@ -123,7 +123,7 @@ class NeuralNetwork:
         return exp / np.sum(exp, axis=0, keepdims=True)
 
     def _softmax_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        dim, batch_size = np_array.shape
+        dim = np_array.shape[0]
         softmax = self._softmax(np_array) # Shape: (dim, batch_size)
 
         softmax_expanded = softmax.T[:, :, None]  # Shape: (batch_size, dim, 1)
@@ -146,7 +146,7 @@ class NeuralNetwork:
         a = np.clip(a, bound, 1-bound)
         return -(y/a) + ((1-y) / (1-a))
     
-    # ===== Multiclass Cross Entropy =====
+    # ===== Multiclass/Categorial Cross Entropy =====
     def _MCE_gradient(self, a: np.ndarray, y:np.ndarray) -> np.ndarray:
         bound = 1e-12
         a = np.clip(a, bound, 1-bound)
@@ -180,7 +180,8 @@ class NeuralNetwork:
         loss_funcs = {
             'mse': self._MSE_gradient,
             'bce': self._BCE_gradient,
-            'mce': self._MCE_gradient
+            'mce': self._MCE_gradient,
+            'cce': self._MCE_gradient # same as mce
         }
         name = name.strip().lower()
         if name in loss_funcs: return loss_funcs[name]
@@ -319,11 +320,11 @@ class NeuralNetwork:
             if self._activation_last_layer == self._softmax:
                 softmax_derivative = self._softmax_derivative(z_layers[-1]) # (dim, dim, batch_size)
 
-                a_gradient_idv_layer_reshaped = a_gradient_idv_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                softmax_derivative_reshaped = softmax_derivative.transpose(2, 0, 1) # (batch_size, dim, dim)
+                da_wrt_dz_reshaped = a_gradient_idv_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
+                dL_wrt_dz_reshaped = softmax_derivative.transpose(2, 0, 1) # (batch_size, dim, dim)
                 
-                term_2_3 = np.matmul(softmax_derivative_reshaped, a_gradient_idv_layer_reshaped) # (batch_size, dim, 1)
-                term_2_3 = term_2_3.squeeze(axis=-1).T # (dim, batch_size)
+                t_2_3_3D = np.matmul(dL_wrt_dz_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
+                term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
                 term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[-1]) * a_gradient_idv_layer
             
@@ -381,7 +382,7 @@ class NeuralNetwork:
         
         print("===== ===== Training Completed ===== =====               ")
     
-    def check_accuracy_binary_classification(self, test_input: list, test_output: list) -> None:
+    def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
         _check_batch_size = 1024
         # threshold defines how close the prediction must be to expected to be considered correct
         # must be 0.0 < threshold <= 0.5

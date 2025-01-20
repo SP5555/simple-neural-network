@@ -9,6 +9,7 @@ class DataGenerator:
             'multilabel': self._generate_multilabel,
             'multiclass': self._generate_multiclass
         }
+        name = name.strip().lower()
         if name in generators: return generators[name](n)
         raise ValueError(f"Unsupported generate function: {name}")
 
@@ -17,6 +18,7 @@ class DataGenerator:
         output_list: list = []
 
         for _ in range(n):
+            # Make your own Data
             i1: float = random.uniform(-6, 6)
             i2: float = random.uniform(-6, 6)
             i3: float = random.uniform(-6, 6)
@@ -25,7 +27,6 @@ class DataGenerator:
             o2: float = 0.0
             o3: float = 0.0
 
-            # Make your own Data Here
             if i1*i1 - 5*i2 < 2*i1*i3 - i4:
                 o1 = 1.0
             if 4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3:
@@ -48,30 +49,31 @@ class DataGenerator:
         output_list: list = []
 
         for _ in range(n):
+            # Make your own Data
             k = random.randint(0, 2)
             if (k == 0):
                 o1 = 1.0
                 o2 = 0.0
                 o3 = 0.0
-                i1: float = random.uniform(3, 5)
-                i2: float = random.uniform(4, 5)
-                i3: float = random.uniform(5, 6)
-                i4: float = random.uniform(5, 6)
+                i1: float = random.uniform(2, 5)
+                i2: float = random.uniform(1, 5)
+                i3: float = random.uniform(0, 4)
+                i4: float = random.uniform(3, 5)
             elif (k == 1):
                 o1 = 0.0
                 o2 = 1.0
                 o3 = 0.0
-                i1: float = random.uniform(3, 4)
-                i2: float = random.uniform(2, 6)
-                i3: float = random.uniform(0, 4)
-                i4: float = random.uniform(0, 3)
+                i1: float = random.uniform(1, 4)
+                i2: float = random.uniform(1, 3)
+                i3: float = random.uniform(3, 6)
+                i4: float = random.uniform(0, 5)
             else:
                 o1 = 0.0
                 o2 = 0.0
                 o3 = 1.0
                 i1: float = random.uniform(0, 3)
-                i2: float = random.uniform(4, 6)
-                i3: float = random.uniform(3, 6)
+                i2: float = random.uniform(2, 6)
+                i3: float = random.uniform(0, 6)
                 i4: float = random.uniform(0, 2)
 
             input_list.append([i1, i2, i3, i4])
