@@ -31,35 +31,27 @@ def data_generator(n: int):
     return input_list, output_list
 
 def main():
-    nn = NeuralNetwork(layers=[4, 8, 6, 2],
+    nn = NeuralNetwork(layers=[4, 6, 6, 2],
                        activation_hidden='leaky_relu',
                        activation_output='sigmoid',
+                       loss_function="BCE",
                        learn_rate=0.08,
                        lambda_parem=0.003,
                        momentum=0.75)
-    
+
     input_train_list, output_train_list = data_generator(40000)
-    # input_test_list, output_test_list = data_generator(40000)
+    input_test_list, output_test_list = data_generator(20000)
     showcase_i, showcase_o = data_generator(16)
 
-    # print("Training Started")
     nn.train(input_list=input_train_list,
              output_list=output_train_list,
-             epoch=2000,
-             batch_size=192)
+             epoch=1000,
+             batch_size=64)
     # nn.inspect_weights_and_biases()
 
-    # use it only when there is only one output
-    # nn.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
+    nn.check_accuracy_binary_classification(test_input=input_test_list, test_output=output_test_list)
 
-    format_width = len(showcase_o[0]) * 8
-    print(f"{"Expected":>{format_width}} | {"Predicted":>{format_width}} | Input Data")
-
-    output = nn.forward_batch(showcase_i)
-    for i in range(16):
-        print(''.join(f'{value:>8.4f}' for value in showcase_o[i]) + ' | ' +
-              ''.join(f'{value:>8.4f}' for value in output[i]) + ' | ' +
-              ''.join(f'{value:>7.3f}' for value in showcase_i[i]))
+    nn.compare_predictions(input=showcase_i, output=showcase_o)
 
 if __name__ == "__main__":
     main()

@@ -1,14 +1,15 @@
 import numpy as np
 
-# Less than 500 neurons in each layer suggested
+# Less than 500 neurons in each layer suggested, or be evil
 class NeuralNetwork:
     def __init__(self,
                  layers: list,
                  activation_hidden: str = 'leaky_relu',
                  activation_output: str = 'leaky_relu',
+                 loss_function: str = 'MSE',
                  learn_rate: float = 0.01,
                  lambda_parem: float = 0.0,
-                 momentum: float = 0.8) -> None:
+                 momentum: float = 0.8,) -> None:
         
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
@@ -53,13 +54,20 @@ class NeuralNetwork:
             print(f"Warning: Momentum value {momentum:.3f} may cause strong \"gliding\" behavior. Consider keeping it less than 0.95")
         self.momentum_beta = momentum
 
+        # Activation Functions
         # Sigmoid, Tanh for probability distribution, classification
-        # ReLU for general regression
+        # ReLU for regression
         self._activation = self._get_activation_func(activation_hidden)
         self._activation_derivative = self._get_activation_derivative_func(activation_hidden)
 
         self._activation_last_layer = self._get_activation_func(activation_output)
         self._activation_last_layer_derivative = self._get_activation_derivative_func(activation_output)
+
+        # Loss Functions
+        # MSE for regression
+        # BCE for binary classification
+        # MCE for multiclass classification (not available yet)
+        self._loss_derivative = self._get_loss_derivative_func(loss_function)
 
         self.weights: list = []
         self.biases: list = []
@@ -74,60 +82,81 @@ class NeuralNetwork:
         print(f"Neural network with {layers} layers initialized.")
         print(f"Parameter Count: {self._get_parameter_count():,}")
     
+    # ACTIVATION FUNCTIONS
     # ===== Sigmoid =====
     def _sigmoid(self, np_array: np.ndarray) -> np.ndarray:
         # s(x) = (tanh(x/2) + 1) / 2
         return (np.tanh(np_array / 2) + 1) / 2
     
-    def _sigmoid_derivative(self, x: float) -> float:
+    def _sigmoid_derivative(self, np_array: np.ndarray) -> float:
         # s'(x) = s(x) * (1 - s(x))
-        s: float = (np.tanh(x / 2) + 1) / 2
+        s: np.ndarray = (np.tanh(np_array / 2) + 1) / 2
         return s*(1-s)
     
     # ===== Tanh =====
     def _tanh(self, np_array: np.ndarray) -> np.ndarray:
         return np.tanh(np_array)
 
-    def _tanh_derivative(self, x: float) -> float:
+    def _tanh_derivative(self, np_array: np.ndarray) -> float:
         # tanh'(x) = 1 - tanh(x)^2
-        t = np.tanh(x)
+        t = np.tanh(np_array)
         return 1 - t*t
 
     # ===== ReLU =====
     def _relu(self, np_array: np.ndarray) -> np.ndarray:
         return np.maximum(0, np_array)
         
-    def _relu_derivative(self, x: float) -> float:
-        return np.where(x > 0, 1, 0)
+    def _relu_derivative(self, np_array: np.ndarray) -> float:
+        return np.where(np_array > 0, 1, 0)
 
     # ===== Leaky ReLU =====
     def _leaky_relu(self, np_array: np.ndarray) -> np.ndarray:
         return np.where(np_array > 0, np_array, 0.1 * np_array)
         
-    def _leaky_relu_derivative(self, x: float) -> float:
-        return np.where(x > 0, 1, 0.1)
+    def _leaky_relu_derivative(self, np_array: np.ndarray) -> float:
+        return np.where(np_array > 0, 1, 0.1)
+    
+    # LOSS FUNCTIONS
+    # ===== Mean Squared Error =====
+    def _MSE_gradient(self, a: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return 2 * (a - y)
+    
+    # ===== Binary Cross Entropy =====
+    def _BCE_gradient(self, a: np.ndarray, y:np.ndarray) -> np.ndarray:
+        bound = 1e-12
+        a = np.clip(a, bound, 1-bound)
+        return -(y/a) + ((1-y) / (1-a))
 
     def _get_activation_func(self, name: str):
-        if name.lower() == 'relu':
-            return self._relu
-        if name.lower() == 'leaky_relu':
-            return self._leaky_relu
-        if name.lower() == 'tanh':
-            return self._tanh
-        if name.lower() == 'sigmoid':
-            return self._sigmoid
+        actv_funcs = {
+            'relu': self._relu,
+            'leaky_relu': self._leaky_relu,
+            'tanh': self._tanh,
+            'sigmoid': self._sigmoid
+        }
+        name = name.strip().lower()
+        if name in actv_funcs: return actv_funcs[name]
         raise ValueError(f"Unsupported activation function: {name}")
 
     def _get_activation_derivative_func(self, name: str):
-        if name.lower() == 'relu':
-            return self._relu_derivative
-        if name.lower() == 'leaky_relu':
-            return self._leaky_relu_derivative
-        if name.lower() == 'tanh':
-            return self._tanh_derivative
-        if name.lower() == 'sigmoid':
-            return self._sigmoid_derivative
+        actv_deriv_funcs = {
+            'relu': self._relu_derivative,
+            'leaky_relu': self._leaky_relu_derivative,
+            'tanh': self._tanh_derivative,
+            'sigmoid': self._sigmoid_derivative
+        }
+        name = name.strip().lower()
+        if name in actv_deriv_funcs: return actv_deriv_funcs[name]
         raise ValueError(f"Unsupported activation function: {name}")
+
+    def _get_loss_derivative_func(self, name: str):
+        loss_funcs = {
+            'mse': self._MSE_gradient,
+            'bce': self._BCE_gradient
+        }
+        name = name.strip().lower()
+        if name in loss_funcs: return loss_funcs[name]
+        raise ValueError(f"Unsupported loss function: {name}")
 
     def _get_parameter_count(self) -> int:
         c: int = 0
@@ -167,7 +196,7 @@ class NeuralNetwork:
         return a.flatten().tolist()
 
     # main feed forward function (multiple)
-    def forward_batch(self, input: list) -> list:
+    def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray:
         if len(input) == 0:
             raise InputValidationError("Input batch does not have data.")
         if len(input[0]) != self.layers[0]:
@@ -187,13 +216,15 @@ class NeuralNetwork:
             else:
                 a: np.ndarray = self._activation_last_layer(z)
         
-        return a.T.tolist()
+        if raw_ndarray_output:
+            return a
+        return a.T.tolist() # user friendly format, not np.ndarray
     
     def train(self,
               input_list: list,
               output_list: list,
               epoch: int = 100,
-              batch_size: int = 16) -> None:
+              batch_size: int = 32) -> None:
         if len(input_list) == 0 or len(output_list) == 0:
             raise InputValidationError("Datasets can't be empty.")
         if len(input_list) != len(output_list):
@@ -252,12 +283,8 @@ class NeuralNetwork:
   
             # a holds columns of output here
             # y is desired output
-            cost: np.ndarray = a - y
-            
-            # derivative of costs with respect to activations for LAST OUTPUT LAYER
-            # Cost = (a(n) - y)^2
-            # dCost/da(n) = 2(a(n) - y)
-            a_gradient_idv_layer: np.ndarray = (2 * cost)
+            # derivative of loss function with respect to activations for LAST OUTPUT LAYER
+            a_gradient_idv_layer: np.ndarray = self._loss_derivative(a, y)
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):
@@ -318,13 +345,13 @@ class NeuralNetwork:
             print(f"Progress: {_+1} / {epoch} [{p:.2f}%]  ", end='\r')
         print("===== ===== Training Completed ===== =====               ")
     
-    def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
-        _check_batch_size = 768
+    def check_accuracy_binary_classification(self, test_input: list, test_output: list) -> None:
+        _check_batch_size = 1024
         # threshold defines how close the prediction must be to expected to be considered correct
         # must be 0.0 < threshold <= 0.5
-        _threshold = 0.4
+        _threshold = 0.5
 
-        if self.layers[-1] > 1 or (self._activation_last_layer != self._sigmoid and self._activation_last_layer != self._tanh):
+        if (self._activation_last_layer != self._sigmoid and self._activation_last_layer != self._tanh):
             raise InputValidationError("Model is not set up for classification.")
         if len(test_input) == 0 or len(test_output) == 0:
             raise InputValidationError("Datasets can't be empty.")
@@ -332,8 +359,6 @@ class NeuralNetwork:
             raise InputValidationError("Input and Output data set sizes must be equal.")
         if len(test_input[0]) != self.layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
-        if len(test_output[0]) != 1:
-            raise InputValidationError("Output must have only one value.")
         
         correct_predictions_count = 0
 
@@ -344,23 +369,14 @@ class NeuralNetwork:
             if index_end > test_size:
                 index_end = test_size
 
-            # activation
-            # changes an array of inputs into n x batch_size numpy 2D array
-            a: np.ndarray = np.array(test_input[index_start: index_end]).T
+            a: np.ndarray = np.array(test_input[index_start: index_end])
 
             # forward pass
-            for i in range(self._layer_count - 1):
-                # z = W*A + b
-                z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
-                # A = activation(z)
-                if i < self._layer_count - 2:
-                    a: np.ndarray = self._activation(z)
-                else:
-                    a: np.ndarray = self._activation_last_layer(z)
+            a = self.forward_batch(a, raw_ndarray_output=True).T
 
-            # a holds columns of predicted output here
-            # since a is just n x 1, change it to 1 x n for faster calculation (and match the expected output array's dimensions)
-            a = a.T
+            # a holds rows of predicted output here
+            # shape is batch_size x n
+
             # o is expected output
             o: np.ndarray = np.array(test_output[index_start: index_end])
 
@@ -369,12 +385,23 @@ class NeuralNetwork:
                 np.logical_and(a >= (1.0 - _threshold), o == 1.0),
                 np.logical_and(a < _threshold, o == 0.0),
             )
-            correct_predictions_count += np.sum(correct_predictions)
+            correct_predictions_count += np.sum(correct_predictions, axis=0)
 
             index_start += _check_batch_size
-        
-        print(f"Accuracy on {test_size} samples: {correct_predictions_count/test_size*100:.2f}%")
+        accuracy = correct_predictions_count / test_size * 100
+        print(f"Accuracy on {test_size} samples: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
+    
+    def compare_predictions(self, input: list, output: list) -> None:
+        format_width = len(output[0]) * 8
+        print(f"{"Expected":>{format_width}} | {"Predicted":>{format_width}} | Input Data")
 
+        predicted = self.forward_batch(input)
+        for i in range(len(output)):
+            print(''.join(f'{value:>8.4f}' for value in output[i]) + ' | ' +
+                  ''.join(f'{value:>8.4f}' for value in predicted[i]) + ' | ' +
+                  ''.join(f'{value:>7.3f}' for value in input[i]))
 
 class InputValidationError(Exception):
-    pass
+    def __str__(self):
+        # Red color escape code for printing
+        return f"\033[91m{self.args[0]}\033[0m" # Red text and reset after
