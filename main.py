@@ -15,9 +15,9 @@ def data_generator(n: int):
         o2: float = 0.0
 
         # Make your own Data Here
-        if i1*i1 - 5*i2 < 2*i3 - i4:
+        if i1*i1 - 5*i2 < 2*i1*i3 - i4:
             o1 = 1.0
-        if 4*i1 - 2*i2 + i4/2 < -3*i3:
+        if 4*i1 - 2*i2*i3 + 0.4*i4/i1 < -3*i3:
             o2 = 1.0
 
         # noise for inputs
@@ -31,7 +31,7 @@ def data_generator(n: int):
     return input_list, output_list
 
 def main():
-    nn = NeuralNetwork(layers=[4, 6, 6, 2],
+    nn = NeuralNetwork(layers=[4, 8, 8, 8, 2],
                        activation_hidden='leaky_relu',
                        activation_output='sigmoid',
                        loss_function="BCE",
@@ -45,7 +45,7 @@ def main():
 
     nn.train(input_list=input_train_list,
              output_list=output_train_list,
-             epoch=1000,
+             epoch=2000,
              batch_size=64)
     # nn.inspect_weights_and_biases()
 
