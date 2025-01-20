@@ -55,8 +55,9 @@ class NeuralNetwork:
         self.momentum_beta = momentum
 
         # Activation Functions
-        # Sigmoid, Tanh for probability distribution, classification
+        # Sigmoid, Tanh for probability distribution, multilabel classification
         # ReLU for regression
+        # Softmax for multiclass classification
         self._activation = self._get_activation_func(activation_hidden)
         self._activation_derivative = self._get_activation_derivative_func(activation_hidden)
 
@@ -88,7 +89,7 @@ class NeuralNetwork:
         # s(x) = (tanh(x/2) + 1) / 2
         return (np.tanh(np_array / 2) + 1) / 2
     
-    def _sigmoid_derivative(self, np_array: np.ndarray) -> float:
+    def _sigmoid_derivative(self, np_array: np.ndarray) -> np.ndarray:
         # s'(x) = s(x) * (1 - s(x))
         s: np.ndarray = (np.tanh(np_array / 2) + 1) / 2
         return s*(1-s)
@@ -97,7 +98,7 @@ class NeuralNetwork:
     def _tanh(self, np_array: np.ndarray) -> np.ndarray:
         return np.tanh(np_array)
 
-    def _tanh_derivative(self, np_array: np.ndarray) -> float:
+    def _tanh_derivative(self, np_array: np.ndarray) -> np.ndarray:
         # tanh'(x) = 1 - tanh(x)^2
         t = np.tanh(np_array)
         return 1 - t*t
@@ -106,16 +107,33 @@ class NeuralNetwork:
     def _relu(self, np_array: np.ndarray) -> np.ndarray:
         return np.maximum(0, np_array)
         
-    def _relu_derivative(self, np_array: np.ndarray) -> float:
+    def _relu_derivative(self, np_array: np.ndarray) -> np.ndarray:
         return np.where(np_array > 0, 1, 0)
 
     # ===== Leaky ReLU =====
     def _leaky_relu(self, np_array: np.ndarray) -> np.ndarray:
         return np.where(np_array > 0, np_array, 0.1 * np_array)
         
-    def _leaky_relu_derivative(self, np_array: np.ndarray) -> float:
+    def _leaky_relu_derivative(self, np_array: np.ndarray) -> np.ndarray:
         return np.where(np_array > 0, 1, 0.1)
     
+    # ===== Softmax =====
+    def _softmax(self, np_array: np.ndarray) -> np.ndarray:
+        exp = np.exp(np_array - np.max(np_array, axis=0, keepdims=True))
+        return exp / np.sum(exp, axis=0, keepdims=True)
+
+    def _softmax_derivative(self, np_array: np.ndarray) -> np.ndarray:
+        dim, batch_size = np_array.shape
+        softmax = self._softmax(np_array)
+
+        jacobians = np.zeros((dim, dim, batch_size))
+
+        for i in range(batch_size):
+            s = softmax[:, i] # i-th sample
+            jacobians[:, :, i] = np.diag(s) - np.outer(s, s)
+
+        return jacobians
+
     # LOSS FUNCTIONS
     # ===== Mean Squared Error =====
     def _MSE_gradient(self, a: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -126,13 +144,20 @@ class NeuralNetwork:
         bound = 1e-12
         a = np.clip(a, bound, 1-bound)
         return -(y/a) + ((1-y) / (1-a))
+    
+    # ===== Multiclass Cross Entropy =====
+    def _MCE_gradient(self, a: np.ndarray, y:np.ndarray) -> np.ndarray:
+        bound = 1e-12
+        a = np.clip(a, bound, 1-bound)
+        return -(y/a)
 
     def _get_activation_func(self, name: str):
         actv_funcs = {
             'relu': self._relu,
             'leaky_relu': self._leaky_relu,
             'tanh': self._tanh,
-            'sigmoid': self._sigmoid
+            'sigmoid': self._sigmoid,
+            'softmax': self._softmax
         }
         name = name.strip().lower()
         if name in actv_funcs: return actv_funcs[name]
@@ -143,7 +168,8 @@ class NeuralNetwork:
             'relu': self._relu_derivative,
             'leaky_relu': self._leaky_relu_derivative,
             'tanh': self._tanh_derivative,
-            'sigmoid': self._sigmoid_derivative
+            'sigmoid': self._sigmoid_derivative,
+            'softmax': self._softmax_derivative
         }
         name = name.strip().lower()
         if name in actv_deriv_funcs: return actv_deriv_funcs[name]
@@ -152,7 +178,8 @@ class NeuralNetwork:
     def _get_loss_derivative_func(self, name: str):
         loss_funcs = {
             'mse': self._MSE_gradient,
-            'bce': self._BCE_gradient
+            'bce': self._BCE_gradient,
+            'mce': self._MCE_gradient
         }
         name = name.strip().lower()
         if name in loss_funcs: return loss_funcs[name]
@@ -294,37 +321,49 @@ class NeuralNetwork:
                 # a(n) = activation(z(n))
 
                 # derivative of costs with respect to weights
-                # dCost/dw(n)
-                # = dz(n)/dw(n) * da(n)/dz(n) * dCost/da(n)
-                # = a(n-1) * actv'(z(n)) * dCost/da(n)
+                # dL/dw(n)
+                # = dz(n)/dw(n) * da(n)/dz(n) * dL/da(n)
+                # = a(n-1) * actv'(z(n)) * dL/da(n)
                 if i < self._layer_count - 2:
                     term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
                 else:
-                    term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
+                    if self._activation_last_layer == self._softmax:
+                        term_2_3: np.ndarray = np.zeros_like(a_gradient_idv_layer)
+                        for lll in range(a_gradient_idv_layer.shape[1]):
+                            dotp = np.dot(self._softmax_derivative(z_layers[i])[:, :, lll], a_gradient_idv_layer[:, lll].reshape(-1, 1))
+                            term_2_3[:, lll] = dotp.flatten()
+                    else:
+                        term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
                 w_gradient_idv_layer = np.matmul(term_2_3, a_layers[i].T)
                 w_gradient_layers.insert(0, w_gradient_idv_layer / batch_size)
 
                 # derivative of costs with respect to biases
-                # dCost/db(n)
-                # = dz(n)/db(n) * da(n)/dz(n) * dCost/da(n)
-                # = 1 * actv'(z(n)) * dCost/da(n)
+                # dL/db(n)
+                # = dz(n)/db(n) * da(n)/dz(n) * dL/da(n)
+                # = 1 * actv'(z(n)) * dL/da(n)
                 if i < self._layer_count - 2:
                     b_gradient_idv_layer = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
                 else:
-                    b_gradient_idv_layer = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
+                    if self._activation_last_layer == self._softmax:
+                        b_gradient_idv_layer: np.ndarray = np.zeros_like(a_gradient_idv_layer)
+                        for lll in range(a_gradient_idv_layer.shape[1]):
+                            dotp = np.dot(self._softmax_derivative(z_layers[i])[:, :, lll], a_gradient_idv_layer[:, lll].reshape(-1, 1))
+                            b_gradient_idv_layer[:, lll] = dotp.flatten()
+                    else:
+                        b_gradient_idv_layer = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
                 b_gradient_aggregated = np.sum(b_gradient_idv_layer, axis=1, keepdims=True)
                 b_gradient_layers.insert(0, b_gradient_aggregated / batch_size)
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation
                 # NOTE: a(n-1) affects all a(n), so backpropagation to a(n-1) will be related to all a(n)
-                # dCost/da(n-1)
-                # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dCost/da(n)]
-                # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dCost/da(n))]
-                if i < self._layer_count - 2:
-                    term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
-                else:
-                    term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
+                # dL/da(n-1)
+                # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
+                # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
+                # if i < self._layer_count - 2:
+                #     term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
+                # else:
+                #     term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[i]) * a_gradient_idv_layer
                 new_a_gradient_idv_layer = np.matmul(self.weights[i].T, term_2_3)
                 a_gradient_idv_layer = new_a_gradient_idv_layer
 
@@ -353,8 +392,8 @@ class NeuralNetwork:
         # must be 0.0 < threshold <= 0.5
         _threshold = 0.5
 
-        if (self._activation_last_layer != self._sigmoid and self._activation_last_layer != self._tanh):
-            raise InputValidationError("Model is not set up for classification.")
+        if self._activation_last_layer not in (self._sigmoid, self._tanh, self._softmax):
+           raise InputValidationError("Model is not set up for classification.")
         if len(test_input) == 0 or len(test_output) == 0:
             raise InputValidationError("Datasets can't be empty.")
         if len(test_input) != len(test_output):

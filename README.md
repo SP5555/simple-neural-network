@@ -131,6 +131,9 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 ## Resources *& Inspirations :)*
 - 3Blue1Brown: [Neural Network Series](https://youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&si=856ZSYGlqoSCdHB2)
 - GeeksForGeeks: [What is a Neural Network?](https://www.geeksforgeeks.org/neural-networks-a-beginners-guide/)
+- TensorFlow: [A Neural Network Playground](https://playground.tensorflow.org/)
+- StatQuest with Josh Starmer: [The Softmax Derivative](https://youtu.be/M59JElEPgIg?si=S_ERldGE5K5Jib0E)
+- [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
 
 ## Future Improvements
 **Multiclass Cross-Entropy (MCE) Loss Function**: The implementation of a multiclass cross-entropy loss function is planned to extend the network's capabilities for multi-class classification tasks.
