@@ -33,7 +33,7 @@ nn = NeuralNetwork([4, 8, 6, 6, 2])
 #### Parameters
 * `activation_hidden`: Activation function for hidden layers (E.g., `"relu"`, `"sigmoid"`).
 * `activation_output`: Activation function for the output layer.
-* `loss_function`: Loss function for training (E.g., `"MSE"`, `"BCE"`,
+* `loss_function`: Loss function for training (E.g., `"MSE"`, `"BCE"`)
 * `learn_rate`: Learning rate for gradient descent.
 * `lambda_parem`: Regularization strength to prevent overfitting.
 * `momentum`: Momentum to accelerate convergence.
@@ -124,7 +124,7 @@ Accuracy on 20000 samples:    96.23%   98.17%
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 
-## Resources
+## Resources *& Inspirations :)*
 - 3Blue1Brown: [Neural Network Series](https://youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&si=856ZSYGlqoSCdHB2)
 - GeeksForGeeks: [What is a Neural Network?](https://www.geeksforgeeks.org/neural-networks-a-beginners-guide/)
 

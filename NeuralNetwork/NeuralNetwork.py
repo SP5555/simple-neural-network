@@ -9,7 +9,7 @@ class NeuralNetwork:
                  loss_function: str = 'MSE',
                  learn_rate: float = 0.01,
                  lambda_parem: float = 0.0,
-                 momentum: float = 0.8,) -> None:
+                 momentum: float = 0.8) -> None:
         
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
