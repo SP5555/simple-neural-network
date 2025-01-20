@@ -67,7 +67,7 @@ class NeuralNetwork:
         # Loss Functions
         # MSE for regression
         # BCE for binary classification
-        # MCE for multiclass classification (not available yet)
+        # MCE/CCE for multiclass classification
         self._loss_derivative = self._get_loss_derivative_func(loss_function)
 
         self.weights: list = []
