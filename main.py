@@ -6,7 +6,7 @@ def main():
                        activation_hidden='leaky_relu',
                        activation_output='softmax',
                        loss_function="CCE",
-                       learn_rate=0.05,
+                       learn_rate=0.08,
                        lambda_parem=0.003,
                        momentum=0.75)
     

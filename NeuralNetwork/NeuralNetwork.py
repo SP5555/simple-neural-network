@@ -133,7 +133,7 @@ class NeuralNetwork:
         # each sample "slice" on 0-th axis is: I * M_softmax(dim, 1) - np.dot(M_softmax, M_softmax.T)
         jacobians = np.eye(dim)[None, :, :] * softmax_expanded - np.matmul(softmax_expanded, softmax_expanded.transpose(0, 2, 1))
 
-        return jacobians.transpose(1, 2, 0) # Shape: (dim, dim, batch_size)
+        return jacobians # Shape: (batch_size, dim, dim)
 
     # LOSS FUNCTIONS
     # ===== Mean Squared Error =====
@@ -318,10 +318,9 @@ class NeuralNetwork:
             # important component for LAST LAYER backpropagation
             # term_2_3 = da(n)/dz(n) * dL/da(n)
             if self._activation_last_layer == self._softmax:
-                jacobians = self._softmax_derivative(z_layers[-1]) # (dim, dim, batch_size)
 
                 da_wrt_dz_reshaped = a_gradient_idv_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_da_reshaped = jacobians.transpose(2, 0, 1) # (batch_size, dim, dim)
+                dL_wrt_da_reshaped = self._softmax_derivative(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
                 
                 t_2_3_3D = np.matmul(dL_wrt_da_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
