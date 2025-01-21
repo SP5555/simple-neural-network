@@ -55,8 +55,8 @@ class NeuralNetwork:
         self.momentum_beta = momentum
 
         # Activation Functions
-        # Sigmoid, Tanh for probability distribution, multilabel classification
         # ReLU for regression
+        # Sigmoid, Tanh for multilabel classification
         # Softmax for multiclass classification
         self._activation = self._get_activation_func(activation_hidden)
         self._activation_derivative = self._get_activation_derivative_func(activation_hidden)
@@ -66,7 +66,7 @@ class NeuralNetwork:
 
         # Loss Functions
         # MSE for regression
-        # BCE for binary classification
+        # BCE for multilabel classification
         # MCE/CCE for multiclass classification
         self._loss_derivative = self._get_loss_derivative_func(loss_function)
 
@@ -426,7 +426,7 @@ class NeuralNetwork:
 
             index_start += _check_batch_size
         accuracy = correct_predictions_count / test_size * 100
-        print(f"Accuracy on {test_size} samples: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
+        print(f"Accuracy on {test_size:,} samples: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
     
     def compare_predictions(self, input: list, output: list) -> None:
         format_width = len(output[0]) * 8

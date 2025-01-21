@@ -2,7 +2,7 @@ from NeuralNetwork import NeuralNetwork
 from DataGenerator import DataGenerator
 
 def main():
-    nn = NeuralNetwork(layers=[4, 12, 12, 3],
+    nn = NeuralNetwork(layers=[4, 8, 6, 3],
                        activation_hidden='leaky_relu',
                        activation_output='softmax',
                        loss_function="CCE",

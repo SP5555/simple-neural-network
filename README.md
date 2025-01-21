@@ -83,10 +83,10 @@ nn.compare_predictions(input=data_i, output=data_o)
 ## Performance & Testing
 This simple network delivers excellent results on basic regression and classification problems. Below is an example demonstrating its effectiveness.
 
-The **synthetic** data (artificial data created using algorithms) is used to test the model's ability to predict outcomes based on the input features. All tests were conducted with **40,000 training datasets**. The performance is then evaluated on **20,000 unseen test datasets** generated using the same method (*the predictions for 16 unseen test datasets are compared with the expected outputs below*).
+The **synthetic** data (artificial data created using algorithms) is used to test the model's ability to predict outcomes based on the input features. All tests were conducted with **40,000 training datasets**. The performance is then evaluated on **20,000 unseen test datasets** generated using the same method (*the predictions for 16 unseen test datasets are compared with the expected outputs below*). [How is synthetic data generated?](#synthetic-data-generation)
 ### Multilabel Classification Performance (Sigmoid activation in last layer + BCE Loss)
-Model configuration:
 ```python
+# Model configuration
 nn = NeuralNetwork(
     layers=[4, 12, 12, 3],
     activation_hidden='leaky_relu',
@@ -118,8 +118,8 @@ Accuracy on 20000 samples:    96.81%   93.44%   93.25%
   0.0000  0.0000  1.0000 |   0.0000  0.0004  0.9900 |  -3.041 -3.689  4.779  1.332
 ```
 ### Multiclass Classification Performance (Softmax activation in last layer + CCE Loss)
-Model configuration:
 ```python
+# Model configuration
 nn = NeuralNetwork(
     layers=[4, 12, 12, 3],
     activation_hidden='leaky_relu',
@@ -151,6 +151,45 @@ Accuracy on 20000 samples:    96.32%   92.32%   95.34%
   1.0000  0.0000  0.0000 |   0.9376  0.0621  0.0003 |   3.538  1.747  2.266  3.482
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
+
+## Synthetic Data Generation
+Random data generation is used to simulate a variety of real-world scenarios where the relationship between input features and output targets is not immediately clear. By introducing randomization, we can create a diverse range of datasets that help test the network's ability to generalize and perform well across different situations.
+
+This synthetic data helps in evaluating the model’s performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
+
+For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
+```python
+# For multilabel classification demonstration
+i1, i2, i3, i4 = random.uniform(-6, 6), random.uniform(-6, 6), random.uniform(-6, 6), random.uniform(-6, 6)
+o1, o2, o3 = 0.0, 0.0, 0.0
+
+# Define arbitrary relationships between inputs and outputs for demonstration
+if i1*i1 - 5*i2 < 2*i1*i3 - i4:           o1 = 1.0
+if 4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3: o2 = 1.0
+if i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4:    o3 = 1.0
+```
+```python
+# For multiclass classification demonstration
+k = random.randint(0, 2) # Select a random class (0, 1, or 2)
+if (k == 0):
+    i1, i2, i3, i4 = random.uniform(2, 5), random.uniform(1, 5), random.uniform(0, 4), random.uniform(3, 5)
+    o1, o2, o3 = 1.0, 0.0, 0.0
+elif (k == 1):
+    i1, i2, i3, i4 = random.uniform(1, 4), random.uniform(1, 3), random.uniform(3, 6), random.uniform(0, 5)
+    o1, o2, o3 = 0.0, 1.0, 0.0
+else:
+    i1, i2, i3, i4 = random.uniform(0, 3), random.uniform(2, 6), random.uniform(0, 6), random.uniform(0, 2)
+    o1, o2, o3 = 0.0, 0.0, 1.0
+```
+In all data generation, input features (`i1, i2, i3, i4`) are exposed to some noise to better mimic real-world scenarios.
+```python
+    input_list.append(self._add_noise([i1, i2, i3, i4], noise=0.2))
+    output_list.append([o1, o2, o3])
+```
+```python
+def _add_noise(self, data: list, noise=0.5):
+    return [x + random.uniform(-noise, noise) for x in data]
+```
 
 ## GPU Acceleration?
 This neural network implementation is built using pure **NumPy** utilities, which allows for easy conversion to **CuPy** for GPU acceleration without changing the code structure. By simply replacing **NumPy** with **CuPy**, computations can be offloaded to a CUDA-capable GPU, for faster training for large network and datasets.
