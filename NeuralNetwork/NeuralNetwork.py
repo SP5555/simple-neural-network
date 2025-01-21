@@ -318,12 +318,12 @@ class NeuralNetwork:
             # important component for LAST LAYER backpropagation
             # term_2_3 = da(n)/dz(n) * dL/da(n)
             if self._activation_last_layer == self._softmax:
-                softmax_derivative = self._softmax_derivative(z_layers[-1]) # (dim, dim, batch_size)
+                jacobians = self._softmax_derivative(z_layers[-1]) # (dim, dim, batch_size)
 
                 da_wrt_dz_reshaped = a_gradient_idv_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_dz_reshaped = softmax_derivative.transpose(2, 0, 1) # (batch_size, dim, dim)
+                dL_wrt_da_reshaped = jacobians.transpose(2, 0, 1) # (batch_size, dim, dim)
                 
-                t_2_3_3D = np.matmul(dL_wrt_dz_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
+                t_2_3_3D = np.matmul(dL_wrt_da_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
                 term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[-1]) * a_gradient_idv_layer

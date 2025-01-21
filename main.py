@@ -2,11 +2,11 @@ from NeuralNetwork import NeuralNetwork
 from DataGenerator import DataGenerator
 
 def main():
-    nn = NeuralNetwork(layers=[4, 8, 6, 3],
+    nn = NeuralNetwork(layers=[4, 12, 12, 3],
                        activation_hidden='leaky_relu',
                        activation_output='softmax',
                        loss_function="CCE",
-                       learn_rate=0.08,
+                       learn_rate=0.05,
                        lambda_parem=0.003,
                        momentum=0.75)
     
@@ -19,7 +19,7 @@ def main():
 
     nn.train(input_list=input_train_list,
              output_list=output_train_list,
-             epoch=1000,
+             epoch=2000,
              batch_size=64)
     # nn.inspect_weights_and_biases()
 
