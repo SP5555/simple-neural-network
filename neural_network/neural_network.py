@@ -298,11 +298,6 @@ class NeuralNetwork:
             # W*A + b of hidden and final layers
             z_layers: list = []
 
-            # individual gradients
-            # (C gradient with respect to w,a,b)
-            w_gradient_layers: list = [] # required, core
-            b_gradient_layers: list = [] # required, core
-
             # forward pass
             for i in range(self._layer_count - 1):
 
@@ -320,19 +315,19 @@ class NeuralNetwork:
             # a holds columns of output here
             # y is desired output
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
-            a_gradient_idv_layer: np.ndarray = self._loss_derivative(a, y)
+            a_gradient_ith_layer: np.ndarray = self._loss_derivative(a, y)
 
             # important component for LAST LAYER backpropagation
             # term_2_3 = da(n)/dz(n) * dL/da(n)
             if self._activation_last_layer == self._softmax:
 
-                da_wrt_dz_reshaped = a_gradient_idv_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
+                da_wrt_dz_reshaped = a_gradient_ith_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
                 dL_wrt_da_reshaped = self._softmax_derivative(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
                 
                 t_2_3_3D = np.matmul(dL_wrt_da_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
-                term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[-1]) * a_gradient_idv_layer
+                term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[-1]) * a_gradient_ith_layer
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):
@@ -344,21 +339,29 @@ class NeuralNetwork:
                 # important component for HIDDEN LAYER backpropagations
                 # term_2_3 = da(n)/dz(n) * dL/da(n)
                 if i < self._layer_count - 2:
-                    term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_idv_layer
+                    term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_ith_layer
 
-                # derivative of costs with respect to weights
+                # CALCULATE derivative of costs with respect to weights
                 # dL/dw(n)
                 # = dz(n)/dw(n) * da(n)/dz(n) * dL/da(n)
                 # = a(n-1) * actv'(z(n)) * dL/da(n)
-                w_gradient_idv_layer = np.matmul(term_2_3, a_layers[i].T)
-                w_gradient_layers.insert(0, w_gradient_idv_layer / batch_size)
+                w_gradient_ith_layer = np.matmul(term_2_3, a_layers[i].T) / batch_size
 
-                # derivative of costs with respect to biases
+                # UPDATE/apply negative of average gradient change to weights
+                lambda_w_old: np.ndarray = self.weights[i] * self.lambda_parem # Compute regularization term
+                self.velocity_w[i] = self.momentum_beta * self.velocity_w[i] + (1 - self.momentum_beta) * (w_gradient_ith_layer + lambda_w_old)
+                self.weights[i] += -1 * self.velocity_w[i] * self.learn_rate
+
+                # CALCULATE derivative of costs with respect to biases
                 # dL/db(n)
                 # = dz(n)/db(n) * da(n)/dz(n) * dL/da(n)
                 # = 1 * actv'(z(n)) * dL/da(n)
-                b_gradient_aggregated = np.sum(term_2_3, axis=1, keepdims=True)
-                b_gradient_layers.insert(0, b_gradient_aggregated / batch_size)
+                b_gradient_ith_layer = np.sum(term_2_3, axis=1, keepdims=True) / batch_size
+
+                # UPDATE/apply negative of average gradient change to biases / Update biases
+                lambda_b_old: np.ndarray = self.biases[i] * self.lambda_parem # Compute regularization term
+                self.velocity_b[i] = self.momentum_beta * self.velocity_b[i] + (1 - self.momentum_beta) * (b_gradient_ith_layer + lambda_b_old)
+                self.biases[i] += -1 * self.velocity_b[i] * self.learn_rate
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation
@@ -366,21 +369,7 @@ class NeuralNetwork:
                 # dL/da(n-1)
                 # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
                 # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
-                a_gradient_idv_layer = np.matmul(self.weights[i].T, term_2_3)
-
-            # apply negative of average gradient change to weights and biases
-            for i in range(self._layer_count - 1):
-                # Update weights
-                # Compute regularization term
-                lambda_w_old: np.ndarray = self.weights[i] * self.lambda_parem
-                self.velocity_w[i] = self.momentum_beta * self.velocity_w[i] + (1 - self.momentum_beta) * (w_gradient_layers[i] + lambda_w_old)
-                self.weights[i] += -1 * self.velocity_w[i] * self.learn_rate
-
-                # Update biases
-                # Compute regularization term
-                lambda_b_old: np.ndarray = self.biases[i] * self.lambda_parem
-                self.velocity_b[i] = self.momentum_beta * self.velocity_b[i] + (1 - self.momentum_beta) * (b_gradient_layers[i] + lambda_b_old)
-                self.biases[i] += -1 * self.velocity_b[i] * self.learn_rate
+                a_gradient_ith_layer = np.matmul(self.weights[i].T, term_2_3)
             
             p: float = (100.0 * _ / epoch)
             print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
