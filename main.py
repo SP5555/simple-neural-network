@@ -1,5 +1,5 @@
-from NeuralNetwork import NeuralNetwork
-from DataGenerator import DataGenerator
+from neural_network import NeuralNetwork
+from data_generator import DataGenerator
 
 def main():
     nn = NeuralNetwork(layers=[4, 12, 12, 3],

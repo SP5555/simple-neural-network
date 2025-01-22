@@ -1,4 +1,5 @@
 import numpy as np
+from utils.exceptions import InputValidationError
 
 # Less than 500 neurons in each layer suggested, or be evil
 class NeuralNetwork:
@@ -58,6 +59,12 @@ class NeuralNetwork:
         # ReLU for regression
         # Sigmoid, Tanh for multilabel classification
         # Softmax for multiclass classification
+        activation_hidden = activation_hidden.strip().lower()
+        activation_output = activation_output.strip().lower()
+
+        if activation_hidden in ("softmax",):
+            raise InputValidationError(f"{activation_hidden} activation can't be used in hidden layers.")
+        
         self._activation = self._get_activation_func(activation_hidden)
         self._activation_derivative = self._get_activation_derivative_func(activation_hidden)
 
@@ -381,11 +388,6 @@ class NeuralNetwork:
         print("===== ===== Training Completed ===== =====               ")
     
     def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
-        _check_batch_size = 1024
-        # threshold defines how close the prediction must be to expected to be considered correct
-        # must be 0.0 < threshold <= 0.5
-        _threshold = 0.5
-
         if self._activation_last_layer not in (self._sigmoid, self._tanh, self._softmax):
            raise InputValidationError("Model is not set up for classification.")
         if len(test_input) == 0 or len(test_output) == 0:
@@ -395,33 +397,45 @@ class NeuralNetwork:
         if len(test_input[0]) != self.layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
         
+        _check_batch_size = 1024
+        # threshold defines how close the prediction must be to expected to be considered correct
+        # must be 0.0 < threshold <= 0.5
+        _threshold = 0.5
+        
         correct_predictions_count = 0
 
         test_size = len(test_input)
         index_start = 0
+        correctly_categorized = 0
         while index_start < test_size:
             index_end = index_start + _check_batch_size
             if index_end > test_size:
                 index_end = test_size
 
             a: np.ndarray = np.array(test_input[index_start: index_end])
-
-            # forward pass
-            a = self.forward_batch(a, raw_ndarray_output=True).T
-
-            # o is expected output
             o: np.ndarray = np.array(test_output[index_start: index_end])
 
+            # forward pass
+            predictions = self.forward_batch(a, raw_ndarray_output=True).T
+
+            if self._activation_last_layer in (self._softmax,):
+                actual_class = np.argmax(o, axis=1)
+                predicted_class = np.argmax(predictions, axis=1)
+                correct_predictions = actual_class == predicted_class
+                correctly_categorized += np.sum(correct_predictions, axis=0)
+
             # 1 if checks, 0 if not.
-            correct_predictions = np.logical_or(
-                np.logical_and(a >= (1.0 - _threshold), o == 1.0),
-                np.logical_and(a < _threshold, o == 0.0),
-            )
+            correct_predictions = np.abs(predictions - o) <= _threshold
             correct_predictions_count += np.sum(correct_predictions, axis=0)
 
             index_start += _check_batch_size
+
         accuracy = correct_predictions_count / test_size * 100
-        print(f"Accuracy on {test_size:,} samples: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
+        print(f"Accuracy on {test_size:,} samples")
+        print("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
+        if self._activation_last_layer in (self._softmax,):
+            cat_accuracy = correctly_categorized / test_size * 100
+            print(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
     
     def compare_predictions(self, input: list, output: list) -> None:
         format_width = len(output[0]) * 8
@@ -432,8 +446,3 @@ class NeuralNetwork:
             print(''.join(f'{value:>8.4f}' for value in output[i]) + ' | ' +
                   ''.join(f'{value:>8.4f}' for value in predicted[i]) + ' | ' +
                   ''.join(f'{value:>7.3f}' for value in input[i]))
-
-class InputValidationError(Exception):
-    def __str__(self):
-        # Red color escape code for printing
-        return f"\033[91m{self.args[0]}\033[0m" # Red text and reset after
