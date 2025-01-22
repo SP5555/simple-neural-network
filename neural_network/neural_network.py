@@ -336,11 +336,6 @@ class NeuralNetwork:
                 # z(n) = w(n)*a(n-1) + b(n)
                 # a(n) = activation(z(n))
 
-                # important component for HIDDEN LAYER backpropagations
-                # term_2_3 = da(n)/dz(n) * dL/da(n)
-                if i < self._layer_count - 2:
-                    term_2_3: np.ndarray = self._activation_derivative(z_layers[i]) * a_gradient_ith_layer
-
                 # CALCULATE derivative of costs with respect to weights
                 # dL/dw(n)
                 # = dz(n)/dw(n) * da(n)/dz(n) * dL/da(n)
@@ -370,6 +365,11 @@ class NeuralNetwork:
                 # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
                 # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
                 a_gradient_ith_layer = np.matmul(self.weights[i].T, term_2_3)
+                
+                # important component for HIDDEN LAYER backpropagations
+                # update for next layer
+                # term_2_3 = da(n)/dz(n) * dL/da(n)
+                term_2_3: np.ndarray = self._activation_derivative(z_layers[i-1]) * a_gradient_ith_layer
             
             p: float = (100.0 * _ / epoch)
             print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
