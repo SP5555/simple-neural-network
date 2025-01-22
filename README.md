@@ -7,7 +7,7 @@ This is the very simple, yet *powerful* example of a fully functional neural net
 ## Features
 - **Fully connected layers**: Customizable layer sizes.
 - **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Softmax.
-- **Loss functions**: Mean-Squared Error (MSE) for regression, Binary Cross-Entropy (BCE) for multilabel classification, Categorical Cross-Entropy for (CCE or MCE) for multiclass classification.
+- **Loss functions**: Mean-Squared Error (MSE) for regression, Binary Cross-Entropy (BCE) for multilabel classification, Categorical Cross-Entropy (CCE or MCE) for multiclass classification.
 - **Training Algorithm**: Gradient descent.
 
 ## Dependencies
@@ -178,10 +178,10 @@ if (k == 0):
     i1, i2, i3, i4 = random.uniform(2, 5), random.uniform(1, 5), random.uniform(0, 4), random.uniform(3, 5)
     o1, o2, o3 = 1.0, 0.0, 0.0
 elif (k == 1):
-    i1, i2, i3, i4 = random.uniform(1, 4), random.uniform(1, 3), random.uniform(3, 6), random.uniform(0, 5)
+    i1, i2, i3, i4 = random.uniform(1, 4), random.uniform(1, 3), random.uniform(3, 6), random.uniform(1, 5)
     o1, o2, o3 = 0.0, 1.0, 0.0
 else:
-    i1, i2, i3, i4 = random.uniform(0, 3), random.uniform(2, 6), random.uniform(0, 6), random.uniform(0, 2)
+    i1, i2, i3, i4 = random.uniform(0, 3), random.uniform(2, 6), random.uniform(0, 5), random.uniform(0, 2)
     o1, o2, o3 = 0.0, 0.0, 1.0
 ```
 In all data generation, input features (`i1, i2, i3, i4`) are exposed to some noise to better mimic real-world scenarios.
