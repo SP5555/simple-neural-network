@@ -162,7 +162,7 @@ class NeuralNetwork:
         }
         name = name.strip().lower()
         if name in actv_funcs: return actv_funcs[name]
-        raise ValueError(f"Unsupported activation function: {name}")
+        raise InputValidationError(f"Unsupported activation function: {name}")
 
     def _get_activation_derivative_func(self, name: str):
         actv_deriv_funcs = {
@@ -174,7 +174,7 @@ class NeuralNetwork:
         }
         name = name.strip().lower()
         if name in actv_deriv_funcs: return actv_deriv_funcs[name]
-        raise ValueError(f"Unsupported activation function: {name}")
+        raise InputValidationError(f"Unsupported activation function: {name}")
 
     def _get_loss_derivative_func(self, name: str):
         loss_funcs = {
@@ -185,7 +185,7 @@ class NeuralNetwork:
         }
         name = name.strip().lower()
         if name in loss_funcs: return loss_funcs[name]
-        raise ValueError(f"Unsupported loss function: {name}")
+        raise InputValidationError(f"Unsupported loss function: {name}")
 
     def _get_parameter_count(self) -> int:
         c: int = 0
@@ -359,8 +359,7 @@ class NeuralNetwork:
                 # dL/da(n-1)
                 # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
                 # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
-                new_a_gradient_idv_layer = np.matmul(self.weights[i].T, term_2_3)
-                a_gradient_idv_layer = new_a_gradient_idv_layer
+                a_gradient_idv_layer = np.matmul(self.weights[i].T, term_2_3)
 
             # apply negative of average gradient change to weights and biases
             for i in range(self._layer_count - 1):
@@ -410,9 +409,6 @@ class NeuralNetwork:
             # forward pass
             a = self.forward_batch(a, raw_ndarray_output=True).T
 
-            # a holds rows of predicted output here
-            # shape is batch_size x n
-
             # o is expected output
             o: np.ndarray = np.array(test_output[index_start: index_end])
 
@@ -429,7 +425,7 @@ class NeuralNetwork:
     
     def compare_predictions(self, input: list, output: list) -> None:
         format_width = len(output[0]) * 8
-        print(f"{"Expected":>{format_width}} | {"Predicted":>{format_width}} | Input Data")
+        print(f"{'Expected':>{format_width}} | {'Predicted':>{format_width}} | Input Data")
 
         predicted = self.forward_batch(input)
         for i in range(len(output)):

@@ -11,7 +11,7 @@ class DataGenerator:
         }
         name = name.strip().lower()
         if name in generators: return generators[name](n)
-        raise ValueError(f"Unsupported generate function: {name}")
+        raise InputValidationError(f"Unsupported generate function: {name}")
 
     def _generate_multilabel(self, n: int):
         input_list: list = []
@@ -23,9 +23,9 @@ class DataGenerator:
             o1, o2, o3 = 0.0, 0.0, 0.0
 
             # Define arbitrary relationships between inputs and outputs for demonstration
-            if i1*i1 - 5*i2 < 2*i1*i3 - i4:           o1 = 1.0
+            if i1*i4 - 5*i2 < 2*i1*i3 - i4:           o1 = 1.0
             if 4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3: o2 = 1.0
-            if i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4:    o3 = 1.0
+            if - i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4:    o3 = 1.0
 
             # noise for inputs
             input_list.append(self._add_noise([i1, i2, i3, i4], noise=0.2))
