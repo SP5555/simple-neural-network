@@ -3,8 +3,8 @@ from data_generator import DataGenerator
 
 def main():
     nn = NeuralNetwork(layers=[4, 12, 12, 3],
-                       activation_hidden='leaky_relu',
-                       activation_output='softmax',
+                       activation_hidden="leaky_relu",
+                       activation_output="softmax",
                        loss_function="CCE",
                        learn_rate=0.08,
                        lambda_parem=0.003,

@@ -5,9 +5,9 @@ from utils.exceptions import InputValidationError
 class NeuralNetwork:
     def __init__(self,
                  layers: list,
-                 activation_hidden: str = 'leaky_relu',
-                 activation_output: str = 'leaky_relu',
-                 loss_function: str = 'MSE',
+                 activation_hidden: str = "leaky_relu",
+                 activation_output: str = "leaky_relu",
+                 loss_function: str = "MSE",
                  learn_rate: float = 0.01,
                  lambda_parem: float = 0.0,
                  momentum: float = 0.8) -> None:
@@ -254,7 +254,7 @@ class NeuralNetwork:
         
         if raw_ndarray_output:
             return a
-        return a.T.tolist() # user friendly format, not np.ndarray
+        return a.T.tolist() # vanilla list, not np.ndarray
     
     def train(self,
               input_list: list,

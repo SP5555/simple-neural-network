@@ -163,35 +163,61 @@ This synthetic data helps in evaluating the model’s performance without the ne
 For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
 ```python
 # For multilabel classification demonstration
-i1, i2, i3, i4 = random.uniform(-6, 6), random.uniform(-6, 6), random.uniform(-6, 6), random.uniform(-6, 6)
-o1, o2, o3 = 0.0, 0.0, 0.0
+# Shape: (1, n)
+i1 = np.random.uniform(-6, 6, size=n)
+i2 = np.random.uniform(-6, 6, size=n)
+i3 = np.random.uniform(-6, 6, size=n)
+i4 = np.random.uniform(-6, 6, size=n)
 
+# Shape: (1, n)
 # Define arbitrary relationships between inputs and outputs for demonstration
-if i1*i1 - 5*i2 < 2*i1*i3 - i4:           o1 = 1.0
-if 4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3: o2 = 1.0
-if i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4:    o3 = 1.0
+o1 = (i1*i4 - 5*i2 < 2*i1*i3 - i4).astype(float)
+o2 = (4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3).astype(float)
+o3 = (-i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4).astype(float)
+
+# Shape: (n, count of input features)
+input_list = np.column_stack((i1, i2, i3, i4))
+
+# Shape: (n, count of output features)
+output_list = np.column_stack((o1, o2, o3))
 ```
 ```python
 # For multiclass classification demonstration
-k = random.randint(0, 2) # Select a random class (0, 1, or 2)
-if (k == 0):
-    i1, i2, i3, i4 = random.uniform(2, 5), random.uniform(1, 5), random.uniform(0, 4), random.uniform(3, 5)
-    o1, o2, o3 = 1.0, 0.0, 0.0
-elif (k == 1):
-    i1, i2, i3, i4 = random.uniform(1, 4), random.uniform(1, 3), random.uniform(3, 6), random.uniform(1, 5)
-    o1, o2, o3 = 0.0, 1.0, 0.0
-else:
-    i1, i2, i3, i4 = random.uniform(0, 3), random.uniform(2, 6), random.uniform(0, 5), random.uniform(0, 2)
-    o1, o2, o3 = 0.0, 0.0, 1.0
+_input_features = 4
+_output_classes = 3
+
+input_list = np.zeros((n, _input_features))
+output_list = np.zeros((n, _output_classes))
+
+# (1, n) shape array of random class labels
+class_labels = np.random.randint(0, _output_classes, size=n)
+
+# Define input data ranges for each class
+class_data = {
+    0: [(2, 5), (1, 5), (0, 4), (3, 5)],
+    1: [(1, 4), (1, 3), (3, 6), (1, 5)],
+    2: [(0, 3), (2, 6), (0, 5), (0, 2)],
+}
+
+for c in range(_output_classes):
+    # extract indices of class c
+    indices = np.where(class_labels == c)[0]
+
+    # generate/fill up data in input list
+    for i, (low, high) in enumerate(class_data[c]):
+        input_list[indices, i] = np.random.uniform(low, high, size=len(indices))
+    # set correct class
+    output_list[indices, c] = 1.0
 ```
-In all data generation, input features (`i1, i2, i3, i4`) are exposed to some noise to better mimic real-world scenarios.
+In all data generation, input features (`i1, i2, i3, i4, ...`) are exposed to some noise to better mimic real-world scenarios.
 ```python
-    input_list.append(self._add_noise([i1, i2, i3, i4], noise=0.2))
-    output_list.append([o1, o2, o3])
+# input noise
+input_list = self._add_noise(input_list, noise=0.2)
 ```
 ```python
-def _add_noise(self, data: list, noise=0.5):
-    return [x + random.uniform(-noise, noise) for x in data]
+def _add_noise(self, data: np.ndarray, noise=0.5):
+    # Add uniform noise element-wise to the entire NumPy array
+    return data + np.random.uniform(-noise, noise, size=data.shape)
 ```
 
 ## GPU Acceleration?
