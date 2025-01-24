@@ -26,8 +26,8 @@ class NeuralNetwork:
         #     new_parameter = old_parameter - velocity * learn_rate 
         if learn_rate <= 0.0:
             raise InputValidationError("Learn rate must be positive.")
-        if learn_rate >= 1.0:
-            print(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 1.0.")
+        if learn_rate >= 0.1:
+            print(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
         self.learn_rate = learn_rate
 
         # Regularization Strength
