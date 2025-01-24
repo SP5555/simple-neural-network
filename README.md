@@ -17,11 +17,11 @@ This is the very simple, yet *powerful* example of a fully functional neural net
 - [Synthetic Data Generation](#synthetic-data-generation)
 - [Experiment!](#experiment)
 - [GPU Acceleration?](#gpu-acceleration)
-- [Resources *& Inspirations*](#resources--inspirations-)
+- [Resources *& Inspirations :)*](#resources--inspirations-)
 
 ## Features
 - **Fully connected layers**: Customizable layer sizes.
-- **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Softmax.
+- **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Linear Softmax.
 - **Loss functions**: Mean-Squared Error (MSE) for regression, Binary Cross-Entropy (BCE) for multilabel classification, Categorial Cross-Entropy (CCE or MCE) for multiclass classification.
 - **Training Algorithm**: Gradient descent.
 
@@ -49,8 +49,7 @@ nn = NeuralNetwork([4, 6, 2])
 nn = NeuralNetwork([4, 8, 6, 6, 2])
 ```
 #### Parameters
-* `activation_hidden`: Activation function for hidden layers (E.g., `"relu"`, `"sigmoid"`).
-* `activation_output`: Activation function for the output layer.
+* `activation`: Activation functions for individual layers (E.g., `"relu"`, `"sigmoid"`).
 * `loss_function`: Loss function for training (E.g., `"MSE"`, `"BCE"`)
 * `learn_rate`: Learning rate for gradient descent.
 * `lambda_parem`: Regularization strength to prevent overfitting.
@@ -59,13 +58,12 @@ nn = NeuralNetwork([4, 8, 6, 6, 2])
 Example with added parameters:
 ```python
 nn = NeuralNetwork(
-	layers=[4, 8, 6, 6, 2],
-	activation_hidden='leaky_relu',
-	activation_output='sigmoid', # for classification
-	loss_function="BCE", # for multilabel classification
-	learn_rate=0.08,
-	lambda_parem=0.003,
-	momentum=0.75
+    layers=[4, 12, 12, 3],
+    activation=["tanh", "tanh", "sigmoid"], # activation for individual layers 
+    loss_function="BCE", # for multilabel classification
+    learn_rate=0.08,
+    lambda_parem=0.003,
+    momentum=0.75
 )
 ```
 ### Training
@@ -106,8 +104,7 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[4, 12, 12, 3],
-    activation_hidden='leaky_relu',
-    activation_output='sigmoid',
+    activation=["tanh", "tanh", "sigmoid"],
     loss_function="BCE",
     learn_rate=0.08,
     lambda_parem=0.003,
@@ -116,34 +113,33 @@ nn = NeuralNetwork(
 ```
 ```
 Accuracy on 20,000 samples
-Accuracy on each output:    96.53%   93.27%   93.16%
+Accuracy on each output:    96.15%   93.52%   92.78%
                    Expected |                   Predicted | Input Data
-   1.0000   0.0000   1.0000 |    0.9984   0.0001   0.9179 |   3.366 -2.848  2.007 -4.548
-   0.0000   1.0000   0.0000 |    0.0000   0.9996   0.0000 |   2.148 -5.773 -4.391 -6.048
-   1.0000   0.0000   1.0000 |    1.0000   0.0617   0.6922 |   4.885  2.000  2.060 -1.791
-   0.0000   0.0000   1.0000 |    0.0000   0.0000   1.0000 |  -1.419 -5.664  6.003  2.735
-   0.0000   1.0000   0.0000 |    0.0000   0.5914   0.0014 |   4.802 -3.247 -2.441 -0.738
-   0.0000   0.0000   1.0000 |    0.0016   0.0578   0.9980 |  -1.842 -2.909  1.368  3.506
-   1.0000   1.0000   1.0000 |    1.0000   0.9975   0.8849 |  -4.672  4.406  0.315  3.947
-   1.0000   1.0000   0.0000 |    0.8399   0.9991   0.0001 |  -2.352 -2.247 -5.126 -5.468
-   0.0000   0.0000   1.0000 |    0.0000   0.0002   1.0000 |   0.543 -4.937  3.004  4.667
-   0.0000   1.0000   0.0000 |    0.4893   0.9983   0.0001 |  -2.157 -2.923 -4.347 -4.040
-   1.0000   0.0000   0.0000 |    0.9448   0.0151   0.0001 |   0.837  4.246 -3.149  5.326
-   0.0000   0.0000   1.0000 |    0.0000   0.0075   0.9998 |  -1.498 -4.266  1.923  4.073
-   0.0000   1.0000   0.0000 |    0.0009   0.9980   0.0001 |  -0.231 -4.627 -3.432  2.662
-   1.0000   0.0000   0.0000 |    0.9913   0.0468   0.0000 |   0.715  2.829 -3.229 -2.805
-   1.0000   0.0000   1.0000 |    1.0000   0.8350   0.9903 |   4.438  4.054  2.747 -3.378
-   1.0000   1.0000   1.0000 |    1.0000   0.9480   0.9939 |   3.899  5.023  5.022 -5.820
+   1.0000   1.0000   0.0000 |    0.9972   0.7317   0.0132 |  -1.328  2.723 -1.069 -2.377
+   1.0000   0.0000   0.0000 |    0.9421   0.0040   0.1248 |   5.753  4.139 -0.224  1.315
+   1.0000   1.0000   1.0000 |    0.9738   0.9990   0.8112 |  -3.634 -0.992 -4.692  4.433
+   1.0000   1.0000   1.0000 |    0.9865   0.9940   0.4115 |  -4.126  1.910 -4.334  4.576
+   0.0000   1.0000   0.0000 |    0.0994   0.9570   0.1016 |  -0.928 -3.851 -4.605  5.514
+   0.0000   0.0000   1.0000 |    0.0086   0.4190   0.9559 |  -2.347 -5.100  0.653  4.223
+   1.0000   1.0000   1.0000 |    0.5226   0.3747   0.9948 |  -0.260  0.773  1.272  1.559
+   0.0000   0.0000   1.0000 |    0.0046   0.0360   0.9815 |   2.842 -3.701  0.761  3.926
+   1.0000   0.0000   1.0000 |    0.9369   0.0052   0.5779 |   1.812 -1.078  5.590  1.029
+   0.0000   0.0000   1.0000 |    0.0074   0.7400   0.9563 |  -4.343 -5.304  0.991  3.811
+   1.0000   0.0000   1.0000 |    0.9981   0.1394   0.9961 |   4.879  3.402  4.317  4.496
+   1.0000   0.0000   1.0000 |    0.9968   0.5184   0.9965 |   1.177  3.738  1.606  2.631
+   0.0000   1.0000   0.0000 |    0.0088   0.9380   0.0429 |   0.347 -5.124 -5.869 -1.815
+   0.0000   0.0000   1.0000 |    0.0057   0.2229   0.6551 |   1.970 -5.232  0.151  1.269
+   1.0000   0.0000   0.0000 |    0.9937   0.0602   0.0091 |  -1.049  6.007 -5.412 -2.311
+   0.0000   0.0000   0.0000 |    0.0250   0.8283   0.0390 |   0.519 -1.991 -0.483 -0.456
 ```
 
 ### Multiclass Classification Performance
-**Multiclass classification** is where each input belongs to exactly one class. This model uses **Softmax** activation in the output layer and **categorial cross-entropy (CCE)** loss for training.
+Multiclass classification is where each input can belong to exactly one class. This model uses **Softmax** activation in the output layer and **categorial cross-entropy (CCE)** loss for training.
 ```python
 # Model configuration
 nn = NeuralNetwork(
     layers=[4, 12, 12, 3],
-    activation_hidden='leaky_relu',
-    activation_output='softmax',
+    activation=["tanh", "sigmoid", "softmax"],
     loss_function="CCE",
     learn_rate=0.08,
     lambda_parem=0.003,
@@ -152,25 +148,25 @@ nn = NeuralNetwork(
 ```
 ```
 Accuracy on 20,000 samples
-Accuracy on each output:    95.64%   93.92%   97.87%
-Overall categorization accuracy:    93.72%
+Accuracy on each output:    95.94%   94.12%   97.55%
+Overall categorization accuracy:    93.84%
                    Expected |                   Predicted | Input Data
-   0.0000   0.0000   1.0000 |    0.0001   0.0001   0.9998 |   0.341  3.343  0.553  1.010
-   0.0000   0.0000   1.0000 |    0.0000   0.0001   0.9999 |   2.182  4.255  1.848  1.188
-   0.0000   1.0000   0.0000 |    0.0055   0.9937   0.0007 |   3.344  2.721  4.642  3.031
-   0.0000   0.0000   1.0000 |    0.0003   0.2822   0.7175 |   1.445  2.451  3.130  1.556
-   0.0000   0.0000   1.0000 |    0.0000   0.0000   1.0000 |   0.135  4.795  0.339  0.685
-   0.0000   1.0000   0.0000 |    0.5241   0.4752   0.0008 |   2.695  2.700  3.229  3.915
-   0.0000   1.0000   0.0000 |    0.0036   0.9937   0.0027 |   1.413  2.182  4.281  3.208
-   0.0000   1.0000   0.0000 |    0.0011   0.9986   0.0004 |   3.879  1.266  4.472  2.196
-   0.0000   0.0000   1.0000 |    0.0000   0.0043   0.9957 |   1.337  4.233  4.815  0.856
-   0.0000   1.0000   0.0000 |    0.3101   0.6896   0.0003 |   2.992  2.367  3.448  3.808
-   1.0000   0.0000   0.0000 |    0.9980   0.0015   0.0005 |   2.356  2.394  0.381  4.857
-   0.0000   0.0000   1.0000 |    0.0000   0.0020   0.9980 |   1.852  4.118  4.989  0.246
-   0.0000   0.0000   1.0000 |    0.0001   0.0000   0.9999 |   2.511  4.188  0.962  1.071
-   0.0000   1.0000   0.0000 |    0.0000   0.9489   0.0511 |   0.955  3.031  5.394  2.472
-   1.0000   0.0000   0.0000 |    0.9960   0.0039   0.0001 |   3.260  1.211  0.350  3.475
-   1.0000   0.0000   0.0000 |    0.9844   0.0156   0.0000 |   4.627  1.746  1.827  3.627
+   0.0000   0.0000   1.0000 |    0.0066   0.6183   0.3751 |   2.789  3.700  5.069  1.737
+   0.0000   1.0000   0.0000 |    0.0659   0.9247   0.0094 |   2.822  2.058  4.628  4.064
+   1.0000   0.0000   0.0000 |    0.9629   0.0233   0.0138 |   2.274  4.073  2.531  4.119
+   0.0000   0.0000   1.0000 |    0.0015   0.1969   0.8016 |   1.253  2.538  4.919  0.747
+   0.0000   1.0000   0.0000 |    0.2551   0.7250   0.0199 |   1.680  2.566  3.363  3.827
+   0.0000   0.0000   1.0000 |    0.0077   0.0025   0.9899 |   2.320  5.637  0.214  1.235
+   0.0000   0.0000   1.0000 |    0.0059   0.4632   0.5309 |   2.108  2.419  3.743  1.205
+   1.0000   0.0000   0.0000 |    0.9828   0.0112   0.0060 |   2.754  2.529 -0.032  3.570
+   1.0000   0.0000   0.0000 |    0.9733   0.0128   0.0139 |   3.673  4.126  0.089  3.486
+   0.0000   1.0000   0.0000 |    0.6864   0.2989   0.0148 |   2.325  2.819  3.340  4.774
+   0.0000   0.0000   1.0000 |    0.0054   0.0026   0.9920 |   2.642  4.487 -0.067  0.022
+   0.0000   0.0000   1.0000 |    0.0010   0.0076   0.9913 |   0.467  5.183  3.625  1.056
+   0.0000   1.0000   0.0000 |    0.0289   0.7527   0.2185 |   2.250  2.394  3.285  1.774
+   0.0000   1.0000   0.0000 |    0.6773   0.3112   0.0115 |   2.763  1.684  3.134  4.645
+   1.0000   0.0000   0.0000 |    0.9810   0.0127   0.0063 |   2.795  3.552  1.143  4.592
+   1.0000   0.0000   0.0000 |    0.9850   0.0118   0.0032 |   4.042  1.021  0.226  4.215
 ```
 
 ### Regression Performance
@@ -180,9 +176,8 @@ Overall categorization accuracy:    93.72%
 ```python
 # Model configuration
 nn = NeuralNetwork(
-    layers=[4, 12, 12, 3],
-    activation_hidden="tanh",
-    activation_output="id",
+    layers=[4, 16, 16, 3],
+    activation=["tanh", "tanh", "id"],
     loss_function="MSE",
     learn_rate=0.08,
     lambda_parem=0.003,
@@ -191,22 +186,22 @@ nn = NeuralNetwork(
 ```
 ```
                    Expected |                   Predicted | Input Data
- -16.4260  10.8446   3.5806 |  -12.7717   7.0471   0.4925 |   2.456 -0.950 -0.884 -1.324
- -12.1671  -5.3751  -6.7291 |  -16.3188  -7.3254 -11.6916 |  -1.511 -1.477  1.965  0.364
-  13.4816 -18.2943 -11.1137 |    7.8558 -10.8403  -6.6613 |  -1.337  0.436 -1.930 -3.258
- -23.3492 -14.2575 -10.5762 |  -16.6960  -7.5671 -11.8593 |  -1.973 -2.586  1.930  0.756
-  13.8075   7.2677   6.6929 |   13.8506   6.4844   4.2223 |   1.773  1.655 -0.099  2.316
-   5.2817  -3.2575   3.4125 |    6.5779  -6.5257   2.4601 |   0.210  0.824 -1.281  2.394
-   1.5152   2.7160  -2.2921 |   -0.0808   4.8274  -1.9845 |   1.628 -1.980  1.732  2.267
- -19.5268 -10.2634 -14.3327 |  -16.5914  -7.2105 -12.5115 |  -1.445 -2.659  2.036 -0.415
-  13.1467  17.1063   3.0304 |    6.1894   7.5210   2.6596 |   2.062 -0.403  2.645  0.543
-  19.6225 -24.7282  -8.6363 |   15.4704 -21.8385  -7.6052 |  -2.055  0.671 -3.108 -0.103
-   4.1203   1.2206   6.8605 |    0.9498   1.7880   2.5967 |   0.657 -0.332 -0.609  2.940
-  -0.3894   4.6636 -13.6448 |   -5.4567   7.2505  -7.0076 |   2.617 -2.183  2.382 -0.287
-   1.8029   7.6694  10.9483 |    2.2082   7.0463  10.0545 |  -2.047  2.566  1.544  2.003
-  21.6373  16.9655  13.0360 |   19.1426  19.9064  12.5229 |   0.842  2.660  0.792  2.803
-   1.4599  -6.5495  -4.8901 |   -2.8113  -3.2333  -5.7527 |  -0.143  0.377 -1.738 -1.841
-  22.0828  29.9685  14.6448 |   19.1210  19.9341  12.4522 |   1.821  2.094  2.873 -0.311
+   4.6904   0.8891   7.6132 |   -0.1779  -1.5684   6.9688 |  -2.250  1.935  1.043  2.589
+ -11.4735  -7.2278 -13.3271 |   -8.8619  -5.5690  -5.8420 |  -2.408 -1.541  0.796 -2.969
+  -5.5815   4.3186 -16.5452 |    0.7439   3.9730  -9.1968 |   2.544 -2.878  3.213 -1.278
+ -11.8967  -3.9798  -5.0469 |   -5.2844  -3.3803  -0.5824 |  -1.381 -0.453  1.768  0.432
+   7.0835  12.4438   3.0195 |   14.4300  12.1018   4.7629 |   3.025 -0.542  1.412  1.590
+  -1.2014   7.3099  -7.1163 |    2.8472   5.9736  -8.2236 |   1.496 -1.501  3.127 -1.328
+   7.1158 -11.3054  -6.1509 |   11.1973 -15.8370  -6.6673 |  -2.066  0.729 -0.794 -1.859
+   1.8783  -8.4357  -4.7597 |   -3.6216  -4.8208  -1.6565 |  -1.841 -0.079  0.263 -1.802
+  -4.2208  -1.9091  10.0115 |    0.3654 -11.0578   6.5732 |  -0.831 -1.543 -2.966  0.103
+ -16.8684  12.0106  -3.2845 |  -11.4201   9.3491   0.6198 |   3.023 -1.097 -0.206 -3.156
+   4.6376  14.4331   2.1979 |    6.5491   9.6920   1.2840 |   0.730  1.724  2.314 -2.231
+  -3.3267  -4.2526   4.3142 |    1.8405 -11.7381   4.4290 |  -1.571 -1.305 -2.384 -0.418
+   8.4135  -6.0481   3.7651 |    8.8429  -6.6180   5.0446 |  -1.532  1.573 -0.013  2.563
+  -0.0767  10.6227  -2.6326 |    0.5036  11.1873   0.5797 |   1.291 -0.287  2.006 -1.665
+ -17.3217   8.0559   8.3748 |   -9.7652   3.4514   6.5633 |   1.151 -2.648 -1.582  0.012
+   9.6006 -19.1509 -10.0426 |   14.1861 -21.7270  -8.8497 |  -0.713  1.188 -3.205 -1.283
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 
@@ -311,6 +306,3 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 - TensorFlow: [A Neural Network Playground](https://playground.tensorflow.org/)
 - StatQuest with Josh Starmer: [The Softmax Derivative](https://youtu.be/M59JElEPgIg?si=S_ERldGE5K5Jib0E)
 - [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
-
-## Future Improvements
-**Layer-Specific Activation Customization**: Allowing each layer to have its own activation function would provide much greater flexibility, especially for tasks like regression.

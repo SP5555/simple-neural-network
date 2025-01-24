@@ -5,8 +5,7 @@ from utils.exceptions import InputValidationError
 class NeuralNetwork:
     def __init__(self,
                  layers: list,
-                 activation_hidden: str = "leaky_relu",
-                 activation_output: str = "leaky_relu",
+                 activation: list[str] = [],
                  loss_function: str = "MSE",
                  learn_rate: float = 0.01,
                  lambda_parem: float = 0.0,
@@ -59,17 +58,24 @@ class NeuralNetwork:
         # ReLU for regression
         # Sigmoid, Tanh for multilabel classification
         # Softmax for multiclass classification
-        activation_hidden = activation_hidden.strip().lower()
-        activation_output = activation_output.strip().lower()
+        activation = [act.strip().lower() for act in activation] if activation else []
 
-        if activation_hidden in ("softmax",):
-            raise InputValidationError(f"{activation_hidden} activation can't be used in hidden layers.")
-        
-        self._activation = self._get_activation_func(activation_hidden)
-        self._activation_derivative = self._get_activation_derivative_func(activation_hidden)
+        if activation == []:
+            # Default configuration
+            self._activation_func_names = ["leaky_relu"] * (self._layer_count - 2) + ["sigmoid"]
+        else:
+            if len(activation) != self._layer_count - 1:
+                raise InputValidationError(f"Expected {self._layer_count - 1} activation functions, but got {len(activation)}.")
 
-        self._activation_last_layer = self._get_activation_func(activation_output)
-        self._activation_last_layer_derivative = self._get_activation_derivative_func(activation_output)
+            # Assign
+            self._activation_func_names = []
+            for i, act in enumerate(activation):
+                if i < self._layer_count - 2 and act in ("softmax",):
+                    raise InputValidationError(f"{act} activation can't be used in hidden layers.")
+                self._activation_func_names.append(act)
+
+        self._activation = [self._get_activation_func(i) for i in self._activation_func_names]
+        self._activation_derivative = [self._get_activation_derivative_func(i) for i in self._activation_func_names]
 
         # Loss Functions
         # MSE for regression
@@ -233,11 +239,8 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i]
             # A = activation(z)
-            if i < self._layer_count - 2:
-                a: np.ndarray = self._activation(z)
-            else:
-                a: np.ndarray = self._activation_last_layer(z)
-        
+            a: np.ndarray = self._activation[i](z)
+
         return a.flatten().tolist()
 
     # main feed forward function (multiple)
@@ -256,15 +259,12 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
             # A = activation(z)
-            if i < self._layer_count - 2:
-                a: np.ndarray = self._activation(z)
-            else:
-                a: np.ndarray = self._activation_last_layer(z)
-        
+            a: np.ndarray = self._activation[i](z)
+
         if raw_ndarray_output:
             return a
         return a.T.tolist() # vanilla list, not np.ndarray
-    
+
     def train(self,
               input_list: list,
               output_list: list,
@@ -313,14 +313,11 @@ class NeuralNetwork:
                 # z = W*A + b
                 z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
                 # A = activation(z)
-                if i < self._layer_count - 2:
-                    a: np.ndarray = self._activation(z)
-                else:
-                    a: np.ndarray = self._activation_last_layer(z)
+                a: np.ndarray = self._activation[i](z)
                 # Record values for training
                 z_layers.append(z)
                 a_layers.append(a)
-  
+
             # a holds columns of output here
             # y is desired output
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
@@ -328,7 +325,7 @@ class NeuralNetwork:
 
             # important component for LAST LAYER backpropagation
             # term_2_3 = da(n)/dz(n) * dL/da(n)
-            if self._activation_last_layer == self._softmax:
+            if self._activation[-1] == self._softmax:
 
                 da_wrt_dz_reshaped = a_gradient_ith_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
                 dL_wrt_da_reshaped = self._softmax_derivative(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
@@ -336,7 +333,7 @@ class NeuralNetwork:
                 t_2_3_3D = np.matmul(dL_wrt_da_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
-                term_2_3: np.ndarray = self._activation_last_layer_derivative(z_layers[-1]) * a_gradient_ith_layer
+                term_2_3: np.ndarray = self._activation_derivative[-1](z_layers[-1]) * a_gradient_ith_layer
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):
@@ -378,7 +375,7 @@ class NeuralNetwork:
                 # important component for HIDDEN LAYER backpropagations
                 # update for next layer
                 # term_2_3 = da(n)/dz(n) * dL/da(n)
-                term_2_3: np.ndarray = self._activation_derivative(z_layers[i-1]) * a_gradient_ith_layer
+                term_2_3: np.ndarray = self._activation_derivative[i-1](z_layers[i-1]) * a_gradient_ith_layer
             
             p: float = (100.0 * _ / epoch)
             print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
@@ -386,7 +383,7 @@ class NeuralNetwork:
         print("===== ===== Training Completed ===== =====               ")
     
     def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
-        if self._activation_last_layer not in (self._sigmoid, self._tanh, self._softmax):
+        if self._activation[-1] not in (self._sigmoid, self._tanh, self._softmax):
             print("The Accuracy Classification function only works for models configured for classification tasks.")
             return
         if len(test_input) == 0 or len(test_output) == 0:
@@ -417,7 +414,7 @@ class NeuralNetwork:
             # forward pass
             predictions = self.forward_batch(a, raw_ndarray_output=True).T
 
-            if self._activation_last_layer in (self._softmax,):
+            if self._activation[-1] in (self._softmax,):
                 actual_class = np.argmax(o, axis=1)
                 predicted_class = np.argmax(predictions, axis=1)
                 correct_predictions = actual_class == predicted_class
@@ -432,7 +429,7 @@ class NeuralNetwork:
         accuracy = correct_predictions_count / test_size * 100
         print(f"Accuracy on {test_size:,} samples")
         print("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
-        if self._activation_last_layer in (self._softmax,):
+        if self._activation[-1] in (self._softmax,):
             cat_accuracy = correctly_categorized / test_size * 100
             print(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
     
