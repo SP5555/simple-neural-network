@@ -21,7 +21,7 @@ This is the very simple, yet *powerful* example of a fully functional neural net
 
 ## Features
 - **Fully connected layers**: Customizable layer sizes.
-- **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Linear Softmax.
+- **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Linear, Softmax.
 - **Loss functions**: Mean-Squared Error (MSE) for regression, Binary Cross-Entropy (BCE) for multilabel classification, Categorial Cross-Entropy (CCE or MCE) for multiclass classification.
 - **Training Algorithm**: Gradient descent.
 
