@@ -6,7 +6,7 @@ def main():
         layers=[4, 12, 12, 3],
         activation=["tanh", "sigmoid", "softmax"],
         loss_function="CCE",
-        learn_rate=0.08,
+        learn_rate=0.02,
         lambda_parem=0.003,
         momentum=0.75
     )
