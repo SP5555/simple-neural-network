@@ -134,7 +134,7 @@ Accuracy on each output:    96.15%   93.52%   92.78%
 ```
 
 ### Multiclass Classification Performance
-Multiclass classification is where each input can belong to exactly one class. This model uses **Softmax** activation in the output layer and **categorial cross-entropy (CCE)** loss for training.
+**Multiclass classification** is where each input belongs to exactly one class. This model uses **Softmax** activation in the output layer and **categorial cross-entropy (CCE)** loss for training.
 ```python
 # Model configuration
 nn = NeuralNetwork(
