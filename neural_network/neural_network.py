@@ -123,7 +123,14 @@ class NeuralNetwork:
         
     def _leaky_relu_derivative(self, np_array: np.ndarray) -> np.ndarray:
         return np.where(np_array > 0, 1, 0.1)
-    
+
+    # ===== Linear Activation =====
+    def _id(self, np_array: np.ndarray) -> np.ndarray:
+        return np_array
+
+    def _id_derivative(self, np_array: np.ndarray) -> np.ndarray:
+        return np.ones_like(np_array)
+
     # ===== Softmax =====
     def _softmax(self, np_array: np.ndarray) -> np.ndarray:
         exp = np.exp(np_array - np.max(np_array, axis=0, keepdims=True))
@@ -165,6 +172,7 @@ class NeuralNetwork:
             'leaky_relu': self._leaky_relu,
             'tanh': self._tanh,
             'sigmoid': self._sigmoid,
+            'id': self._id,
             'softmax': self._softmax
         }
         name = name.strip().lower()
@@ -177,6 +185,7 @@ class NeuralNetwork:
             'leaky_relu': self._leaky_relu_derivative,
             'tanh': self._tanh_derivative,
             'sigmoid': self._sigmoid_derivative,
+            'id': self._id_derivative,
             'softmax': self._softmax_derivative
         }
         name = name.strip().lower()
@@ -378,7 +387,8 @@ class NeuralNetwork:
     
     def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
         if self._activation_last_layer not in (self._sigmoid, self._tanh, self._softmax):
-           raise InputValidationError("Model is not set up for classification.")
+            print("The Accuracy Classification function only works for models configured for classification tasks.")
+            return
         if len(test_input) == 0 or len(test_output) == 0:
             raise InputValidationError("Datasets can't be empty.")
         if len(test_input) != len(test_output):
@@ -427,11 +437,11 @@ class NeuralNetwork:
             print(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
     
     def compare_predictions(self, input: list, output: list) -> None:
-        format_width = len(output[0]) * 8
+        format_width = len(output[0]) * 9
         print(f"{'Expected':>{format_width}} | {'Predicted':>{format_width}} | Input Data")
 
         predicted = self.forward_batch(input)
         for i in range(len(output)):
-            print(''.join(f'{value:>8.4f}' for value in output[i]) + ' | ' +
-                  ''.join(f'{value:>8.4f}' for value in predicted[i]) + ' | ' +
+            print(''.join(f'{value:>9.4f}' for value in output[i]) + ' | ' +
+                  ''.join(f'{value:>9.4f}' for value in predicted[i]) + ' | ' +
                   ''.join(f'{value:>7.3f}' for value in input[i]))

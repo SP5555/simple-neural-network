@@ -7,12 +7,37 @@ class DataGenerator:
 
     def generate(self, n: int, name: str):
         generators = {
+            'regression': self._generate_regression,
             'multilabel': self._generate_multilabel,
             'multiclass': self._generate_multiclass
         }
         name = name.strip().lower()
         if name in generators: return generators[name](n)
         raise InputValidationError(f"Unsupported generate function: {name}")
+    
+    def _generate_regression(self, n: int):
+        # Make your own Data
+        # Shape: (1, n)
+        i1 = np.random.uniform(-3, 3, size=n)
+        i2 = np.random.uniform(-3, 3, size=n)
+        i3 = np.random.uniform(-3, 3, size=n)
+        i4 = np.random.uniform(-3, 3, size=n)
+
+        # Shape: (1, n)
+        o1 = (i1*i4 + 5*i2 + 2*i1*i3 + i4)
+        o2 = (4*i1 + 2*i2*i3 + 0.4*i4*i2 + 3*i3)
+        o3 = (i1 + 0.3*i2 + 2*i3*i2 + 2*i4)
+
+        # Shape: (n, count of input features)
+        input_list = np.column_stack((i1, i2, i3, i4))
+
+        # Shape: (n, count of output features)
+        output_list = np.column_stack((o1, o2, o3))
+
+        # input noise
+        input_list = self._add_noise(input_list, noise=0.5)
+
+        return input_list.tolist(), output_list.tolist()
 
     def _generate_multilabel(self, n: int):
         # Make your own Data
