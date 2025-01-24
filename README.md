@@ -17,8 +17,7 @@ This is the very simple, yet *powerful* example of a fully functional neural net
 - [Synthetic Data Generation](#synthetic-data-generation)
 - [Experiment!](#experiment)
 - [GPU Acceleration?](#gpu-acceleration)
-- [Resources *& Inspirations*](#resources--inspirations)
-
+- [Resources *& Inspirations*](#resources--inspirations-)
 
 ## Features
 - **Fully connected layers**: Customizable layer sizes.
