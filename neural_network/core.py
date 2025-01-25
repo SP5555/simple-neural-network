@@ -1,8 +1,12 @@
 import numpy as np
-from utils.exceptions import InputValidationError
+from .activations import Activations
+from .utils import Utils
+from .metrics import Metrics
+from .exceptions import InputValidationError
 
-# Less than 500 neurons in each layer suggested, or be evil
 class NeuralNetwork:
+    _LL_exclusive = (Activations.softmax,)
+    
     def __init__(self,
                  layers: list,
                  activation: list[str] = [],
@@ -10,6 +14,9 @@ class NeuralNetwork:
                  learn_rate: float = 0.01,
                  lambda_parem: float = 0.0,
                  momentum: float = 0.8) -> None:
+        
+        self.utils = Utils(self)
+        self.metrics = Metrics(self)
         
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
@@ -62,26 +69,24 @@ class NeuralNetwork:
 
         if activation == []:
             # Default configuration
-            self._activation_func_names = ["leaky_relu"] * (self._layer_count - 2) + ["sigmoid"]
+            activation = ["leaky_relu"] * (self._layer_count - 2) + ["sigmoid"]
         else:
             if len(activation) != self._layer_count - 1:
                 raise InputValidationError(f"Expected {self._layer_count - 1} activation functions, but got {len(activation)}.")
 
-            # Assign
-            self._activation_func_names = []
+            # Verifier
             for i, act in enumerate(activation):
-                if i < self._layer_count - 2 and act in ("softmax",):
+                if i < self._layer_count - 2 and self.utils.get_activation_func(act) in self._LL_exclusive:
                     raise InputValidationError(f"{act} activation can't be used in hidden layers.")
-                self._activation_func_names.append(act)
 
-        self._activation = [self._get_activation_func(i) for i in self._activation_func_names]
-        self._activation_derivative = [self._get_activation_derivative_func(i) for i in self._activation_func_names]
+        self._activation = [self.utils.get_activation_func(i) for i in activation]
+        self._activation_derivative = [self.utils.get_activation_derivative_func(i) for i in activation]
 
         # Loss Functions
         # MSE for regression
         # BCE for multilabel classification
         # MCE/CCE for multiclass classification
-        self._loss_derivative = self._get_loss_derivative_func(loss_function)
+        self._loss_derivative = self.utils.get_loss_derivative_func(loss_function)
 
         self.weights: list = []
         self.biases: list = []
@@ -94,138 +99,9 @@ class NeuralNetwork:
         self.velocity_b = [np.zeros_like(b) for b in self.biases]
 
         print(f"Neural network with {layers} layers initialized.")
-        print(f"Parameter Count: {self._get_parameter_count():,}")
-    
-    # ACTIVATION FUNCTIONS
-    # ===== Sigmoid =====
-    def _sigmoid(self, np_array: np.ndarray) -> np.ndarray:
-        # s(x) = (tanh(x/2) + 1) / 2
-        return (np.tanh(np_array / 2) + 1) / 2
-    
-    def _sigmoid_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        # s'(x) = s(x) * (1 - s(x))
-        s: np.ndarray = (np.tanh(np_array / 2) + 1) / 2
-        return s*(1-s)
-    
-    # ===== Tanh =====
-    def _tanh(self, np_array: np.ndarray) -> np.ndarray:
-        return np.tanh(np_array)
+        print(f"Parameter Count: {self.utils.get_parameter_count():,}")
 
-    def _tanh_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        # tanh'(x) = 1 - tanh(x)^2
-        t = np.tanh(np_array)
-        return 1 - t*t
-
-    # ===== ReLU =====
-    def _relu(self, np_array: np.ndarray) -> np.ndarray:
-        return np.maximum(0, np_array)
-        
-    def _relu_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        return np.where(np_array > 0, 1, 0)
-
-    # ===== Leaky ReLU =====
-    def _leaky_relu(self, np_array: np.ndarray) -> np.ndarray:
-        return np.where(np_array > 0, np_array, 0.1 * np_array)
-        
-    def _leaky_relu_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        return np.where(np_array > 0, 1, 0.1)
-
-    # ===== Linear Activation =====
-    def _id(self, np_array: np.ndarray) -> np.ndarray:
-        return np_array
-
-    def _id_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        return np.ones_like(np_array)
-
-    # ===== Softmax =====
-    def _softmax(self, np_array: np.ndarray) -> np.ndarray:
-        exp = np.exp(np_array - np.max(np_array, axis=0, keepdims=True))
-        return exp / np.sum(exp, axis=0, keepdims=True)
-
-    def _softmax_derivative(self, np_array: np.ndarray) -> np.ndarray:
-        dim = np_array.shape[0]
-        softmax = self._softmax(np_array) # Shape: (dim, batch_size)
-
-        softmax_expanded = softmax.T[:, :, None]  # Shape: (batch_size, dim, 1)
-
-        # Shape: (batch_size, dim, dim)
-        # matmul perform matrix multiplication on the last two dimensions here
-        # each sample "slice" on 0-th axis is: I * M_softmax(dim, 1) - np.dot(M_softmax, M_softmax.T)
-        jacobians = np.eye(dim)[None, :, :] * softmax_expanded - np.matmul(softmax_expanded, softmax_expanded.transpose(0, 2, 1))
-
-        return jacobians # Shape: (batch_size, dim, dim)
-
-    # LOSS FUNCTIONS
-    # ===== Mean Squared Error =====
-    def _MSE_gradient(self, a: np.ndarray, y: np.ndarray) -> np.ndarray:
-        return 2 * (a - y)
-    
-    # ===== Binary Cross Entropy =====
-    def _BCE_gradient(self, a: np.ndarray, y:np.ndarray) -> np.ndarray:
-        bound = 1e-12
-        a = np.clip(a, bound, 1-bound)
-        return -(y/a) + ((1-y) / (1-a))
-    
-    # ===== Multiclass/Categorial Cross Entropy =====
-    def _MCE_gradient(self, a: np.ndarray, y:np.ndarray) -> np.ndarray:
-        bound = 1e-12
-        a = np.clip(a, bound, 1-bound)
-        return -(y/a)
-
-    def _get_activation_func(self, name: str):
-        actv_funcs = {
-            'relu': self._relu,
-            'leaky_relu': self._leaky_relu,
-            'tanh': self._tanh,
-            'sigmoid': self._sigmoid,
-            'id': self._id,
-            'softmax': self._softmax
-        }
-        name = name.strip().lower()
-        if name in actv_funcs: return actv_funcs[name]
-        raise InputValidationError(f"Unsupported activation function: {name}")
-
-    def _get_activation_derivative_func(self, name: str):
-        actv_deriv_funcs = {
-            'relu': self._relu_derivative,
-            'leaky_relu': self._leaky_relu_derivative,
-            'tanh': self._tanh_derivative,
-            'sigmoid': self._sigmoid_derivative,
-            'id': self._id_derivative,
-            'softmax': self._softmax_derivative
-        }
-        name = name.strip().lower()
-        if name in actv_deriv_funcs: return actv_deriv_funcs[name]
-        raise InputValidationError(f"Unsupported activation function: {name}")
-
-    def _get_loss_derivative_func(self, name: str):
-        loss_funcs = {
-            'mse': self._MSE_gradient,
-            'bce': self._BCE_gradient,
-            'mce': self._MCE_gradient,
-            'cce': self._MCE_gradient # same as mce
-        }
-        name = name.strip().lower()
-        if name in loss_funcs: return loss_funcs[name]
-        raise InputValidationError(f"Unsupported loss function: {name}")
-
-    def _get_parameter_count(self) -> int:
-        c: int = 0
-        for i in range(self._layer_count - 1):
-            # c += self.layers[i + 1] * self.layers[i] # Weights
-            # c += self.layers[i + 1] # Biases
-            c += self.layers[i + 1] * (self.layers[i] + 1)
-        return c
-    
-    def inspect_weights_and_biases(self) -> None:
-        np.set_printoptions(precision=4)
-        for i in range(self._layer_count - 1):
-            print(f'w L{i+1} -> L{i+2}')
-            print(self.weights[i])
-            print(f'b L{i+1} -> L{i+2}')
-            print(self.biases[i])
-    
-    # main feed forward function (single)
+         # main feed forward function (single)
     def forward(self, input: list) -> list:
         if len(input) != self.layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
@@ -325,10 +201,10 @@ class NeuralNetwork:
 
             # important component for LAST LAYER backpropagation
             # term_2_3 = da(n)/dz(n) * dL/da(n)
-            if self._activation[-1] == self._softmax:
+            if self._activation[-1] == Activations.softmax:
 
                 da_wrt_dz_reshaped = a_gradient_ith_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_da_reshaped = self._softmax_derivative(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
+                dL_wrt_da_reshaped = Activations.softmax_derivative(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
                 
                 t_2_3_3D = np.matmul(dL_wrt_da_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
@@ -381,64 +257,11 @@ class NeuralNetwork:
             print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
         
         print("===== ===== Training Completed ===== =====               ")
-    
-    def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
-        if self._activation[-1] not in (self._sigmoid, self._tanh, self._softmax):
-            print("The Accuracy Classification function only works for models configured for classification tasks.")
-            return
-        if len(test_input) == 0 or len(test_output) == 0:
-            raise InputValidationError("Datasets can't be empty.")
-        if len(test_input) != len(test_output):
-            raise InputValidationError("Input and Output data set sizes must be equal.")
-        if len(test_input[0]) != self.layers[0]:
-            raise InputValidationError("Input array size does not match the neural network.")
-        
-        _check_batch_size = 1024
-        # threshold defines how close the prediction must be to expected to be considered correct
-        # must be 0.0 < threshold <= 0.5
-        _threshold = 0.5
-        
-        correct_predictions_count = 0
 
-        test_size = len(test_input)
-        index_start = 0
-        correctly_categorized = 0
-        while index_start < test_size:
-            index_end = index_start + _check_batch_size
-            if index_end > test_size:
-                index_end = test_size
-
-            a: np.ndarray = np.array(test_input[index_start: index_end])
-            o: np.ndarray = np.array(test_output[index_start: index_end])
-
-            # forward pass
-            predictions = self.forward_batch(a, raw_ndarray_output=True).T
-
-            if self._activation[-1] in (self._softmax,):
-                actual_class = np.argmax(o, axis=1)
-                predicted_class = np.argmax(predictions, axis=1)
-                correct_predictions = actual_class == predicted_class
-                correctly_categorized += np.sum(correct_predictions, axis=0)
-
-            # 1 if checks, 0 if not.
-            correct_predictions = np.abs(predictions - o) <= _threshold
-            correct_predictions_count += np.sum(correct_predictions, axis=0)
-
-            index_start += _check_batch_size
-
-        accuracy = correct_predictions_count / test_size * 100
-        print(f"Accuracy on {test_size:,} samples")
-        print("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
-        if self._activation[-1] in (self._softmax,):
-            cat_accuracy = correctly_categorized / test_size * 100
-            print(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
-    
-    def compare_predictions(self, input: list, output: list) -> None:
-        format_width = len(output[0]) * 9
-        print(f"{'Expected':>{format_width}} | {'Predicted':>{format_width}} | Input Data")
-
-        predicted = self.forward_batch(input)
-        for i in range(len(output)):
-            print(''.join(f'{value:>9.4f}' for value in output[i]) + ' | ' +
-                  ''.join(f'{value:>9.4f}' for value in predicted[i]) + ' | ' +
-                  ''.join(f'{value:>7.3f}' for value in input[i]))
+    def _get_parameter_count(self) -> int:
+        c: int = 0
+        for i in range(self._layer_count - 1):
+            # c += self.layers[i + 1] * self.layers[i] # Weights
+            # c += self.layers[i + 1] # Biases
+            c += self.layers[i + 1] * (self.layers[i] + 1)
+        return c

@@ -1,5 +1,5 @@
 import numpy as np
-from utils.exceptions import InputValidationError
+from .exceptions import InputValidationError
 
 class DataGenerator:
     def __init__(self):

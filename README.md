@@ -81,7 +81,7 @@ View the current weights and biases of the network:
 ```python
 nn.inspect_weights_and_biases()
 ```
-Evaluate the accuracy of the network for binary classification:
+Evaluate the accuracy of the network for classification tasks:
 ```python
 nn.check_accuracy_classification(
 	test_input=input_test_list,
@@ -293,7 +293,7 @@ def _add_noise(self, data: np.ndarray, noise=0.5):
 ## Experiment!
 Normally, bounded functions like **Sigmoid**, **Tanh**, or **Softmax** activations aren't ideal for regression problems, and unbounded functions like **Leaky ReLU** or **Linear** activations aren't meant for classification.
 
-*But hey, curious about what would happen if you try them anyway? Time to have some fun and experiment! Feel free to break this network with some wild experiments!*
+*But hey, ever wonder what happens if you try them anyway? Time to have some fun and experiment! Feel free to break this network!*
 
 ## GPU Acceleration?
 This neural network implementation is built using pure **NumPy** utilities, which allows for easy conversion to **CuPy** for GPU acceleration without changing the code structure. By simply replacing **NumPy** with **CuPy**, computations can be offloaded to a CUDA-capable GPU, for faster training for large network and datasets.

@@ -1,3 +1,3 @@
-from .neural_network import NeuralNetwork
+from .core import NeuralNetwork
 
-__all__ = ["neural_network"]
+__all__ = ["NeuralNetwork"]

@@ -24,9 +24,9 @@ def main():
              batch_size=64)
     # nn.inspect_weights_and_biases()
 
-    nn.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
+    nn.metrics.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
 
-    nn.compare_predictions(input=showcase_i, output=showcase_o)
+    nn.metrics.compare_predictions(input=showcase_i, output=showcase_o)
 
 if __name__ == "__main__":
     main()
