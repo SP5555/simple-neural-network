@@ -79,18 +79,18 @@ nn.train(
 ### Utilities
 View the current weights and biases of the network:
 ```python
-nn.inspect_weights_and_biases()
+nn.utils.inspect_weights_and_biases()
 ```
 Evaluate the accuracy of the network for classification tasks:
 ```python
-nn.check_accuracy_classification(
+nn.metrics.check_accuracy_classification(
 	test_input=input_test_list,
 	test_output=output_test_list
 )
 ```
 Compare the predicted results with the desired results:
 ```python
-nn.compare_predictions(input=data_i, output=data_o)
+nn.metrics.compare_predictions(input=data_i, output=data_o)
 ```
 
 ## Performance & Testing

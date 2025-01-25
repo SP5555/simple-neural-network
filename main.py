@@ -22,7 +22,7 @@ def main():
              output_list=output_train_list,
              epoch=2000,
              batch_size=64)
-    # nn.inspect_weights_and_biases()
+    # nn.utils.inspect_weights_and_biases()
 
     nn.metrics.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
 
