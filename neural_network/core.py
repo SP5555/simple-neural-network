@@ -256,7 +256,7 @@ class NeuralNetwork:
             p: float = (100.0 * _ / epoch)
             print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
         
-        print("===== ===== Training Completed ===== =====               ")
+        print("===== ===== Training Completed ===== =====")
 
     def _get_parameter_count(self) -> int:
         c: int = 0
