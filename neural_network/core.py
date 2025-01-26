@@ -255,10 +255,10 @@ class NeuralNetwork:
                 # term_2_3 = da(n)/dz(n) * dL/da(n)
                 term_2_3: np.ndarray = self._activation_derivative[i-1](z_layers[i-1]) * a_gradient_ith_layer
             
-            p: float = (100.0 * _ / epoch)
-            print(f"Progress: {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
+            p: float = (100.0 * (_+1) / epoch)
+            print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
         
-        print("===== ===== Training Completed ===== =====")
+        print("\n===== ===== Training Completed ===== =====")
 
     def _get_parameter_count(self) -> int:
         c: int = 0
