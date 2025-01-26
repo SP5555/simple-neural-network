@@ -20,6 +20,8 @@ class NeuralNetwork:
         
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
+        if len(layers) == 1:
+            raise InputValidationError("Must have at least 2 layers (Input and Output).")
         if 0 in layers: # if layer with 0 neurons exists
             raise InputValidationError("A layer can't have 0 neurons.")
         if not all(isinstance(x, int) for x in layers): # if not all entries are integers
