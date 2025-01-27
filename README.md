@@ -6,7 +6,7 @@ This project is an intermediate level, fully functional neural network implement
 
 White it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of Linear Algebra and Calculus can learn to predict.
 
-First off, a huge shoutout to the awesome **NumPy** library, which is pretty much responsible for 99% of this neural network’s speed.
+First off, a huge shoutout to the awesome **NumPy** library, which is pretty much responsible for 99% of this neural network's speed.
 
 - [Features](#features)
 - [Installation Instructions](#installation-instructions)
@@ -213,7 +213,7 @@ As shown, the neural network performs exceptionally well on the synthetic data. 
 ## Synthetic Data Generation
 Random data generation is used to simulate a variety of real-world scenarios where the relationship between input features and output targets is not immediately clear. By introducing randomization, we can create a diverse range of datasets that help test the network's ability to generalize and perform well across different situations.
 
-This synthetic data helps in evaluating the model’s performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
+This synthetic data helps in evaluating the model's performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
 
 For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
 ```python
