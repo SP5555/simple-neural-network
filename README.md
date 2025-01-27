@@ -296,9 +296,11 @@ def _add_noise(self, data: np.ndarray, noise=0.5):
 ```
 
 ## Experiment!
-Normally, bounded functions like **Sigmoid**, **Tanh**, or **Softmax** activations aren't ideal for regression problems, and unbounded functions like **Leaky ReLU** or **Linear** activations aren't meant for classification.
+Alright, there are *tons* of ways to mess this thing up. A neural network is not something that is strictly tailored to do one specific task, nor it is a random jumble of math that do awesome possum magic and surprisingly spits out excellent results. It all comes down to how *you* configure it. 
 
-*But hey, ever wonder what happens if you try them anyway? Time to have some fun and experiment! Feel free to break this network!*
+Feel free to mess around with the hyperparameters, or change things up entirely. You might discover some cool insights or get the network to do things it wasn't originally designed for. *What is it originally designed for anyway?*
+
+*But hey, no one gets hurt if this thing breaks.*
 
 ## GPU Acceleration?
 This neural network implementation is built using pure **NumPy** utilities, which allows for easy conversion to **CuPy** for GPU acceleration without changing the code structure. By simply replacing **NumPy** with **CuPy**, computations can be offloaded to a CUDA-capable GPU, for faster training for large network and datasets.
