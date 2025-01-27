@@ -1,5 +1,5 @@
 import numpy as np
-from .activations import Activations
+from .activations import Activations, ActivationWrapper
 from .losses import Losses
 from .exceptions import InputValidationError
 
@@ -30,13 +30,14 @@ class Utils:
     @staticmethod
     def _get_act_func(name: str):
         actv_funcs = {
-            'relu': Activations._relu,
-            'leaky_relu': Activations._leaky_relu,
-            'tanh': Activations._tanh,
-            'sigmoid': Activations._sigmoid,
-            'swish': Activations._swish,
-            'id': Activations._id, 'linear': Activations._id,
-            'softmax': Activations._softmax
+            'relu': ActivationWrapper(lambda z, b=None: Activations._relu(z), "relu"),
+            'leaky_relu': ActivationWrapper(lambda z, b=None: Activations._leaky_relu(z), "leaky_relu"),
+            'tanh': ActivationWrapper(lambda z, b=None: Activations._tanh(z), "tanh"),
+            'sigmoid': ActivationWrapper(lambda z, b=None: Activations._sigmoid(z), "sigmoid"),
+            'swish': ActivationWrapper(lambda z, b=None: Activations._swish(z), "swish"),
+            'id': ActivationWrapper(lambda z, b=None: Activations._id(z), "id"),
+            'linear': ActivationWrapper(lambda z, b=None: Activations._id(z), "linear"),
+            'softmax': ActivationWrapper(lambda z, b=None: Activations._softmax(z), "softmax"),
         }
         name = name.strip().lower()
         if name in actv_funcs: return actv_funcs[name]
@@ -45,13 +46,14 @@ class Utils:
     @staticmethod
     def _get_act_deriv_func(name: str):
         actv_deriv_funcs = {
-            'relu': Activations._relu_deriv,
-            'leaky_relu': Activations._leaky_relu_deriv,
-            'tanh': Activations._tanh_deriv,
-            'sigmoid': Activations._sigmoid_deriv,
-            'swish': Activations._swish_deriv,
-            'id': Activations._id_deriv, 'linear': Activations._id_deriv,
-            'softmax': Activations._softmax_deriv
+            'relu': ActivationWrapper(lambda z, b=None: Activations._relu_deriv(z), "relu"),
+            'leaky_relu': ActivationWrapper(lambda z, b=None: Activations._leaky_relu_deriv(z), "leaky_relu"),
+            'tanh': ActivationWrapper(lambda z, b=None: Activations._tanh_deriv(z), "tanh"),
+            'sigmoid': ActivationWrapper(lambda z, b=None: Activations._sigmoid_deriv(z), "sigmoid"),
+            'swish': ActivationWrapper(lambda z, b=None: Activations._swish_deriv(z), "swish"),
+            'id': ActivationWrapper(lambda z, b=None: Activations._id_deriv(z), "id"),
+            'linear': ActivationWrapper(lambda z, b=None: Activations._id_deriv(z), "linear"),
+            'softmax': ActivationWrapper(lambda z, b=None: Activations._softmax_deriv(z), "softmax"),
         }
         name = name.strip().lower()
         if name in actv_deriv_funcs: return actv_deriv_funcs[name]

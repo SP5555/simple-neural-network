@@ -1,7 +1,19 @@
 import numpy as np
 
+class ActivationWrapper:
+    def __init__(self, func: callable, name: str) -> None:
+        self.func = func
+        self.name = name
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
 # ACTIVATION FUNCTIONS
 class Activations:
+    _LL_exclusive = ("id", "linear", "softmax")
+    _classification_LL_acts = ("sigmoid", "tanh", "softmax")
+    _learnable_acts = ()
+    
     # ===== Sigmoid =====
     @staticmethod
     def _sigmoid(x: np.ndarray) -> np.ndarray:
@@ -82,5 +94,3 @@ class Activations:
         jacobians = np.eye(dim)[None, :, :] * softmax_expanded - np.matmul(softmax_expanded, softmax_expanded.transpose(0, 2, 1))
 
         return jacobians # Shape: (batch_size, dim, dim)
-
-    _LL_exclusive = (_softmax,)

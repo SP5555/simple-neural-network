@@ -76,7 +76,7 @@ class NeuralNetwork:
 
             # Verifier
             for i, act in enumerate(activation):
-                if i < self._layer_count - 2 and self.utils._get_act_func(act) in Activations._LL_exclusive:
+                if i < self._layer_count - 2 and self.utils._get_act_func(act).name in Activations._LL_exclusive:
                     raise InputValidationError(f"{act} activation can't be used in hidden layers.")
 
         self._act_func = [self.utils._get_act_func(i) for i in activation]
@@ -92,6 +92,12 @@ class NeuralNetwork:
             self.weights.append(np.random.randn(layers[i + 1], layers[i]) * np.sqrt(2/layers[i]))
             self.biases.append(np.random.randn(layers[i + 1], 1))
         
+        # extra learnable parameters
+        # one per each layer
+        # layers that don't use a learnable parameter will remain fixed at 1.0 throughout training
+        self.learnable_b = np.ones(self._layer_count - 1, dtype=np.float64)
+
+        # velocities for momentum technique
         self.v_w = [np.zeros_like(w) for w in self.weights]
         self.v_b = [np.zeros_like(b) for b in self.biases]
 
@@ -112,7 +118,7 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i]
             # A = activation(z)
-            a: np.ndarray = self._act_func[i](z)
+            a: np.ndarray = self._act_func[i](z, self.learnable_b[i])
 
         return a.flatten().tolist()
 
@@ -132,7 +138,7 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
             # A = activation(z)
-            a: np.ndarray = self._act_func[i](z)
+            a: np.ndarray = self._act_func[i](z, self.learnable_b[i])
 
         if raw_ndarray_output:
             return a
@@ -186,7 +192,7 @@ class NeuralNetwork:
                 # z = W*A + b
                 z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
                 # A = activation(z)
-                a: np.ndarray = self._act_func[i](z)
+                a: np.ndarray = self._act_func[i](z, self.learnable_b[i])
                 # Record values for training
                 z_layers.append(z)
                 a_layers.append(a)
@@ -198,10 +204,10 @@ class NeuralNetwork:
 
             # important component for LAST LAYER backpropagation
             # term_2_3 = dL/da(n) * da(n)/dz(n)
-            if self._act_func[-1] == Activations._softmax:
+            if self._act_func[-1].name == "softmax":
 
                 da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_da = Activations._softmax_deriv(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
+                dL_wrt_da = self._act_deriv_func[-1](z_layers[-1]) # Jacobians; (batch_size, dim, dim)
                 
                 t_2_3_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
