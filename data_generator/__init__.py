@@ -1,3 +1,3 @@
-from .data_generator import DataGenerator
+from .core import DataGenerator
 
-__all__ = ["data_generator"]
+__all__ = ["core"]
