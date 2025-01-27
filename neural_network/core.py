@@ -104,7 +104,7 @@ class NeuralNetwork:
         print(f"Neural network with {layers} layers initialized.")
         print(f"Parameter Count: {self.utils._get_param_count():,}")
 
-         # main feed forward function (single)
+    # main feed forward function (single)
     def forward(self, input: list) -> list:
         if len(input) != self._layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
