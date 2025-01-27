@@ -65,9 +65,6 @@ class NeuralNetwork:
         self.m_beta = momentum
 
         # Activation Functions
-        # ReLU for regression
-        # Sigmoid, Tanh for multilabel classification
-        # Softmax for multiclass classification
         activation = [act.strip().lower() for act in activation] if activation else []
 
         if activation == []:
@@ -86,9 +83,6 @@ class NeuralNetwork:
         self._act_deriv_func = [self.utils._get_act_deriv_func(i) for i in activation]
 
         # Loss Functions
-        # MSE for regression
-        # BCE for multilabel classification
-        # MCE/CCE for multiclass classification
         self._loss_deriv = self.utils._get_loss_deriv_func(loss_function)
 
         self.weights: list = []
@@ -203,7 +197,7 @@ class NeuralNetwork:
             act_grad: np.ndarray = self._loss_deriv(a, y)
 
             # important component for LAST LAYER backpropagation
-            # term_2_3 = da(n)/dz(n) * dL/da(n)
+            # term_2_3 = dL/da(n) * da(n)/dz(n)
             if self._act_func[-1] == Activations._softmax:
 
                 da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
@@ -223,8 +217,8 @@ class NeuralNetwork:
 
                 # CALCULATE derivative of costs with respect to weights
                 # dL/dw(n)
-                # = dz(n)/dw(n) * da(n)/dz(n) * dL/da(n)
-                # = a(n-1) * actv'(z(n)) * dL/da(n)
+                # = dL/da(n) * da(n)/dz(n) * dz(n)/dw(n)
+                # = dL/da(n) * actv'(z(n)) * a(n-1)
                 w_grad = np.matmul(term_2_3, a_layers[i].T) / batch_size
 
                 # UPDATE/apply negative of average gradient change to weights
@@ -234,8 +228,8 @@ class NeuralNetwork:
 
                 # CALCULATE derivative of costs with respect to biases
                 # dL/db(n)
-                # = dz(n)/db(n) * da(n)/dz(n) * dL/da(n)
-                # = 1 * actv'(z(n)) * dL/da(n)
+                # = dL/da(n) * da(n)/dz(n) * dz(n)/db(n)
+                # = dL/da(n) * actv'(z(n)) * 1
                 b_grad = np.sum(term_2_3, axis=1, keepdims=True) / batch_size
 
                 # UPDATE/apply negative of average gradient change to biases / Update biases
@@ -247,8 +241,8 @@ class NeuralNetwork:
                 # actual backpropagation
                 # NOTE: a(n-1) affects all a(n), so backpropagation to a(n-1) will be related to all a(n)
                 # dL/da(n-1)
-                # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
-                # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
+                # = column-wise sum in w matrix [dz(n)/da(n-1) * dL/da(n) * da(n)/dz(n)]
+                # = column-wise sum in w matrix [w(n) * dL/da(n) * actv'(z(n))]
                 act_grad = np.matmul(self.weights[i].T, term_2_3)
                 
                 # important component for HIDDEN LAYER backpropagations
