@@ -25,7 +25,7 @@ First off, a huge shoutout to the awesome **NumPy** library, which is pretty muc
 
 ## Features
 - **Architecture**: Fully-connected layers with customizable layer sizes.
-- **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Linear, Softmax.
+- **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Swish, Linear, Softmax.
 - **Loss functions**:
     - **Regression**: Mean-Squared Error (MSE).
     - **Multilabel classification**: Binary Cross-Entropy (BCE).
@@ -316,3 +316,6 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 - TensorFlow: [A Neural Network Playground](https://playground.tensorflow.org/)
 - StatQuest with Josh Starmer: [The Softmax Derivative](https://youtu.be/M59JElEPgIg?si=S_ERldGE5K5Jib0E)
 - [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
+
+## Future Improvements
+- **Swish beta Activation Function**: Said to match or outperform the ReLU and includes an additional learnable variable: beta.

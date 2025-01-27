@@ -34,6 +34,7 @@ class Utils:
             'leaky_relu': Activations._leaky_relu,
             'tanh': Activations._tanh,
             'sigmoid': Activations._sigmoid,
+            'swish': Activations._swish,
             'id': Activations._id, 'linear': Activations._id,
             'softmax': Activations._softmax
         }
@@ -48,6 +49,7 @@ class Utils:
             'leaky_relu': Activations._leaky_relu_deriv,
             'tanh': Activations._tanh_deriv,
             'sigmoid': Activations._sigmoid_deriv,
+            'swish': Activations._swish_deriv,
             'id': Activations._id_deriv, 'linear': Activations._id_deriv,
             'softmax': Activations._softmax_deriv
         }

@@ -43,6 +43,15 @@ class Activations:
     def _leaky_relu_deriv(x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, 1, 0.1)
 
+    # ===== Swish =====
+    def _swish(x: np.ndarray) -> np.ndarray:
+        s = Activations._sigmoid(x)
+        return x * s
+    
+    def _swish_deriv(x: np.ndarray) -> np.ndarray:
+        s = Activations._sigmoid(x)
+        return s * (1 + x * (1 - s))
+
     # ===== Linear Activation =====
     @staticmethod
     def _id(x: np.ndarray) -> np.ndarray:
