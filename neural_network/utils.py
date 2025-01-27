@@ -3,8 +3,12 @@ from .activations import Activations
 from .losses import Losses
 from .exceptions import InputValidationError
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .core import NeuralNetwork
+
 class Utils:
-    def __init__(self, core_instance):
+    def __init__(self, core_instance: "NeuralNetwork"):
         self.core = core_instance
  
     def inspect_weights_and_biases(self) -> None:
@@ -15,48 +19,48 @@ class Utils:
             print(f'b L{i+1} -> L{i+2}')
             print(self.core.biases[i])
 
-    def get_parameter_count(self) -> int:
+    def _get_param_count(self) -> int:
         c: int = 0
         for i in range(self.core._layer_count - 1):
             # c += self.layers[i + 1] * self.layers[i] # Weights
             # c += self.layers[i + 1] # Biases
-            c += self.core.layers[i + 1] * (self.core.layers[i] + 1)
+            c += self.core._layers[i + 1] * (self.core._layers[i] + 1)
         return c
 
     @staticmethod
-    def get_activation_func(name: str):
+    def _get_act_func(name: str):
         actv_funcs = {
-            'relu': Activations.relu,
-            'leaky_relu': Activations.leaky_relu,
-            'tanh': Activations.tanh,
-            'sigmoid': Activations.sigmoid,
-            'id': Activations.id, 'linear': Activations.id,
-            'softmax': Activations.softmax
+            'relu': Activations._relu,
+            'leaky_relu': Activations._leaky_relu,
+            'tanh': Activations._tanh,
+            'sigmoid': Activations._sigmoid,
+            'id': Activations._id, 'linear': Activations._id,
+            'softmax': Activations._softmax
         }
         name = name.strip().lower()
         if name in actv_funcs: return actv_funcs[name]
         raise InputValidationError(f"Unsupported activation function: {name}")
 
     @staticmethod
-    def get_activation_derivative_func(name: str):
+    def _get_act_deriv_func(name: str):
         actv_deriv_funcs = {
-            'relu': Activations.relu_derivative,
-            'leaky_relu': Activations.leaky_relu_derivative,
-            'tanh': Activations.tanh_derivative,
-            'sigmoid': Activations.sigmoid_derivative,
-            'id': Activations.id_derivative, 'linear': Activations.id_derivative,
-            'softmax': Activations.softmax_derivative
+            'relu': Activations._relu_deriv,
+            'leaky_relu': Activations._leaky_relu_deriv,
+            'tanh': Activations._tanh_deriv,
+            'sigmoid': Activations._sigmoid_deriv,
+            'id': Activations._id_deriv, 'linear': Activations._id_deriv,
+            'softmax': Activations._softmax_deriv
         }
         name = name.strip().lower()
         if name in actv_deriv_funcs: return actv_deriv_funcs[name]
         raise InputValidationError(f"Unsupported activation function: {name}")
 
     @staticmethod
-    def get_loss_derivative_func(name: str):
+    def _get_loss_deriv_func(name: str):
         loss_funcs = {
-            'mse': Losses.MSE_gradient,
-            'bce': Losses.BCE_gradient,
-            'mce': Losses.MCE_gradient, 'cce': Losses.MCE_gradient
+            'mse': Losses._mse_grad,
+            'bce': Losses._bce_grad,
+            'mce': Losses._mce_grad, 'cce': Losses._mce_grad
         }
         name = name.strip().lower()
         if name in loss_funcs: return loss_funcs[name]

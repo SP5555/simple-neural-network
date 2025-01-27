@@ -5,7 +5,6 @@ from .metrics import Metrics
 from .exceptions import InputValidationError
 
 class NeuralNetwork:
-    _LL_exclusive = (Activations.softmax,)
     
     def __init__(self,
                  layers: list,
@@ -27,7 +26,7 @@ class NeuralNetwork:
         if not all(isinstance(x, int) for x in layers): # if not all entries are integers
             raise InputValidationError("Layers must be a list of integers.")
         
-        self.layers: list = layers
+        self._layers: list = layers
         self._layer_count: int = len(layers)
         
         # Learn Rate
@@ -37,17 +36,19 @@ class NeuralNetwork:
             raise InputValidationError("Learn rate must be positive.")
         if learn_rate >= 0.1:
             print(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
-        self.learn_rate = learn_rate
+        self.lr = learn_rate
 
-        # Regularization Strength
-        # Large weights and biases will change more aggressively than small ones
+        # L2 Regularization Strength
+        # low reg strength -> cook in class, and fail in exam; overfit
+        # high reg strength -> I am dumb dumb, can't learn; underfit
+        # Large weights and biases will are penalized more aggressively than small ones
         # Don't set it too large, at most 0.01 (unless you know what you're doing)
         #     new_velocity = momentum * old_velocity + (1-momentum) * (parameter_gradient + lambda_parem * parameter)
         if lambda_parem < 0.0:
             raise InputValidationError("Regularization Strength can't be negative.")
         if lambda_parem > 0.01:
             print(f"Warning: Regularization Strength {lambda_parem:.3f} is strong. Consider keeping it less than 0.01")
-        self.lambda_parem = lambda_parem
+        self.l2_lambda = lambda_parem
 
         # Momentum Beta for Momentum Gradient Descent
         # 0.0 disables the momentum behavior
@@ -61,7 +62,7 @@ class NeuralNetwork:
             raise InputValidationError("Momentum must be less than 1.0.")
         if momentum >= 0.95:
             print(f"Warning: Momentum value {momentum:.3f} may cause strong \"gliding\" behavior. Consider keeping it less than 0.95")
-        self.momentum_beta = momentum
+        self.m_beta = momentum
 
         # Activation Functions
         # ReLU for regression
@@ -78,17 +79,17 @@ class NeuralNetwork:
 
             # Verifier
             for i, act in enumerate(activation):
-                if i < self._layer_count - 2 and self.utils.get_activation_func(act) in self._LL_exclusive:
+                if i < self._layer_count - 2 and self.utils._get_act_func(act) in Activations._LL_exclusive:
                     raise InputValidationError(f"{act} activation can't be used in hidden layers.")
 
-        self._activation = [self.utils.get_activation_func(i) for i in activation]
-        self._activation_derivative = [self.utils.get_activation_derivative_func(i) for i in activation]
+        self._act_func = [self.utils._get_act_func(i) for i in activation]
+        self._act_deriv_func = [self.utils._get_act_deriv_func(i) for i in activation]
 
         # Loss Functions
         # MSE for regression
         # BCE for multilabel classification
         # MCE/CCE for multiclass classification
-        self._loss_derivative = self.utils.get_loss_derivative_func(loss_function)
+        self._loss_deriv = self.utils._get_loss_deriv_func(loss_function)
 
         self.weights: list = []
         self.biases: list = []
@@ -97,27 +98,27 @@ class NeuralNetwork:
             self.weights.append(np.random.randn(layers[i + 1], layers[i]) * np.sqrt(2/layers[i]))
             self.biases.append(np.random.randn(layers[i + 1], 1))
         
-        self.velocity_w = [np.zeros_like(w) for w in self.weights]
-        self.velocity_b = [np.zeros_like(b) for b in self.biases]
+        self.v_w = [np.zeros_like(w) for w in self.weights]
+        self.v_b = [np.zeros_like(b) for b in self.biases]
 
         print(f"Neural network with {layers} layers initialized.")
-        print(f"Parameter Count: {self.utils.get_parameter_count():,}")
+        print(f"Parameter Count: {self.utils._get_param_count():,}")
 
          # main feed forward function (single)
     def forward(self, input: list) -> list:
-        if len(input) != self.layers[0]:
+        if len(input) != self._layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
 
         # activation
         # changes 1D input array into n x 1 sized numpy 2D array
-        a: np.ndarray = np.array(input).reshape(-1, 1)
+        a: np.ndarray = np.array(input).T
 
         # forward pass
         for i in range(self._layer_count - 1):
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i]
             # A = activation(z)
-            a: np.ndarray = self._activation[i](z)
+            a: np.ndarray = self._act_func[i](z)
 
         return a.flatten().tolist()
 
@@ -125,7 +126,7 @@ class NeuralNetwork:
     def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray:
         if len(input) == 0:
             raise InputValidationError("Input batch does not have data.")
-        if len(input[0]) != self.layers[0]:
+        if len(input[0]) != self._layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
         
         # activation
@@ -137,7 +138,7 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
             # A = activation(z)
-            a: np.ndarray = self._activation[i](z)
+            a: np.ndarray = self._act_func[i](z)
 
         if raw_ndarray_output:
             return a
@@ -152,9 +153,9 @@ class NeuralNetwork:
             raise InputValidationError("Datasets can't be empty.")
         if len(input_list) != len(output_list):
             raise InputValidationError("Input and Output data set sizes must be equal.")
-        if len(input_list[0]) != self.layers[0]:
+        if len(input_list[0]) != self._layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
-        if len(output_list[0]) != self.layers[-1]:
+        if len(output_list[0]) != self._layers[-1]:
             raise InputValidationError("Output array size does not match the neural network.")
         if epoch <= 0:
             raise InputValidationError("Epoch must be positive.")
@@ -191,7 +192,7 @@ class NeuralNetwork:
                 # z = W*A + b
                 z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
                 # A = activation(z)
-                a: np.ndarray = self._activation[i](z)
+                a: np.ndarray = self._act_func[i](z)
                 # Record values for training
                 z_layers.append(z)
                 a_layers.append(a)
@@ -199,19 +200,19 @@ class NeuralNetwork:
             # a holds columns of output here
             # y is desired output
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
-            a_gradient_ith_layer: np.ndarray = self._loss_derivative(a, y)
+            act_grad: np.ndarray = self._loss_deriv(a, y)
 
             # important component for LAST LAYER backpropagation
             # term_2_3 = da(n)/dz(n) * dL/da(n)
-            if self._activation[-1] == Activations.softmax:
+            if self._act_func[-1] == Activations._softmax:
 
-                da_wrt_dz_reshaped = a_gradient_ith_layer[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_da_reshaped = Activations.softmax_derivative(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
+                da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
+                dL_wrt_da = Activations._softmax_deriv(z_layers[-1]) # Jacobians; (batch_size, dim, dim)
                 
-                t_2_3_3D = np.matmul(dL_wrt_da_reshaped, da_wrt_dz_reshaped) # (batch_size, dim, 1)
+                t_2_3_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, dim, 1)
                 term_2_3 = t_2_3_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
-                term_2_3: np.ndarray = self._activation_derivative[-1](z_layers[-1]) * a_gradient_ith_layer
+                term_2_3: np.ndarray = self._act_deriv_func[-1](z_layers[-1]) * act_grad
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):
@@ -224,23 +225,23 @@ class NeuralNetwork:
                 # dL/dw(n)
                 # = dz(n)/dw(n) * da(n)/dz(n) * dL/da(n)
                 # = a(n-1) * actv'(z(n)) * dL/da(n)
-                w_gradient_ith_layer = np.matmul(term_2_3, a_layers[i].T) / batch_size
+                w_grad = np.matmul(term_2_3, a_layers[i].T) / batch_size
 
                 # UPDATE/apply negative of average gradient change to weights
-                lambda_w_old: np.ndarray = self.weights[i] * self.lambda_parem # Compute regularization term
-                self.velocity_w[i] = self.momentum_beta * self.velocity_w[i] + (1 - self.momentum_beta) * (w_gradient_ith_layer + lambda_w_old)
-                self.weights[i] += -1 * self.velocity_w[i] * self.learn_rate
+                l2_term_for_w: np.ndarray = self.weights[i] * self.l2_lambda # Compute regularization term
+                self.v_w[i] = self.m_beta * self.v_w[i] + (1 - self.m_beta) * (w_grad + l2_term_for_w)
+                self.weights[i] += -1 * self.v_w[i] * self.lr
 
                 # CALCULATE derivative of costs with respect to biases
                 # dL/db(n)
                 # = dz(n)/db(n) * da(n)/dz(n) * dL/da(n)
                 # = 1 * actv'(z(n)) * dL/da(n)
-                b_gradient_ith_layer = np.sum(term_2_3, axis=1, keepdims=True) / batch_size
+                b_grad = np.sum(term_2_3, axis=1, keepdims=True) / batch_size
 
                 # UPDATE/apply negative of average gradient change to biases / Update biases
-                lambda_b_old: np.ndarray = self.biases[i] * self.lambda_parem # Compute regularization term
-                self.velocity_b[i] = self.momentum_beta * self.velocity_b[i] + (1 - self.momentum_beta) * (b_gradient_ith_layer + lambda_b_old)
-                self.biases[i] += -1 * self.velocity_b[i] * self.learn_rate
+                l2_term_for_b: np.ndarray = self.biases[i] * self.l2_lambda # Compute regularization term
+                self.v_b[i] = self.m_beta * self.v_b[i] + (1 - self.m_beta) * (b_grad + l2_term_for_b)
+                self.biases[i] += -1 * self.v_b[i] * self.lr
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation
@@ -248,22 +249,14 @@ class NeuralNetwork:
                 # dL/da(n-1)
                 # = column-wise sum in w matrix [dz(n)/da(n-1) * da(n)/dz(n) * dL/da(n)]
                 # = column-wise sum in w matrix [(w(n) * actv'(z(n)) * dL/da(n))]
-                a_gradient_ith_layer = np.matmul(self.weights[i].T, term_2_3)
+                act_grad = np.matmul(self.weights[i].T, term_2_3)
                 
                 # important component for HIDDEN LAYER backpropagations
                 # update for next layer
                 # term_2_3 = da(n)/dz(n) * dL/da(n)
-                term_2_3: np.ndarray = self._activation_derivative[i-1](z_layers[i-1]) * a_gradient_ith_layer
+                term_2_3: np.ndarray = self._act_deriv_func[i-1](z_layers[i-1]) * act_grad
             
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
         
         print("\n===== ===== Training Completed ===== =====")
-
-    def _get_parameter_count(self) -> int:
-        c: int = 0
-        for i in range(self._layer_count - 1):
-            # c += self.layers[i + 1] * self.layers[i] # Weights
-            # c += self.layers[i + 1] # Biases
-            c += self.layers[i + 1] * (self.layers[i] + 1)
-        return c

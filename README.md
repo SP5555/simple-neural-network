@@ -2,7 +2,11 @@
 # Simple Neural Network
 
 ## Overview
-This is the very simple, yet *powerful* example of a fully functional neural network implemented from scratch in Python (with numpy).
+This project is an intermediate level, fully functional neural network implemented from scratch in Python. Initially started out as a simple Python project to neural networks, it has gradually evolved into a more robust form.
+
+White it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of Linear Algebra and Calculus can learn to predict.
+
+First off, a huge shoutout to the awesome **NumPy** library, which is pretty much responsible for 99% of this neural network’s speed.
 
 - [Features](#features)
 - [Installation Instructions](#installation-instructions)
@@ -23,7 +27,8 @@ This is the very simple, yet *powerful* example of a fully functional neural net
 - **Fully connected layers**: Customizable layer sizes.
 - **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Linear, Softmax.
 - **Loss functions**: Mean-Squared Error (MSE) for regression, Binary Cross-Entropy (BCE) for multilabel classification, Categorial Cross-Entropy (CCE or MCE) for multiclass classification.
-- **Training Algorithm**: Gradient descent.
+- **Regularization**: L2 (Ridge).
+- **Training Algorithm**: Mini-batch gradient descent.
 
 ## Dependencies
 * **Python 3.0**
@@ -73,7 +78,7 @@ nn.train(
 	input_list=input_train_list,
 	output_list=output_train_list,
 	epoch=1000,
-	batch_size=64
+	batch_size=64 # number of samples in each mini-batch for training
 )
 ```
 ### Utilities
@@ -88,7 +93,7 @@ nn.metrics.check_accuracy_classification(
 	test_output=output_test_list
 )
 ```
-Compare the predicted results with the desired results:
+Compare and print out the predicted results with the desired results:
 ```python
 nn.metrics.compare_predictions(input=data_i, output=data_o)
 ```

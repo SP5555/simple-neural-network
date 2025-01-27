@@ -7,7 +7,7 @@ def main():
         activation=["leaky_relu", "sigmoid", "softmax"],
         loss_function="CCE",
         learn_rate=0.02,
-        lambda_parem=0.003,
+        lambda_parem=0.008,
         momentum=0.75
     )
 

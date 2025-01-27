@@ -4,64 +4,66 @@ import numpy as np
 class Activations:
     # ===== Sigmoid =====
     @staticmethod
-    def sigmoid(x: np.ndarray) -> np.ndarray:
+    def _sigmoid(x: np.ndarray) -> np.ndarray:
         # s(x) = (tanh(x/2) + 1) / 2
         return (np.tanh(x / 2) + 1) / 2
 
     @staticmethod
-    def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
+    def _sigmoid_deriv(x: np.ndarray) -> np.ndarray:
         # s'(x) = s(x) * (1 - s(x))
         s: np.ndarray = (np.tanh(x / 2) + 1) / 2
         return s*(1-s)
 
     # ===== Tanh =====
     @staticmethod
-    def tanh(x: np.ndarray) -> np.ndarray:
+    def _tanh(x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
     @staticmethod
-    def tanh_derivative(x: np.ndarray) -> np.ndarray:
+    def _tanh_deriv(x: np.ndarray) -> np.ndarray:
         # tanh'(x) = 1 - tanh(x)^2
         t = np.tanh(x)
         return 1 - t*t
 
     # ===== ReLU =====
     @staticmethod
-    def relu(x: np.ndarray) -> np.ndarray:
+    def _relu(x: np.ndarray) -> np.ndarray:
         return np.maximum(0, x)
 
     @staticmethod
-    def relu_derivative(x: np.ndarray) -> np.ndarray:
+    def _relu_deriv(x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, 1, 0)
 
     # ===== Leaky ReLU =====
     @staticmethod
-    def leaky_relu(x: np.ndarray) -> np.ndarray:
+    def _leaky_relu(x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, x, 0.1 * x)
 
     @staticmethod
-    def leaky_relu_derivative(x: np.ndarray) -> np.ndarray:
+    def _leaky_relu_deriv(x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, 1, 0.1)
 
     # ===== Linear Activation =====
     @staticmethod
-    def id(x: np.ndarray) -> np.ndarray:
+    def _id(x: np.ndarray) -> np.ndarray:
         return x
 
     @staticmethod
-    def id_derivative(x: np.ndarray) -> np.ndarray:
+    def _id_deriv(x: np.ndarray) -> np.ndarray:
         return np.ones_like(x)
 
     # ===== Softmax =====
     @staticmethod
-    def softmax(x: np.ndarray) -> np.ndarray:
+    def _softmax(x: np.ndarray) -> np.ndarray:
         exp = np.exp(x - np.max(x, axis=0, keepdims=True))
         return exp / np.sum(exp, axis=0, keepdims=True)
 
     @staticmethod
-    def softmax_derivative(x: np.ndarray) -> np.ndarray:
+    # due to the nature of how softmax derivative is applied in backpropagation,
+    # this function returns "stacks" of jacobian matrices.
+    def _softmax_deriv(x: np.ndarray) -> np.ndarray:
         dim = x.shape[0]
-        softmax = Activations.softmax(x) # Shape: (dim, batch_size)
+        softmax = Activations._softmax(x) # Shape: (dim, batch_size)
 
         softmax_expanded = softmax.T[:, :, None]  # Shape: (batch_size, dim, 1)
 
@@ -71,3 +73,5 @@ class Activations:
         jacobians = np.eye(dim)[None, :, :] * softmax_expanded - np.matmul(softmax_expanded, softmax_expanded.transpose(0, 2, 1))
 
         return jacobians # Shape: (batch_size, dim, dim)
+
+    _LL_exclusive = (_softmax,)

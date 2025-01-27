@@ -1,20 +1,24 @@
 import numpy as np
-from .activations import Activations as A
+from .activations import Activations as Act
 from .exceptions import InputValidationError
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .core import NeuralNetwork
+
 class Metrics:
-    def __init__(self, core_instance):
+    def __init__(self, core_instance: "NeuralNetwork"):
         self.core = core_instance
 
     def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
-        if self.core._activation[-1] not in (A.sigmoid, A.tanh, A.softmax):
+        if self.core._act_func[-1] not in (Act._sigmoid, Act._tanh, Act._softmax):
             print("The Accuracy Classification function only works for models configured for classification tasks.")
             return
         if len(test_input) == 0 or len(test_output) == 0:
             raise InputValidationError("Datasets can't be empty.")
         if len(test_input) != len(test_output):
             raise InputValidationError("Input and Output data set sizes must be equal.")
-        if len(test_input[0]) != self.core.layers[0]:
+        if len(test_input[0]) != self.core._layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
         
         _check_batch_size = 1024
@@ -38,7 +42,7 @@ class Metrics:
             # forward pass
             predictions = self.core.forward_batch(a, raw_ndarray_output=True).T
 
-            if self.core._activation[-1] in self.core._LL_exclusive:
+            if self.core._act_func[-1] in Act._LL_exclusive:
                 actual_class = np.argmax(o, axis=1)
                 predicted_class = np.argmax(predictions, axis=1)
                 correct_predictions = actual_class == predicted_class
@@ -53,7 +57,7 @@ class Metrics:
         accuracy = correct_predictions_count / test_size * 100
         print(f"Accuracy on {test_size:,} samples")
         print("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
-        if self.core._activation[-1] in self.core._LL_exclusive:
+        if self.core._act_func[-1] in Act._LL_exclusive:
             cat_accuracy = correctly_categorized / test_size * 100
             print(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
     
