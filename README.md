@@ -24,11 +24,14 @@ First off, a huge shoutout to the awesome **NumPy** library, which is pretty muc
 - [Resources *& Inspirations :)*](#resources--inspirations-)
 
 ## Features
-- **Fully connected layers**: Customizable layer sizes.
+- **Architecture**: Fully-connected layers with customizable layer sizes.
 - **Activation functions**: Sigmoid, Tanh, ReLU, Leaky ReLU, Linear, Softmax.
-- **Loss functions**: Mean-Squared Error (MSE) for regression, Binary Cross-Entropy (BCE) for multilabel classification, Categorial Cross-Entropy (CCE or MCE) for multiclass classification.
-- **Regularization**: L2 (Ridge).
-- **Training Algorithm**: Mini-batch gradient descent.
+- **Loss functions**:
+    - **Regression**: Mean-Squared Error (MSE).
+    - **Multilabel classification**: Binary Cross-Entropy (BCE).
+    - **Multiclass classification**: Categorial Cross-Entropy (CCE or MCE).
+- **Training Algorithms**: Mini-batch gradient descent.
+- **Techniques**: L2 (Ridge) regularization, Momentum.
 
 ## Dependencies
 * **Python 3.0**
