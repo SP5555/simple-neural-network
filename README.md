@@ -398,7 +398,9 @@ Just like in life, being an extremist is never good. The same goes for neural ne
 - **Overfitting** occurs when the network performs too perfectly on the training data, but fails to predict unseen data well. Essentially, the network "memorizes" the data instead of learning the underlying pattern. This usually happens due to overtraining, overwhelming number of parameters, overly strong gradients, or small datasets, etc. *Monkey Language: The network memorized the material taught in class without understanding it, only to fail the exam when unseen questions come up.*
 
 Rather than trying to balance everything from the start, we begin with a highly capable neural network. Possibly, multiple layers and appropriate activation functions. Then, we introduce a bit of interference in the learning process to prevent the network from learning too perfectly. This is exactly what **L2 (Ridge) Regularization** does.
+
 $$Regularized\ Loss=Loss+\frac{1}{2} \lambda ||w||^{2}$$
+
 What is the intuition? In neural networks, large parameter values have a stronger influence on the output. If these large parameters are on their way to "memorize" the given data, the **L2 regularization** term, $\frac{1}{2} \lambda ||w||^{2}$ adds to the overall loss and heavily penalizes it with the squared value of the parameter. This makes  strong parameters decay back towards zero. The $\lambda$ controls the strength of regularization.
 
 ### Momentum
