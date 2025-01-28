@@ -346,7 +346,7 @@ x & \text{if}\ x >0\\
 \end{cases}$$
 
 ### Leaky ReLU
-Basically **ReLU** but leaking on the negative side. **Leaky ReLYU** can mitigate the **dying ReLU problem**. By introducing a small slope, $\alpha$ (usually 0.01, can be configured), on the negative side, it creates non-zero gradient for negative inputs, potentially allowing backpropagation to revive the "dead" neurons which **ReLU** can't. **Leaky ReLU** is computationally cheap like **ReLU**, making it a cost-efficient activation function for regression problems.
+Basically **ReLU** but leaking on the negative side. **Leaky ReLU** can mitigate the **dying ReLU problem**. By introducing a small slope, $\alpha$ (usually 0.01, can be configured), on the negative side, it creates non-zero gradient for negative inputs, potentially allowing backpropagation to revive the "dead" neurons which **ReLU** can't. **Leaky ReLU** is computationally cheap like **ReLU**, making it a cost-efficient activation function for regression problems.
 
 $$A(x) =\begin{cases}
 x & \text{if}\ x >0\\
@@ -387,11 +387,11 @@ When **MSE** struggles with small error values (less than 1) due to squaring, wh
 $$BCE=-y_{actual}\log(y_{predicted})-(1-y_{actual})\log(1-y_{predicted})$$
 
 ### Categorial Cross-Entropy (CCE)
-While **BCE** penalizes both 1s for not being 0 and 0s for not being 1, **Categorical Cross-Entropy** (CCE) focuses only on punishing the 0s when they should be 1. Designed to work with one-hot encoded values *together* with the **Softmax** activation function, **CCE** can guide a neural network to categorize data accurately by heavily penalizing incorrect 0 predictions. Once low raw scores become high enough, the **Softmax** activation will reward them with a high probability distribution.
+While **BCE** penalizes both 1s for not being 0 and 0s for not being 1, **Categorical Cross-Entropy** (CCE) focuses only on punishing the 0s when they should be 1. Designed to work with one-hot encoded values *together* with the **Softmax** activation function, **CCE** can guide a neural network to categorize data accurately by heavily penalizing incorrect 0 predictions. Once low raw scores become high enough, the **Softmax** activation will convert them with a high probability distribution.
 
 $$CCE=-y_{actual}\log(y_{predicted})$$
 
-## Techniques
+## Optimization Techniques
 
 ### L2 (Ridge) Regularization
 Just like in life, being an extremist is never good. The same goes for neural networks. Both underfitting and overfitting are problems to avoid:
@@ -403,7 +403,7 @@ Rather than trying to balance everything from the start, we begin with a highly 
 
 $$Regularized\ Loss=Loss+\frac{1}{2} \lambda w^{2}$$
 
-What is the intuition? In neural networks, large parameter values have a stronger influence on the output. If these large parameters are on their way to "memorize" the given data, the **L2 regularization** term, $\frac{1}{2} \lambda w^{2}$ adds to the overall loss and heavily penalizes it with the squared value of the parameter. This makes strong parameters decay back towards zero. The $\lambda$ controls the strength of regularization.
+What is the intuition? In neural networks, large parameter values have a stronger influence on the output. If these large parameters begin to "memorize" the given data, the **L2 regularization** term, $\frac{1}{2} \lambda w^{2}$ adds to the overall loss and heavily penalizes them with the squared values. This makes stronger parameters decay more quickly back toward zero. In other words, it is like a void pulling all parameters toward zero, ensuring that no value in the network explodes into huge negatives or positives. This process thereby reducing the risk of "memorizing" the data and helps the network generalize better. The $\lambda$ controls the strength of regularization.
 
 ### Momentum
 In physics, when an object is moving, it has momentum. Objects with momentum continue to maintain that momentum unless external forces act upon them. Similarly, in neural networks, when parameters are moving toward a local minimum to minimize the loss, the momentum technique gives them the ability to "glide." This "gliding" helps them escape high-loss plateaus, allowing them to reach the local minimum more efficiently. It introduces the concept of "velocity" for each parameter in the model. The velocity is updated as follows:
