@@ -371,8 +371,9 @@ $$A(x)=x\sigma(\beta x)=\frac{x}{1+e^{-x}}$$
 ### Softmax
 Unlike all other activation functions, **Softmax** squashes raw scores of all neurons in same layer into a probability distribution, ensuring all values are positive and sum up to $1$. Backpropagation and gradient calculations become further complicated due to its interconnectivity between activations in the same layer. Since all activations sum up to just $1$, using **Softmax** in hidden layers would effectively suppress weaker activated neurons and exaggerate stronger ones, which is not what we want. For this reason, **Softmax** is typically reserved for the final layer in multiclass classification tasks.
 
-$$A_{i}( x) =\frac{e^{x_{i}}}{\sum _{j=1}^{n} e^{x_{j}}}$$
-
+```math
+A_{i}(x) =\frac{e^{x_{i}}}{\sum_{j=1}^{n} e^{x_{j}}}
+```
 
 ## Loss Functions
 Loss functions measure how well a model's predictions align with the target values. They get applied to each neuron in the output layer, and the whole point of training a neural network is to adjust the parameters so that the loss gets as small as possible. The better we can get each neuron to predict with less loss, the more accurate the model becomes. The entire realm of Linear Algebra and Calculus has been summoned to minimize this loss value.
@@ -407,9 +408,7 @@ What is the intuition? In neural networks, large parameter values have a stronge
 ### Momentum
 In physics, when an object is moving, it has momentum. Objects with momentum continue to maintain that momentum unless external forces act upon them. Similarly, in neural networks, when parameters are moving toward a local minimum to minimize the loss, the momentum technique gives them the ability to "glide." This "gliding" helps them escape high-loss plateaus, allowing them to reach the local minimum more efficiently. It introduces the concept of "velocity" for each parameter in the model. The velocity is updated as follows:
 
-```math
-v_{t+1} =\beta v_{t} +( 1-\beta ) \nabla L( w_{t})
-```
+$$v_{t+1} =\beta v_{t} +( 1-\beta ) \nabla L( w_{t})$$
 
 where $\beta$ is the momentum strength, ranging between $0$ and $1$. A value of $0$ disables the "gliding" behavior while $1$ results in full "gliding" with no update. Ideally, $\beta$ is set between $0.5$ and $0.8$.
 
