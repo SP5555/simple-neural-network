@@ -57,22 +57,22 @@ class Activations:
 
     # ===== Swish ===== learnable parameter
     @staticmethod
-    def _swish(x: np.ndarray, b: np.float64) -> np.ndarray:
+    def _swish(x: np.ndarray, b: np.ndarray) -> np.ndarray:
         # swish(x, b) = x * s(bx)
         s = Activations._sigmoid(b * x)
         return x * s
     
     @staticmethod
-    def _swish_deriv(x: np.ndarray, b: np.float64) -> np.ndarray:
+    def _swish_deriv(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
         # dswish(x, b)/dx = s(bx) * (1 + bx * (1 - s(bx)))
-        bx = b * x
-        s = Activations._sigmoid(bx)
-        return s * (1 + bx * (1 - s))
+        alpx = alp * x
+        s = Activations._sigmoid(alpx)
+        return s * (1 + alpx * (1 - s))
 
     @staticmethod
-    def _swish_learnable_deriv(x: np.ndarray, b:np.float64) -> np.ndarray:
+    def _swish_learnable_deriv(x: np.ndarray, alp:np.ndarray) -> np.ndarray:
         # dswish(x, b)/db = x^2 * s(bx) * (1 - s(bx))
-        s = Activations._sigmoid(b * x)
+        s = Activations._sigmoid(alp * x)
         return x * x * s * (1 - s)
 
     # ===== Linear Activation =====

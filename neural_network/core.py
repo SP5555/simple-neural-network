@@ -36,7 +36,7 @@ class NeuralNetwork:
             raise InputValidationError("Learn rate must be positive.")
         if learn_rate >= 0.1:
             print(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
-        self.lr = learn_rate
+        self.LR = learn_rate
 
         # L2 Regularization Strength
         # low reg strength -> cook in class, and fail in exam; overfit
@@ -81,27 +81,28 @@ class NeuralNetwork:
 
         self._act_func = [self.utils._get_act_func(i) for i in activation]
         self._act_deriv_func = [self.utils._get_act_deriv_func(i) for i in activation]
-        self._learnable_deriv_func = [self.utils._get_learnable_b_grad_func(i) for i in activation]
+        self._learnable_deriv_func = [self.utils._get_learnable_alpha_grad_func(i) for i in activation]
 
         # Loss Functions
         self._loss_deriv = self.utils._get_loss_deriv_func(loss_function)
 
         self.weights: list = []
         self.biases: list = []
+        self.alpha: list = []
         for i in range(self._layer_count - 1):
             # prevent extreme values
             self.weights.append(np.random.randn(layers[i + 1], layers[i]) * np.sqrt(2/layers[i]))
             self.biases.append(np.random.randn(layers[i + 1], 1))
         
-        # extra learnable parameters
-        # one per each layer
-        # layers that don't use a learnable parameter will remain fixed at 1.0 throughout training
-        self.learnable_b = np.ones(self._layer_count - 1, dtype=np.float64)
+            # extra learnable parameters
+            # one per each neuron
+            # neurons in layers that don't use learnable parameters will remain fixed at 1.0 throughout training
+            self.alpha.append(np.ones((layers[i + 1], 1)))
 
         # velocities for momentum technique
         self.v_w = [np.zeros_like(w) for w in self.weights]
         self.v_b = [np.zeros_like(b) for b in self.biases]
-        self.v_learnable_b = np.zeros_like(self.learnable_b)
+        self.v_alpha = [np.zeros_like(x) for x in self.alpha]
 
         print(f"Neural network with {layers} layers initialized.")
         print(f"Parameter Count: {self.utils._get_param_count():,}")
@@ -120,7 +121,7 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i]
             # A = activation(z)
-            a: np.ndarray = self._act_func[i](z, self.learnable_b[i])
+            a: np.ndarray = self._act_func[i](z, self.alpha[i])
 
         return a.flatten().tolist()
 
@@ -140,7 +141,7 @@ class NeuralNetwork:
             # z = W*A + b
             z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
             # A = activation(z)
-            a: np.ndarray = self._act_func[i](z, self.learnable_b[i])
+            a: np.ndarray = self._act_func[i](z, self.alpha[i])
 
         if raw_ndarray_output:
             return a
@@ -194,7 +195,7 @@ class NeuralNetwork:
                 # z = W*A + b
                 z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i].reshape(-1, 1) # broadcasting
                 # A = activation(z)
-                a: np.ndarray = self._act_func[i](z, self.learnable_b[i])
+                a: np.ndarray = self._act_func[i](z, self.alpha[i])
                 # Record values for training
                 z_layers.append(z)
                 a_layers.append(a)
@@ -209,19 +210,19 @@ class NeuralNetwork:
             if self._act_func[-1].name == "softmax":
 
                 da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_da = self._act_deriv_func[-1](z_layers[-1], self.learnable_b[i]) # Jacobians; (batch_size, dim, dim)
+                dL_wrt_da = self._act_deriv_func[-1](z_layers[-1], self.alpha[i]) # Jacobians; (batch_size, dim, dim)
                 
                 t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, dim, 1)
                 term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
-                term_1_2: np.ndarray = self._act_deriv_func[-1](z_layers[-1], self.learnable_b[i]) * act_grad
+                term_1_2: np.ndarray = self._act_deriv_func[-1](z_layers[-1], self.alpha[i]) * act_grad
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):
 
                 # Math
                 # z(n) = w(n)*a(n-1) + b(n)
-                # a(n) = activation(z(n,b)) # learnable parem is unused for most activations
+                # a(n) = activation(z(n,b)) # learnable parem is used only in some activations
 
                 # CALCULATE derivative of loss with respect to weights
                 # dL/dw(n)
@@ -232,7 +233,7 @@ class NeuralNetwork:
                 # UPDATE/APPLY negative of average gradient change to weights
                 l2_term_for_w: np.ndarray = self.weights[i] * self.l2_lambda # Compute regularization term
                 self.v_w[i] = self.m_beta * self.v_w[i] + (1 - self.m_beta) * (w_grad + l2_term_for_w)
-                self.weights[i] += -1 * self.v_w[i] * self.lr
+                self.weights[i] += -1 * self.v_w[i] * self.LR
 
                 # CALCULATE derivative of loss with respect to biases
                 # dL/db(n)
@@ -243,17 +244,18 @@ class NeuralNetwork:
                 # UPDATE/APPLY negative of average gradient change to biases
                 l2_term_for_b: np.ndarray = self.biases[i] * self.l2_lambda # Compute regularization term
                 self.v_b[i] = self.m_beta * self.v_b[i] + (1 - self.m_beta) * (b_grad + l2_term_for_b)
-                self.biases[i] += -1 * self.v_b[i] * self.lr
+                self.biases[i] += -1 * self.v_b[i] * self.LR
 
                 # CALCULATE derivative of loss with respect to learnable parameter
                 # dL/dlearn_b(n)
                 # = dL/da(n) * da(n)/dlearn_b(n)
-                learnable_b_grad = np.mean(self._learnable_deriv_func[i](z_layers[i], self.learnable_b[i]) * act_grad)
+                dL_wrt_dlearn_b = self._learnable_deriv_func[i](z_layers[i], self.alpha[i]) * act_grad
+                alpha_grad = np.sum(dL_wrt_dlearn_b, axis=1, keepdims=True) / batch_size
 
                 # UPDATE/APPLY negative of average gradient change to learnable parameter
-                l2_term_for_learnable_b: np.float64 = self.learnable_b[i] * self.l2_lambda # Compute regularization term
-                self.v_learnable_b[i] = self.m_beta * self.v_learnable_b[i] + (1 - self.m_beta) * (learnable_b_grad * l2_term_for_learnable_b)
-                self.learnable_b[i] += -1 * self.v_learnable_b[i] * self.lr
+                l2_term_for_alpha: np.float64 = self.alpha[i] * self.l2_lambda # Compute regularization term
+                self.v_alpha[i] = self.m_beta * self.v_alpha[i] + (1 - self.m_beta) * (alpha_grad * l2_term_for_alpha)
+                self.alpha[i] += -1 * self.v_alpha[i] * self.LR
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation
@@ -266,7 +268,7 @@ class NeuralNetwork:
                 # important component for HIDDEN LAYER backpropagations
                 # update for next layer
                 # term_2_3 = da(n)/dz(n) * dL/da(n)
-                term_1_2: np.ndarray = self._act_deriv_func[i-1](z_layers[i-1], self.learnable_b[i-1]) * act_grad
+                term_1_2: np.ndarray = self._act_deriv_func[i-1](z_layers[i-1], self.alpha[i-1]) * act_grad
             
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
