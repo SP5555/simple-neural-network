@@ -13,6 +13,12 @@ class Activations:
     _LL_exclusive = ("id", "linear", "softmax")
     _LL_classification_acts = ("sigmoid", "tanh", "softmax")
     _learnable_acts = ("prelu", "swish")
+    _learn_param_initialization = {
+        "prelu": 0.01,
+        "swish": 1.0,
+    }
+    _learn_param_clip_low = 0.001
+    _learn_param_clip_high = 5.0
     
     # ===== Sigmoid =====
     @staticmethod
@@ -49,24 +55,24 @@ class Activations:
     # ===== Leaky ReLU =====
     @staticmethod
     def _leaky_relu(x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, x, 0.1 * x)
+        return np.where(x > 0, x, 0.01 * x)
 
     @staticmethod
     def _leaky_relu_deriv(x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 1, 0.1)
+        return np.where(x > 0, 1, 0.01)
     
     # ===== Parametric ReLU (Learnable Leaky ReLU) =====
     @staticmethod
     def _prelu(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, x, 0.1 * alp * x)
+        return np.where(x > 0, x, alp * x)
 
     @staticmethod
     def _prelu_deriv(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 1, 0.1 * alp)
+        return np.where(x > 0, 1, alp)
 
     @staticmethod
     def _prelu_param_deriv(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 0, 0.1 * x)
+        return np.where(x > 0, 0, x)
     
     # ===== Swish with disabled learnable parameter =====
     @staticmethod

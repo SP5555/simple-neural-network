@@ -97,7 +97,8 @@ class NeuralNetwork:
             # extra learnable parameters
             # one per each neuron
             # neurons in layers that don't use learnable parameters will remain fixed at 1.0 throughout training
-            self.alpha.append(np.ones((layers[i + 1], 1)))
+            init_value = Activations._learn_param_initialization.get(activation[i], 1.0) # default to 1.0 if not found
+            self.alpha.append(np.full((layers[i + 1], 1), init_value))
 
         # velocities for momentum technique
         self.v_w = [np.zeros_like(w) for w in self.weights]
@@ -257,6 +258,7 @@ class NeuralNetwork:
                     l2_term_for_alpha: np.ndarray = self.alpha[i] * self.l2_lambda # Compute regularization term
                     self.v_alpha[i] = self.m_beta * self.v_alpha[i] + (1 - self.m_beta) * (alpha_grad + l2_term_for_alpha)
                     self.alpha[i] += -1 * self.v_alpha[i] * self.LR
+                    self.alpha[i] = np.clip(self.alpha[i], Activations._learn_param_clip_low, Activations._learn_param_clip_high)
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation
