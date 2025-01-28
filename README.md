@@ -323,7 +323,7 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 ## Future Improvements
 - chill out. Not right now.
 
-# Abyssal Zone
+# Abyssal Zone (Recommended to not proceed)
 You made it this far. A scrolling enthusiast. Let's see where this takes you.
 
 ## Activation Functions
