@@ -321,3 +321,15 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 
 ## Future Improvements
 - chill out. Not right now.
+
+# Abyssal Zone
+You made it this far. A scrolling enthusiast. Let's see where this takes you.
+
+## Activation Functions Implemented
+### Sigmoid
+An 'S' shaped function very commonly used in neural networks. Since output ranges between 0 and 1, sigmoid is useful for classification tasks.
+```math
+A(x)=\frac{1}{1+e^{-x}}
+```
+
+$$A(x)=\frac{1}{1+e^{-x}}$$
