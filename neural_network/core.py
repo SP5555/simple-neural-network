@@ -210,12 +210,12 @@ class NeuralNetwork:
             if self._act_func[-1].name == "softmax":
 
                 da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-                dL_wrt_da = self._act_deriv_func[-1](z_layers[-1], self.alpha[i]) # Jacobians; (batch_size, dim, dim)
+                dL_wrt_da = self._act_deriv_func[-1](z_layers[-1], self.alpha[-1]) # Jacobians; (batch_size, dim, dim)
                 
                 t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, dim, 1)
                 term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (dim, batch_size)
             else:
-                term_1_2: np.ndarray = self._act_deriv_func[-1](z_layers[-1], self.alpha[i]) * act_grad
+                term_1_2: np.ndarray = self._act_deriv_func[-1](z_layers[-1], self.alpha[-1]) * act_grad
             
             # backpropagation
             for i in reversed(range(self._layer_count - 1)):

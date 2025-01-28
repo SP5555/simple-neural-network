@@ -16,10 +16,10 @@ class Utils:
         for i in range(self.core._layer_count - 1):
             print(f'w L{i+1} -> L{i+2}:')
             print(self.core.weights[i])
-            print(f'learnable param L{i+1} -> L{i+2}:')
-            print(self.core.alpha[i])
             print(f'b L{i+1} -> L{i+2}:')
             print(self.core.biases[i])
+            print(f'learnable param L{i+1} -> L{i+2}:')
+            print(self.core.alpha[i])
 
     def _get_param_count(self) -> int:
         c: int = 0
