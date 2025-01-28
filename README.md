@@ -373,6 +373,7 @@ Unlike all other activation functions, **Softmax** squashes raw scores of all ne
 
 $$A_{i}( x) =\frac{e^{x_{i}}}{\sum _{j=1}^{n} e^{x_{j}}}$$
 
+
 ## Loss Functions
 Loss functions measure how well a model's predictions align with the target values. They get applied to each neuron in the output layer, and the whole point of training a neural network is to adjust the parameters so that the loss gets as small as possible. The better we can get each neuron to predict with less loss, the more accurate the model becomes. The entire realm of Linear Algebra and Calculus has been summoned to minimize this loss value.
 
