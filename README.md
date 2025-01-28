@@ -331,14 +331,17 @@ Activation functions calculate the output value of a neuron given the input valu
 
 ### Sigmoid
 An 'S' shaped function very commonly used in neural networks. Since output ranges between 0 and 1, **Sigmoid** is useful for classification tasks. Suffers from **vanishing gradient problem**. *Monkey Language: If $x$ becomes too small (large negative) or too large (large positive), gradients (derivatives) used to update the network become very small, making the network learn very slowly, if at all.*
+
 $$A(x)=\sigma ( x)=\frac{1}{1+e^{-x}}$$
 
 ### Tanh
 Classic Hyperbolic Tangent function. **Tanh** generally gives better performance than **Sigmoid** when used in hidden layers due to its ability to express both negative and positive numbers from -1 to 1. Therefore, useful for classification. This one suffers from **vanishing gradient problem** too.
+
 $$A( x) =\tanh( x) =\frac{e^{x} -e^{-x}}{e^{x} +e^{-x}}$$
 
 ### ReLU
 The Rectified Linear Unit activation function is an unbounded function with output ranging up to infinity. Main strength lies in its simplicity not having to do nasty math functions on the silicon. However, **ReLU** suffers from **dying ReLU problem**. *Monkey Language: when input $x$ is negative, it basically cuts off information or kills the neurons with the output activation value of $0$. Therefore, backpropagation algorithms can't pass through this dead gradient barrier.*
+
 $$A(x) =\begin{cases}
 x & \text{if}\ x >0\\
 0 & \text{if}\ x\leqslant 0
@@ -346,6 +349,7 @@ x & \text{if}\ x >0\\
 
 ### Leaky ReLU
 Basically **ReLU** but leaking on the negative side. **Leaky ReLYU** can mitigate the **dying ReLU problem**. By introducing a small slope, $\alpha$ (usually $0.01$, can be configured), on the negative side, it creates non-zero gradient for negative inputs, potentially allowing backpropagation to revive the "dead" neurons which **ReLU** can't. **Leaky ReLU** is computationally cheap like **ReLU**, making it a cost-efficient activation function for regression problems. 
+
 $$A(x) =\begin{cases}
 x & \text{if}\ x >0\\
 \alpha x & \text{if}\ x\leqslant 0
@@ -356,14 +360,17 @@ Disturbed by the fixed slope $\alpha$ in **Leaky ReLU**? This is where **PReLU**
 
 ### Linear (Identity)
 For those who love simplicity. It's lightning-fast since it involves literally no math. However, due to the lack of non-linearity, a deep network made up of thousands, millions, or even billions of layers with **Linear** activations is mathematically equivalent to a single linearly activated layer. Too bad right? Yeah, this is why **Linear** is only used in the final layer when raw values are required (regression tasks). No point using this in hidden layers.
+
 $$A(x)=x$$
 
 ### Swish
 When sharp changes in gradient of **ReLU** variants do not fit your favor and you still want the power of **ReLU**, **Swish** comes to the rescue. Thanks to its smooth gradient, it can outperform traditional **ReLU** variants. What makes it even more powerful? The addition of a learnable parameter, $\beta$, ensuring a high performance uplift. Of course, with great power comes great cost, **Swish** is by far the most computationally expensive activation to calculate. Alternatively, learnable parameter $\beta$ can be disabled (permanently set to $1$) to reduce computation while maintaining relatively high performance. 
+
 $$A(x)=x\sigma(\beta x)=\frac{x}{1+e^{-x}}$$
 
 ### Softmax
 Unlike all other activation functions, **Softmax** squashes raw scores of all neurons in same layer into a probability distribution, ensuring all values are positive and sum up to $1$. Backpropagation and gradient calculations become further complicated due to its interconnectivity between activations in the same layer. Since all activations sum up to just $1$, using **Softmax** in hidden layers would effectively suppress weaker activated neurons and exaggerate stronger ones, which is not what we want. For this reason, **Softmax** is typically reserved for the final layer in multiclass classification tasks.
+
 $$A_{i}( x) =\frac{e^{x_{i}}}{\sum _{j=1}^{n} e^{x_{j}}}$$
 
 ## Loss Functions
@@ -371,14 +378,17 @@ Loss functions measure how well a model's predictions align with the target valu
 
 ### Mean-Squared Error (MSE)
 A commonly used loss function. As the name suggests, it is just the square of the error. The squaring effect diminishes small errors (values less than $1$) but causes large errors to explode, making this both a strength and a weakness of the **Mean-Squared Error** loss function. Due to its ability to deal with errors of all sizes (assuming we have infinite hardware power to handle extremely large squared values), it is most suited for regression tasks.
+
 $$MSE=( y_{actual} -y_{predicted})^{2}$$
 
 ### Binary Cross-Entropy (BCE)
 When **MSE** struggles with small error values (less than $1$) due to squaring, which diminishes those values, **Binary Cross-Entropy** is the answer. The logarithmic functions help amplify the error between $0$ and $1$, making it much more effective at penalizing incorrect predictions in this tiny range. This gives **BCE** an edge, especially in binary classification tasks where the model's predictions need to be confident (either $0$ or $1$).
+
 $$BCE=-y_{actual}\log(y_{predicted})-(1-y_{actual})\log(1-y_{predicted})$$
 
 ### Categorial Cross-Entropy (CCE)
 While **BCE** penalizes both $1$s for not being $0$ and $0$s for not being $1$, **Categorical Cross-Entropy** (CCE) focuses only on punishing the $0$s when they should be $1$. Designed to work with one-hot encoded values *together* with the **Softmax** activation function, **CCE** can guide a neural network to categorize data accurately by heavily penalizing incorrect $0$ predictions. Once low raw scores become high enough, the **Softmax** activation will reward them with a high probability distribution.
+
 $$CCE=-y_{actual}\log(y_{predicted})$$
 
 ## Techniques
@@ -393,9 +403,13 @@ What is the intuition? In neural networks, large parameter values have a stronge
 
 ### Momentum
 In physics, when an object is moving, it has momentum. Objects with momentum continue to maintain that momentum unless external forces act upon them. Similarly, in neural networks, when parameters are moving toward a local minimum to minimize the loss, the momentum technique gives them the ability to "glide." This "gliding" helps them escape high-loss plateaus, allowing them to reach the local minimum more efficiently. It introduces the concept of "velocity" for each parameter in the model. The velocity is updated as follows:
+
 $$v_{t+1} =\beta v_{t} +( 1-\beta ) \nabla L( w_{t})$$
+
 where $\beta$ is the momentum strength, ranging between $0$ and $1$. A value of $0$ disables the "gliding" behavior while $1$ results in full "gliding" with no update. Ideally, $\beta$ is set between $0.5$ and $0.8$.
 
 And the calculated velocity is applied to parameters as follows:
+
 $$w_{t+1} =w_{t} -\alpha v_{t+1}$$
+
 Here, $\alpha$ is simply the **learn rate**, which controls how fast or slow the velocity moves the parameter. Ideally, $\alpha$ values less than $0.01$ are preferred. It can go as low as $0.0001$ in some cases.
