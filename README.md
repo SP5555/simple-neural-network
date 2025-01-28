@@ -407,7 +407,9 @@ What is the intuition? In neural networks, large parameter values have a stronge
 ### Momentum
 In physics, when an object is moving, it has momentum. Objects with momentum continue to maintain that momentum unless external forces act upon them. Similarly, in neural networks, when parameters are moving toward a local minimum to minimize the loss, the momentum technique gives them the ability to "glide." This "gliding" helps them escape high-loss plateaus, allowing them to reach the local minimum more efficiently. It introduces the concept of "velocity" for each parameter in the model. The velocity is updated as follows:
 
-$$v_{t+1} =\beta v_{t} +( 1-\beta ) \nabla L( w_{t})$$
+```math
+v_{t+1} =\beta v_{t} +( 1-\beta ) \nabla L( w_{t})
+```
 
 where $\beta$ is the momentum strength, ranging between $0$ and $1$. A value of $0$ disables the "gliding" behavior while $1$ results in full "gliding" with no update. Ideally, $\beta$ is set between $0.5$ and $0.8$.
 
