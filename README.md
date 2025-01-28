@@ -387,7 +387,7 @@ When **MSE** struggles with small error values (less than 1) due to squaring, wh
 $$BCE=-y_{actual}\log(y_{predicted})-(1-y_{actual})\log(1-y_{predicted})$$
 
 ### Categorial Cross-Entropy (CCE)
-While **BCE** penalizes both 1s for not being 0 and 0s for not being 1, **Categorical Cross-Entropy** (CCE) focuses only on punishing the 0s when they should be 1. Designed to work with one-hot encoded values *together* with the **Softmax** activation function, **CCE** can guide a neural network to categorize data accurately by heavily penalizing incorrect 0 predictions. Once low raw scores become high enough, the **Softmax** activation will convert them with a high probability distribution.
+While **BCE** penalizes both 1s for not being 0 and 0s for not being 1, **Categorical Cross-Entropy** (CCE) focuses only on punishing the 0s when they should be 1. Designed to work with one-hot encoded values *together* with the **Softmax** activation function, **CCE** can guide a neural network to categorize data accurately by heavily penalizing incorrect 0 predictions. Once low raw scores become high enough, the **Softmax** activation will convert them into a high probability distribution.
 
 $$CCE=-y_{actual}\log(y_{predicted})$$
 
