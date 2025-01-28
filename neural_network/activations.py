@@ -55,14 +55,25 @@ class Activations:
     def _leaky_relu_deriv(x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, 1, 0.1)
 
-    # ===== Swish =====
-    def _swish(x: np.ndarray) -> np.ndarray:
-        s = Activations._sigmoid(x)
+    # ===== Swish ===== learnable parameter
+    @staticmethod
+    def _swish(x: np.ndarray, b: np.float64) -> np.ndarray:
+        # swish(x, b) = x * s(bx)
+        s = Activations._sigmoid(b * x)
         return x * s
     
-    def _swish_deriv(x: np.ndarray) -> np.ndarray:
-        s = Activations._sigmoid(x)
-        return s * (1 + x * (1 - s))
+    @staticmethod
+    def _swish_deriv(x: np.ndarray, b: np.float64) -> np.ndarray:
+        # dswish(x, b)/dx = s(bx) * (1 + bx * (1 - s(bx)))
+        bx = b * x
+        s = Activations._sigmoid(bx)
+        return s * (1 + bx * (1 - s))
+
+    @staticmethod
+    def _swish_learnable_deriv(x: np.ndarray, b:np.float64) -> np.ndarray:
+        # dswish(x, b)/db = x^2 * s(bx) * (1 - s(bx))
+        s = Activations._sigmoid(b * x)
+        return x * x * s * (1 - s)
 
     # ===== Linear Activation =====
     @staticmethod
