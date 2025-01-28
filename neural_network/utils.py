@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 class Utils:
     def __init__(self, core_instance: "NeuralNetwork"):
         self.core = core_instance
- 
+
     def inspect_weights_and_biases(self) -> None:
         np.set_printoptions(precision=4)
         for i in range(self.core._layer_count - 1):
@@ -24,9 +24,11 @@ class Utils:
     def _get_param_count(self) -> int:
         c: int = 0
         for i in range(self.core._layer_count - 1):
-            # c += self.layers[i + 1] * self.layers[i] # Weights
-            # c += self.layers[i + 1] # Biases
+            # c += self._layers[i + 1] * self._layers[i] # Weights
+            # c += self._layers[i + 1] # Biases
             c += self.core._layers[i + 1] * (self.core._layers[i] + 1)
+            if (self.core._act_func[i].name in Activations._learnable_acts):
+                c += self.core._layers[i + 1]
         return c
 
     @staticmethod
@@ -34,9 +36,11 @@ class Utils:
         actv_funcs = {
             'relu':         ActivationWrapper(lambda z, b: Activations._relu(z), "relu"),
             'leaky_relu':   ActivationWrapper(lambda z, b: Activations._leaky_relu(z), "leaky_relu"),
+            'prelu':        ActivationWrapper(lambda z, b: Activations._prelu(z, b), "prelu"),
             'tanh':         ActivationWrapper(lambda z, b: Activations._tanh(z), "tanh"),
             'sigmoid':      ActivationWrapper(lambda z, b: Activations._sigmoid(z), "sigmoid"),
             'swish':        ActivationWrapper(lambda z, b: Activations._swish(z, b), "swish"),
+            'swish_f':      ActivationWrapper(lambda z, b: Activations._swish_fixed(z), "swish_f"),
             'id':           ActivationWrapper(lambda z, b: Activations._id(z), "id"),
             'linear':       ActivationWrapper(lambda z, b: Activations._id(z), "linear"),
             'softmax':      ActivationWrapper(lambda z, b: Activations._softmax(z), "softmax"),
@@ -50,9 +54,11 @@ class Utils:
         actv_deriv_funcs = {
             'relu':         ActivationWrapper(lambda z, b: Activations._relu_deriv(z), "relu"),
             'leaky_relu':   ActivationWrapper(lambda z, b: Activations._leaky_relu_deriv(z), "leaky_relu"),
+            'prelu':        ActivationWrapper(lambda z, b: Activations._prelu_deriv(z, b), "prelu"),
             'tanh':         ActivationWrapper(lambda z, b: Activations._tanh_deriv(z), "tanh"),
             'sigmoid':      ActivationWrapper(lambda z, b: Activations._sigmoid_deriv(z), "sigmoid"),
             'swish':        ActivationWrapper(lambda z, b: Activations._swish_deriv(z, b), "swish"),
+            'swish_f':      ActivationWrapper(lambda z, b: Activations._swish_fixed_deriv(z), "swish_f"),
             'id':           ActivationWrapper(lambda z, b: Activations._id_deriv(z), "id"),
             'linear':       ActivationWrapper(lambda z, b: Activations._id_deriv(z), "linear"),
             'softmax':      ActivationWrapper(lambda z, b: Activations._softmax_deriv(z), "softmax"),
@@ -60,11 +66,12 @@ class Utils:
         name = name.strip().lower()
         if name in actv_deriv_funcs: return actv_deriv_funcs[name]
         raise InputValidationError(f"Unsupported activation function: {name}")
-    
+
     @staticmethod
     def _get_learnable_alpha_grad_func(name: str):
         learnable_alpha_grad_funcs = {
-            'swish': ActivationWrapper(lambda z, b: Activations._swish_learnable_deriv(z, b), "swish"),
+            'swish':        ActivationWrapper(lambda z, b: Activations._swish_param_deriv(z, b), "swish"),
+            'prelu':        ActivationWrapper(lambda z, b: Activations._prelu_param_deriv(z, b), "prelu"),
         }
         name = name.strip().lower()
         if name in learnable_alpha_grad_funcs:

@@ -7,7 +7,7 @@ def main():
         activation=["swish", "swish", "softmax"],
         loss_function="CCE",
         learn_rate=0.02,
-        lambda_parem=0.008,
+        lambda_parem=0.001,
         momentum=0.75
     )
 

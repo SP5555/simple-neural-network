@@ -222,7 +222,7 @@ class NeuralNetwork:
 
                 # Math
                 # z(n) = w(n)*a(n-1) + b(n)
-                # a(n) = activation(z(n,b)) # learnable parem is used only in some activations
+                # a(n) = activation(z(n,learn_b)) # learnable parem is used only in some activations
 
                 # CALCULATE derivative of loss with respect to weights
                 # dL/dw(n)
@@ -246,16 +246,17 @@ class NeuralNetwork:
                 self.v_b[i] = self.m_beta * self.v_b[i] + (1 - self.m_beta) * (b_grad + l2_term_for_b)
                 self.biases[i] += -1 * self.v_b[i] * self.LR
 
-                # CALCULATE derivative of loss with respect to learnable parameter
-                # dL/dlearn_b(n)
-                # = dL/da(n) * da(n)/dlearn_b(n)
-                dL_wrt_dlearn_b = self._learnable_deriv_func[i](z_layers[i], self.alpha[i]) * act_grad
-                alpha_grad = np.sum(dL_wrt_dlearn_b, axis=1, keepdims=True) / batch_size
+                if self._act_func[i].name in Activations._learnable_acts:
+                    # CALCULATE derivative of loss with respect to learnable    parameter
+                    # dL/dlearn_b(n)
+                    # = dL/da(n) * da(n)/dlearn_b(n)
+                    dL_wrt_dlearn_alpha = self._learnable_deriv_func[i](z_layers[i], self.alpha[i]) * act_grad
+                    alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
 
-                # UPDATE/APPLY negative of average gradient change to learnable parameter
-                l2_term_for_alpha: np.float64 = self.alpha[i] * self.l2_lambda # Compute regularization term
-                self.v_alpha[i] = self.m_beta * self.v_alpha[i] + (1 - self.m_beta) * (alpha_grad * l2_term_for_alpha)
-                self.alpha[i] += -1 * self.v_alpha[i] * self.LR
+                    # UPDATE/APPLY negative of average gradient change to learnable parameter
+                    l2_term_for_alpha: np.ndarray = self.alpha[i] * self.l2_lambda # Compute regularization term
+                    self.v_alpha[i] = self.m_beta * self.v_alpha[i] + (1 - self.m_beta) * (alpha_grad + l2_term_for_alpha)
+                    self.alpha[i] += -1 * self.v_alpha[i] * self.LR
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation

@@ -11,8 +11,8 @@ class ActivationWrapper:
 # ACTIVATION FUNCTIONS
 class Activations:
     _LL_exclusive = ("id", "linear", "softmax")
-    _classification_LL_acts = ("sigmoid", "tanh", "softmax")
-    _learnable_acts = ()
+    _LL_classification_acts = ("sigmoid", "tanh", "softmax")
+    _learnable_acts = ("prelu", "swish")
     
     # ===== Sigmoid =====
     @staticmethod
@@ -54,12 +54,37 @@ class Activations:
     @staticmethod
     def _leaky_relu_deriv(x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, 1, 0.1)
-
-    # ===== Swish ===== learnable parameter
+    
+    # ===== Parametric ReLU (Learnable Leaky ReLU) =====
     @staticmethod
-    def _swish(x: np.ndarray, b: np.ndarray) -> np.ndarray:
+    def _prelu(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
+        return np.where(x > 0, x, 0.1 * alp * x)
+
+    @staticmethod
+    def _prelu_deriv(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
+        return np.where(x > 0, 1, 0.1 * alp)
+
+    @staticmethod
+    def _prelu_param_deriv(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
+        return np.where(x > 0, 0, 0.1 * x)
+    
+    # ===== Swish with disabled learnable parameter =====
+    @staticmethod
+    def _swish_fixed(x: np.ndarray) -> np.ndarray:
+        # swish(x) = x * s(x)
+        return x * Activations._sigmoid(x)
+    
+    @staticmethod
+    def _swish_fixed_deriv(x: np.ndarray) -> np.ndarray:
+        # dswish(x)/dx = s(x) * (1 + x * (1 - s(x)))
+        s = Activations._sigmoid(x)
+        return s * (1 + x * (1 - s))
+
+    # ===== Swish with learnable parameter =====
+    @staticmethod
+    def _swish(x: np.ndarray, alp: np.ndarray) -> np.ndarray:
         # swish(x, b) = x * s(bx)
-        s = Activations._sigmoid(b * x)
+        s = Activations._sigmoid(alp * x)
         return x * s
     
     @staticmethod
@@ -70,7 +95,7 @@ class Activations:
         return s * (1 + alpx * (1 - s))
 
     @staticmethod
-    def _swish_learnable_deriv(x: np.ndarray, alp:np.ndarray) -> np.ndarray:
+    def _swish_param_deriv(x: np.ndarray, alp:np.ndarray) -> np.ndarray:
         # dswish(x, b)/db = x^2 * s(bx) * (1 - s(bx))
         s = Activations._sigmoid(alp * x)
         return x * x * s * (1 - s)
