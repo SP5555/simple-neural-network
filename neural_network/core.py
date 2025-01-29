@@ -52,7 +52,7 @@ class NeuralNetwork:
 
         # Momentum Beta for Momentum Gradient Descent
         # 0.0 disables the momentum behavior
-        # having momentum beta helps escape the high cost "plateaus" better
+        # having momentum beta helps escape the high loss "plateaus" better
         # high values result in smoother/stronger "gliding" descent
         # MUST be less than 1.0
         #     new_velocity = momentum * old_velocity + (1-momentum) * (parameter_gradient + lambda_parem * parameter)
@@ -74,17 +74,17 @@ class NeuralNetwork:
             if len(activation) != self._layer_count - 1:
                 raise InputValidationError(f"Expected {self._layer_count - 1} activation functions, but got {len(activation)}.")
 
-            # Verifier
-            for i, act in enumerate(activation):
-                if i < self._layer_count - 2 and self.utils._get_act_func(act).name in Activations._LL_exclusive:
-                    raise InputValidationError(f"{act} activation can't be used in hidden layers.")
+            # Check if LL exclusives are in hidden layers
+            for i in range(self._layer_count - 2):
+                if self.utils._get_act_func(activation[i]).name in Activations._LL_exclusive:
+                    raise InputValidationError(f"{activation[i]} activation can't be used in hidden layers.")
 
         self._act_func = [self.utils._get_act_func(i) for i in activation]
         self._act_deriv_func = [self.utils._get_act_deriv_func(i) for i in activation]
         self._learnable_deriv_func = [self.utils._get_learnable_alpha_grad_func(i) for i in activation]
 
         # Loss Functions
-        self._loss_deriv = self.utils._get_loss_deriv_func(loss_function)
+        self._loss_deriv_func = self.utils._get_loss_deriv_func(loss_function)
 
         self.weights: list = []
         self.biases: list = []
@@ -96,8 +96,9 @@ class NeuralNetwork:
         
             # extra learnable parameters
             # one per each neuron
-            # neurons in layers that don't use learnable parameters will remain fixed at 1.0 throughout training
-            init_value = Activations._learn_param_initialization.get(activation[i], 1.0) # default to 1.0 if not found
+            # learnable params of neurons in layers that don't use learnable parameters
+            # will remain fixed at 1.0 throughout training
+            init_value = Activations._learn_param_values.get(activation[i], (1.0,))[0] # default to 1.0 if not found
             self.alpha.append(np.full((layers[i + 1], 1), init_value))
 
         # velocities for momentum technique
@@ -204,7 +205,7 @@ class NeuralNetwork:
             # a holds columns of output here
             # y is desired output
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
-            act_grad: np.ndarray = self._loss_deriv(a, y)
+            act_grad: np.ndarray = self._loss_deriv_func(a, y)
 
             # important component for LAST LAYER backpropagation
             # term_1_2 = dL/da(n) * da(n)/dz(n)
@@ -258,7 +259,7 @@ class NeuralNetwork:
                     l2_term_for_alpha: np.ndarray = self.alpha[i] * self.l2_lambda # Compute regularization term
                     self.v_alpha[i] = self.m_beta * self.v_alpha[i] + (1 - self.m_beta) * (alpha_grad + l2_term_for_alpha)
                     self.alpha[i] += -1 * self.v_alpha[i] * self.LR
-                    self.alpha[i] = np.clip(self.alpha[i], Activations._learn_param_clip_low, Activations._learn_param_clip_high)
+                    self.alpha[i] = np.clip(self.alpha[i], Activations._learn_param_values[self._act_func[i].name][1], Activations._learn_param_values[self._act_func[i].name][2])
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation

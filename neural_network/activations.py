@@ -13,12 +13,11 @@ class Activations:
     _LL_exclusive = ("id", "linear", "softmax")
     _LL_classification_acts = ("sigmoid", "tanh", "softmax")
     _learnable_acts = ("prelu", "swish")
-    _learn_param_initialization = {
-        "prelu": 0.01,
-        "swish": 1.0,
+    _learn_param_values = {
+        # name: (initial, low_cap, high_cap)
+        "prelu": (0.01, 0.001, 0.1),
+        "swish": (1.0, 0.5, 10.0)
     }
-    _learn_param_clip_low = 0.001
-    _learn_param_clip_high = 5.0
     
     # ===== Sigmoid =====
     @staticmethod
@@ -106,7 +105,7 @@ class Activations:
         s = Activations._sigmoid(alp * x)
         return x * x * s * (1 - s)
 
-    # ===== Linear Activation =====
+    # ===== Linear (Identity) =====
     @staticmethod
     def _id(x: np.ndarray) -> np.ndarray:
         return x
