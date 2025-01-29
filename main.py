@@ -6,7 +6,7 @@ def main():
         layers=[4, 12, 12, 3],
         activation=["swish", "swish", "softmax"],
         loss_function="CCE",
-        learn_rate=0.02,
+        learn_rate=0.03,
         lambda_parem=0.001,
         momentum=0.75
     )

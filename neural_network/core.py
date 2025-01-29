@@ -92,8 +92,8 @@ class NeuralNetwork:
         # Learnable parameter bounds for each layer
         # defaults to (1.0, 1.0, 1.0) for non-learnable functions
         self._learnable_bounds = [
-            (Activations._learn_param_values.get(x, (1.0, 1.0, 1.0))[1],
-             Activations._learn_param_values.get(x, (1.0, 1.0, 1.0))[2])
+            (Activations._learn_param_values.get(x, (None, None, None))[1],
+             Activations._learn_param_values.get(x, (None, None, None))[2])
              for x in activation
         ]
 
@@ -112,7 +112,7 @@ class NeuralNetwork:
             # one per each neuron
             # learnable params of neurons in layers that don't use learnable parameters
             # will remain fixed at 1.0 throughout training
-            init_value = Activations._learn_param_values.get(activation[i], (1.0,))[0] # default to 1.0 if not found
+            init_value = Activations._learn_param_values.get(activation[i], (None,))[0] # default to 1.0 if not found
             self.alpha.append(np.full((layers[i + 1], 1), init_value))
 
         # velocities for momentum technique

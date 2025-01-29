@@ -20,7 +20,7 @@ class Activations:
     _learn_param_values = {
         # name: (initial, low_cap, high_cap)
         "prelu": (0.01, 0.001, 0.1),
-        "swish": (1.0, 0.5, 10.0)
+        "swish": (1.0, 0.5, 5.0)
     }
     
     # ===== Sigmoid =====
