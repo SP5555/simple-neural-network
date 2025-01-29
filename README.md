@@ -19,6 +19,7 @@ First off, a huge shoutout to the awesome **NumPy** library, which is pretty muc
     - [Regression](#regression-performance)
 - [Synthetic Data Generation](#synthetic-data-generation)
 - [Experiment!](#experiment)
+- [What to Expect?](#what-to-expect)
 - [GPU Acceleration?](#gpu-acceleration)
 - [Resources *& Inspirations :)*](#resources--inspirations-)
 
@@ -306,6 +307,19 @@ Feel free to mess around with the hyperparameters, or change things up entirely.
 
 *But hey, no one gets hurt if this thing breaks.*
 
+## What to Expect?
+This network has **insane level of scalibility** in terms of depth (number of layers) and width (neurons per layer), with the only real limit being your hardware, super impressive! Dense network architectures are suited the most for general-purpose tasks since they can approximate *any* mathematical function.
+
+*Monkey Language: We're saying that stacks of linear equations and activation functions can approximate even the most complicated mathematical relations to some extent, similar to how taylor series approximation works. As long as there's an underlying mathematical pattern between the input and output, this network can learn to model it!*
+
+Meanwhile, due to the **Lack of Structure Awareness**, the input is just a big flat vector of numbers to this network. And therefore, it can NOT understand the spatial hierarchies like **Convolutional Neural Networks (CNN)** and sequential dependencies like **Recurrent Neural Networks (RNN)**.
+
+*Monkey Language: this means, you can't train this dense network to recognize images, or "understand" the meaning of texts and time-series data efficiently.*
+
+That said, this does not mean it's impossible, just less efficient. **CNN**s and **RNN**s just happen to have "specialized brains" for those tasks. This network might feel like it's "brute-forcing" solutions instead of leveraging patterns more naturally.
+
+Interestingly, **CNN**s and **RNN**s still end with a **fully connected (dense) neural network** for final predictions. This means only one thing: this **Simple Neural Network** can be extended in the future with **CNN**s or **RNN**s.
+
 ## GPU Acceleration?
 This neural network implementation is built using pure **NumPy** utilities, which allows for easy conversion to **CuPy** for GPU acceleration without changing the code structure. By simply replacing **NumPy** with **CuPy**, computations can be offloaded to a CUDA-capable GPU, for faster training for large network and datasets.
 
@@ -328,7 +342,9 @@ You made it this far. A scrolling enthusiast. Let's see where this takes you.
 Activation functions calculate the output value of a neuron given the input value. As simple as that. They are inspired by the the behavior of neurons in the brain. A biological neuron "fires" or activates when it receives a signal exceeding a certain threshold. Similarly, activation functions in artificial neurons produce outputs based on the input values. This allows artificial neurons in a neural network layer to process information in a way that mimics biological neurons, deciding whether to pass on a signal to the next layer or not depending on the strength of the input.
 
 ### Sigmoid
-An 'S' shaped function very commonly used in neural networks. Since output ranges between 0 and 1, **Sigmoid** is useful for classification tasks. Suffers from **vanishing gradient problem**. *Monkey Language: If* $x$  *becomes too small (large negative) or too large (large positive), gradients (derivatives) used to update the network become very small, making the network learn very slowly, if at all.*
+An 'S' shaped function very commonly used in neural networks. Since output ranges between 0 and 1, **Sigmoid** is useful for classification tasks. Suffers from **vanishing gradient problem**.
+
+*Monkey Language: If* $x$  *becomes too small (large negative) or too large (large positive), gradients (derivatives) used to update the network become very small, making the network learn very slowly, if at all.*
 
 $$A(x)=\sigma ( x)=\frac{1}{1+e^{-x}}$$
 
@@ -338,7 +354,9 @@ Classic Hyperbolic Tangent function. **Tanh** generally gives better performance
 $$A( x) =\tanh( x) =\frac{e^{x} -e^{-x}}{e^{x} +e^{-x}}$$
 
 ### ReLU
-The Rectified Linear Unit activation function is an unbounded function with output ranging up to infinity. Main strength lies in its simplicity not having to do nasty math functions on the silicon. However, **ReLU** suffers from **dying ReLU problem**. *Monkey Language: when input* $x$  *is negative, it basically cuts off information or kills the neurons with the output activation value of 0. Therefore, backpropagation algorithms can't pass through this dead gradient barrier.*
+The Rectified Linear Unit activation function is an unbounded function with output ranging up to infinity. Main strength lies in its simplicity not having to do nasty math functions on the silicon. However, **ReLU** suffers from **dying ReLU problem**.
+
+*Monkey Language: when input* $x$  *is negative, it basically cuts off information or kills the neurons with the output activation value of 0. Therefore, backpropagation algorithms can't pass through this dead gradient barrier.*
 
 $$A(x) =\begin{cases}
 x & \text{if}\ x >0\\
@@ -396,8 +414,12 @@ $$CCE=-y_{actual}\log(y_{predicted})$$
 ### L2 (Ridge) Regularization
 Just like in life, being an extremist is never good. The same goes for neural networks. Both underfitting and overfitting are problems to avoid:
 
-- **Underfitting** happens when a network isn't able to learn well enough. This can happen due to various factors like a low neuron count, lack of non-linearity, or too low of a learning rate. *Monkey Language: The network can't learn because it does not have enough brain cells or its brain cells are too simple.*
-- **Overfitting** occurs when the network performs too perfectly on the training data, but fails to predict unseen data well. Essentially, the network "memorizes" the data instead of learning the underlying pattern. This usually happens due to overtraining, overwhelming number of parameters, overly strong gradients, or small datasets, etc. *Monkey Language: The network memorized the material taught in class without understanding it, only to fail the exam when unseen questions come up.*
+- **Underfitting** happens when a network isn't able to learn well enough. This can happen due to various factors like a low neuron count, lack of non-linearity, or too low of a learning rate.
+
+*Monkey Language: The network can't learn because it does not have enough brain cells or its brain cells are too simple.*
+- **Overfitting** occurs when the network performs too perfectly on the training data, but fails to predict unseen data well. Essentially, the network "memorizes" the data instead of learning the underlying pattern. This usually happens due to overtraining, overwhelming number of parameters, overly strong gradients, or small datasets, etc.
+
+*Monkey Language: The network memorized the material taught in class without understanding it, only to fail the exam when unseen questions come up.*
 
 Rather than trying to balance everything from the start, we begin with a highly capable neural network. Possibly, multiple layers and appropriate activation functions. Then, we introduce a bit of interference in the learning process to prevent the network from learning too perfectly. This is exactly what **L2 (Ridge) Regularization** does.
 
