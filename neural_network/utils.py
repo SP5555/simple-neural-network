@@ -1,5 +1,6 @@
 import numpy as np
 from .activations import Activations, ActivationWrapper
+from .print_utils import PrintUtils
 from .losses import Losses
 from .exceptions import InputValidationError
 
@@ -14,11 +15,11 @@ class Utils:
     def inspect_weights_and_biases(self) -> None:
         np.set_printoptions(precision=4)
         for i in range(self.core._layer_count - 1):
-            print(f'weights L{i+1} -> L{i+2}:')
+            PrintUtils.print_info(f'weights L{i+1} -> L{i+2}:')
             print(self.core.weights[i])
-            print(f'biases L{i+1} -> L{i+2}:')
+            PrintUtils.print_info(f'biases L{i+1} -> L{i+2}:')
             print(self.core.biases[i])
-            print(f'learnable param L{i+1} -> L{i+2}:')
+            PrintUtils.print_info(f'learnable param L{i+1} -> L{i+2}:')
             print(self.core.alpha[i])
 
     def _get_param_count(self) -> int:
@@ -30,6 +31,20 @@ class Utils:
             if (self.core._act_func[i].name in Activations._learnable_acts):
                 c += self.core._layers[i + 1]
         return c
+    
+    # names must be already all lowercase
+    @staticmethod
+    def _act_func_validator(names: list[str]):
+        for i, name in enumerate(names):
+            if name not in Activations._supported_acts:
+                raise InputValidationError(f"Unsupported activation function: {name}")
+            if name in Activations._LL_exclusive and i < len(names) - 1:
+                raise InputValidationError(f"{name} activation can't be used in hidden layers.")
+
+    @staticmethod
+    def _loss_func_validator(name: str):
+        if name not in Losses._supported_loss:
+            raise InputValidationError(f"Unsupported loss function: {name}")
 
     @staticmethod
     def _get_act_func(name: str):
@@ -45,9 +60,7 @@ class Utils:
             'linear':       ActivationWrapper(lambda z, b: Activations._id(z), "linear"),
             'softmax':      ActivationWrapper(lambda z, b: Activations._softmax(z), "softmax"),
         }
-        name = name.strip().lower()
-        if name in actv_funcs: return actv_funcs[name]
-        raise InputValidationError(f"Unsupported activation function: {name}")
+        return actv_funcs[name]
 
     @staticmethod
     def _get_act_deriv_func(name: str):
@@ -63,9 +76,7 @@ class Utils:
             'linear':       ActivationWrapper(lambda z, b: Activations._id_deriv(z), "linear"),
             'softmax':      ActivationWrapper(lambda z, b: Activations._softmax_deriv(z), "softmax"),
         }
-        name = name.strip().lower()
-        if name in actv_deriv_funcs: return actv_deriv_funcs[name]
-        raise InputValidationError(f"Unsupported activation function: {name}")
+        return actv_deriv_funcs[name]
 
     @staticmethod
     def _get_learnable_alpha_grad_func(name: str):
@@ -73,10 +84,9 @@ class Utils:
             'swish':        ActivationWrapper(lambda z, b: Activations._swish_param_deriv(z, b), "swish"),
             'prelu':        ActivationWrapper(lambda z, b: Activations._prelu_param_deriv(z, b), "prelu"),
         }
-        name = name.strip().lower()
         if name in learnable_alpha_grad_funcs:
             return learnable_alpha_grad_funcs[name]
-        return ActivationWrapper(lambda z, b=None: 0, "N/A")
+        return ActivationWrapper(lambda z, b: 0, "N/A")
 
     @staticmethod
     def _get_loss_deriv_func(name: str):
@@ -85,6 +95,4 @@ class Utils:
             'bce': Losses._bce_grad,
             'cce': Losses._mce_grad
         }
-        name = name.strip().lower()
-        if name in loss_funcs: return loss_funcs[name]
-        raise InputValidationError(f"Unsupported loss function: {name}")
+        return loss_funcs[name]

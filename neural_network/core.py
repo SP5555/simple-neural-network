@@ -2,6 +2,7 @@ import numpy as np
 from .activations import Activations
 from .utils import Utils
 from .metrics import Metrics
+from .print_utils import PrintUtils
 from .exceptions import InputValidationError
 
 class NeuralNetwork:
@@ -17,6 +18,7 @@ class NeuralNetwork:
         self.utils = Utils(self)
         self.metrics = Metrics(self)
         
+        # ===== ===== INPUT VALIDATION START ===== =====
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
         if len(layers) == 1:
@@ -26,17 +28,13 @@ class NeuralNetwork:
         if not all(isinstance(x, int) for x in layers): # if not all entries are integers
             raise InputValidationError("Layers must be a list of integers.")
         
-        self._layers: list = layers
-        self._layer_count: int = len(layers)
-        
         # Learn Rate
         # How fast or slow this network learns
         #     new_parameter = old_parameter - velocity * learn_rate 
         if learn_rate <= 0.0:
             raise InputValidationError("Learn rate must be positive.")
         if learn_rate >= 0.1:
-            print(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
-        self.LR = learn_rate
+            PrintUtils.print_warning(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
 
         # L2 Regularization Strength
         # low reg strength -> cook in class, and fail in exam; overfit
@@ -47,8 +45,7 @@ class NeuralNetwork:
         if lambda_parem < 0.0:
             raise InputValidationError("Regularization Strength can't be negative.")
         if lambda_parem > 0.01:
-            print(f"Warning: Regularization Strength {lambda_parem:.3f} is strong. Consider keeping it less than 0.01")
-        self.l2_lambda = lambda_parem
+            PrintUtils.print_warning(f"Warning: Regularization Strength {lambda_parem:.3f} is strong. Consider keeping it less than 0.01")
 
         # Momentum Beta for Momentum Gradient Descent
         # 0.0 disables the momentum behavior
@@ -61,27 +58,44 @@ class NeuralNetwork:
         if momentum >= 1.0:
             raise InputValidationError("Momentum must be less than 1.0.")
         if momentum >= 0.95:
-            print(f"Warning: Momentum value {momentum:.3f} may cause strong \"gliding\" behavior. Consider keeping it less than 0.95")
-        self.m_beta = momentum
+            PrintUtils.print_warning(f"Warning: Momentum value {momentum:.3f} may cause strong \"gliding\" behavior. Consider keeping it less than 0.95")
 
-        # Activation Functions
+        # lower case conversion
         activation = [act.strip().lower() for act in activation] if activation else []
+        loss_function = loss_function.strip().lower()
+
+        # Check for activation function and layer count match
+        if len(activation) == 0:
+            PrintUtils.print_warning("Default configuration of hidden layer leaky_relu and last layer sigmoid has been applied.")
+        elif len(activation) != len(layers) - 1:
+            raise InputValidationError(f"Expected {len(layers) - 1} activation functions, but got {len(activation)}.")
+
+        # Validate names and check if LL exclusives are in hidden layers
+        self.utils._act_func_validator(activation)
+        self.utils._loss_func_validator(loss_function)
+        # ===== ===== INPUT VALIDATION END ===== =====
+        
+        self._layers: list = layers
+        self._layer_count: int = len(layers)
+        self.LR = learn_rate
+        self.l2_lambda = lambda_parem
+        self.m_beta = momentum
 
         if activation == []:
             # Default configuration
             activation = ["leaky_relu"] * (self._layer_count - 2) + ["sigmoid"]
-        else:
-            if len(activation) != self._layer_count - 1:
-                raise InputValidationError(f"Expected {self._layer_count - 1} activation functions, but got {len(activation)}.")
-
-            # Check if LL exclusives are in hidden layers
-            for i in range(self._layer_count - 2):
-                if self.utils._get_act_func(activation[i]).name in Activations._LL_exclusive:
-                    raise InputValidationError(f"{activation[i]} activation can't be used in hidden layers.")
 
         self._act_func = [self.utils._get_act_func(i) for i in activation]
         self._act_deriv_func = [self.utils._get_act_deriv_func(i) for i in activation]
         self._learnable_deriv_func = [self.utils._get_learnable_alpha_grad_func(i) for i in activation]
+
+        # Learnable parameter bounds for each layer
+        # defaults to (1.0, 1.0, 1.0) for non-learnable functions
+        self._learnable_bounds = [
+            (Activations._learn_param_values.get(x, (1.0, 1.0, 1.0))[1],
+             Activations._learn_param_values.get(x, (1.0, 1.0, 1.0))[2])
+             for x in activation
+        ]
 
         # Loss Functions
         self._loss_deriv_func = self.utils._get_loss_deriv_func(loss_function)
@@ -106,8 +120,8 @@ class NeuralNetwork:
         self.v_b = [np.zeros_like(b) for b in self.biases]
         self.v_alpha = [np.zeros_like(x) for x in self.alpha]
 
-        print(f"Neural network with {layers} layers initialized.")
-        print(f"Parameter Count: {self.utils._get_param_count():,}")
+        PrintUtils.print_info(f"Neural network with {layers} layers initialized.")
+        PrintUtils.print_info(f"Parameter Count: {self.utils._get_param_count():,}")
 
     # main feed forward function (single)
     def forward(self, input: list) -> list:
@@ -259,7 +273,7 @@ class NeuralNetwork:
                     l2_term_for_alpha: np.ndarray = self.alpha[i] * self.l2_lambda # Compute regularization term
                     self.v_alpha[i] = self.m_beta * self.v_alpha[i] + (1 - self.m_beta) * (alpha_grad + l2_term_for_alpha)
                     self.alpha[i] += -1 * self.v_alpha[i] * self.LR
-                    self.alpha[i] = np.clip(self.alpha[i], Activations._learn_param_values[self._act_func[i].name][1], Activations._learn_param_values[self._act_func[i].name][2])
+                    self.alpha[i] = np.clip(self.alpha[i], *self._learnable_bounds[i])
 
                 if i == 0: continue # skip gradient descent calculation for input layer 
                 # actual backpropagation
@@ -277,4 +291,4 @@ class NeuralNetwork:
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
         
-        print("\n===== ===== Training Completed ===== =====")
+        PrintUtils.print_success("\n===== ===== ===== Training Completed ===== ===== =====")

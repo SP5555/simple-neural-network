@@ -1,5 +1,6 @@
 import numpy as np
 from .activations import Activations
+from .print_utils import PrintUtils
 from .exceptions import InputValidationError
 
 from typing import TYPE_CHECKING
@@ -12,7 +13,7 @@ class Metrics:
 
     def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
         if self.core._act_func[-1].name not in Activations._LL_classification_acts:
-            print("The Accuracy Classification function only works for models configured for classification tasks.")
+            PrintUtils.print_warning("The Accuracy Classification function only works for models configured for classification tasks.")
             return
         if len(test_input) == 0 or len(test_output) == 0:
             raise InputValidationError("Datasets can't be empty.")
@@ -55,11 +56,11 @@ class Metrics:
             index_start += _check_batch_size
 
         accuracy = correct_predictions_count / test_size * 100
-        print(f"Accuracy on {test_size:,} samples")
-        print("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
+        PrintUtils.print_info(f"Accuracy on {test_size:,} samples")
+        PrintUtils.print_info("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
         if self.core._act_func[-1].name in Activations._LL_exclusive:
             cat_accuracy = correctly_categorized / test_size * 100
-            print(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
+            PrintUtils.print_info(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
 
     def compare_predictions(self, input: list, output: list) -> None:
         format_width = len(output[0]) * 9

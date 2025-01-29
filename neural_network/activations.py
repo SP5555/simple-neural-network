@@ -8,8 +8,12 @@ class ActivationWrapper:
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-# ACTIVATION FUNCTIONS
 class Activations:
+    _supported_acts = (
+        "relu", "leaky_relu", "prelu", "tanh",
+        "sigmoid", "swish", "swish_f", "id",
+        "linear", "softmax"
+    )
     _LL_exclusive = ("id", "linear", "softmax")
     _LL_classification_acts = ("sigmoid", "tanh", "softmax")
     _learnable_acts = ("prelu", "swish")

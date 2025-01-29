@@ -1,7 +1,8 @@
 import numpy as np
 
-# LOSS FUNCTIONS
 class Losses:
+    _supported_loss = ("mse", "bce", "cce")
+
     # ===== Mean Squared Error =====
     @staticmethod
     def _mse_grad(a: np.ndarray, y: np.ndarray) -> np.ndarray:
