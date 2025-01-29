@@ -128,16 +128,7 @@ class NeuralNetwork:
         if len(input) != self._layers[0]:
             raise InputValidationError("Input array size does not match the neural network.")
 
-        # activation
-        # changes 1D input array into n x 1 sized numpy 2D array
-        a: np.ndarray = np.array(input).T
-
-        # forward pass
-        for i in range(self._layer_count - 1):
-            # z = W*A + b
-            z: np.ndarray = np.matmul(self.weights[i], a) + self.biases[i]
-            # A = activation(z)
-            a: np.ndarray = self._act_func[i](z, self.alpha[i])
+        a: np.ndarray = self.forward_batch([input], raw_ndarray_output=True)
 
         return a.flatten().tolist()
 
