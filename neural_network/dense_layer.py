@@ -4,6 +4,7 @@ from .utils import Utils
 from .exceptions import InputValidationError
 
 class DenseLayer:
+    
     def __init__(self, input_size: int, output_size: int, activation: str) -> None:
         if input_size == 0:
             raise InputValidationError("A layer can't have 0 input.")
@@ -46,17 +47,21 @@ class DenseLayer:
         init_value = Activations._learn_param_values.get(self.act_name, (1.0,))[0] # default to None if not found
         self.alpha = np.full((self.output_size, 1), init_value)
 
-        self.w_grad = np.zeros_like(self.weights)
-        self.b_grad = np.zeros_like(self.biases)
-        self.alpha_grad = np.zeros_like(self.alpha)
+        # inialized with None for efficiency
+        # gradients
+        self.w_grad = None          # same shape as self.weights
+        self.b_grad = None          #      //       self.biases
+        self.alpha_grad = None      #      //       self.alpha
 
+        # velocities
         self.v_w = np.zeros_like(self.weights)
         self.v_b = np.zeros_like(self.biases)
         self.v_alpha = np.zeros_like(self.alpha)
 
-        self.a_in = None
-        self.a = None
-        self.z = None
+        # raw input, raw output and activation
+        self.a_in = None            # shape: (input_size, batch_size)
+        self.z = None               # shape: (output_size, batch_size)
+        self.a = None               # shape: (output_size, batch_size)
     
     def forward(self, input: np.ndarray) -> np.ndarray:
         
@@ -70,9 +75,9 @@ class DenseLayer:
     
     def backward(self, act_grad: np.ndarray) -> np.ndarray:
     
-        # important component for LAST LAYER backpropagation
+        # important component for backpropagation
         # term_1_2 = dL/da(n) * da(n)/dz(n)
-        if self.is_final and self.act_func.name == "softmax":
+        if self.act_func.name == "softmax":
 
             da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
             dL_wrt_da = self.act_deriv_func(self.z, self.alpha) # Jacobians; (batch_size, dim, dim)

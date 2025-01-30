@@ -2,28 +2,20 @@ from neural_network import NeuralNetwork, DenseLayer
 from data_generator import DataGenerator
 
 def main():
-    # nn = NeuralNetwork(
-    #     layers=[4, 12, 12, 3],
-    #     activation=["swish", "swish", "prelu"],
-    #     loss_function="BCE",
-    #     learn_rate=0.03,
-    #     lambda_parem=0.001,
-    #     momentum=0.75
-    # )
     nn = NeuralNetwork(
         layers=[
-            DenseLayer(4, 12, "prelu"),
-            DenseLayer(12, 12, "prelu"),
-            DenseLayer(12, 3, "id")
+            DenseLayer(4, 12, "swish"),
+            DenseLayer(12, 12, "swish"),
+            DenseLayer(12, 3, "softmax")
         ],
-        loss_function="MSE",
-        learn_rate=0.003,
+        loss_function="CCE",
+        learn_rate=0.02,
         lambda_parem=0.001,
         momentum=0.75
     )
 
     data_generator = DataGenerator()
-    problem_type = "regression"
+    problem_type = "multiclass"
 
     input_train_list, output_train_list = data_generator.generate(40000, problem_type)
     input_test_list, output_test_list = data_generator.generate(20000, problem_type)

@@ -14,13 +14,13 @@ class Utils:
 
     def inspect_weights_and_biases(self) -> None:
         np.set_printoptions(precision=4)
-        for i in range(self.core._layer_count - 1):
+        for i, layer in enumerate(self.core._layers):
             PrintUtils.print_info(f'weights L{i+1} -> L{i+2}:')
-            print(self.core.weights[i])
+            print(layer.weights)
             PrintUtils.print_info(f'biases L{i+1} -> L{i+2}:')
-            print(self.core.biases[i])
+            print(layer.biases)
             PrintUtils.print_info(f'learnable param L{i+1} -> L{i+2}:')
-            print(self.core.alpha[i])
+            print(layer.alpha)
     
     def _get_param_count(self) -> int:
         c: int = 0

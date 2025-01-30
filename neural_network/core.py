@@ -7,7 +7,7 @@ from .print_utils import PrintUtils
 from .exceptions import InputValidationError
 
 class NeuralNetwork:
-    
+
     def __init__(self,
                  layers: list[DenseLayer],
                  loss_function: str = "MSE",
@@ -81,7 +81,7 @@ class NeuralNetwork:
 
         self._loss_deriv_func = self.utils._get_loss_deriv_func(loss_function)
         
-        PrintUtils.print_info(f"Neural network initialized.")
+        PrintUtils.print_info(f"Neural network initialization successful.")
         PrintUtils.print_info(f"Parameter Count: {self.utils._get_param_count():,}")
 
     # main feed forward function (single)
@@ -158,8 +158,8 @@ class NeuralNetwork:
             act_grad: np.ndarray = self._loss_deriv_func(a, y)
 
             # backpropagation to calculate gradients
-            for i in reversed(range(self._layer_count)):
-                act_grad = self._layers[i].backward(act_grad=act_grad)
+            for layer in reversed(self._layers):
+                act_grad = layer.backward(act_grad)
             
             # apply calculated gradients
             for layer in self._layers:

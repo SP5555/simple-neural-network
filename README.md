@@ -24,7 +24,7 @@ First off, a huge shoutout to the awesome **NumPy** library, which is pretty muc
 - [Resources *& Inspirations :)*](#resources--inspirations-)
 
 ## Features
-- **Architecture**: Fully-connected layers with customizable layer sizes.
+- **Architecture**: Fully-connected (dense) layers with customizable layer sizes.
 - **Activation functions**:
     - **Bounded**: Sigmoid, Tanh, Softmax.
     - **Unbounded**: ReLU, Leaky ReLU, PReLU (Learnable), Swish (Fixed/Learnable), Linear.
@@ -52,14 +52,24 @@ pip install -r requirements.txt
 ### Creating a Neural Network
 To create a neural network with customizable layer configurations:
 ```python
-# Example 1: A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
-nn = NeuralNetwork([4, 6, 2])
+# Example 1:
+# A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
+# with leaky_relu activation in hidden layer and sigmoid activation in final layer
+nn = NeuralNetwork(layers=[
+    DenseLayer(4, 6, "leaky_relu"),
+    DenseLayer(6, 2, "sigmoid")
+])
 
 # Example 2: A deeper network with multiple hidden layers
-nn = NeuralNetwork([4, 8, 6, 6, 2])
+nn = NeuralNetwork(layers=[
+    DenseLayer(4, 8, "leaky_relu"),
+    DenseLayer(8, 6, "tanh"),
+    DenseLayer(6, 6, "tanh"),
+    DenseLayer(6, 2, "sigmoid")
+])
 ```
 #### Parameters
-* `activation`: Activation functions for individual layers (E.g., `"relu"`, `"sigmoid"`).
+* `layers`: List of `DenseLayer` class.
 * `loss_function`: Loss function for training (E.g., `"MSE"`, `"BCE"`)
 * `learn_rate`: Learning rate for gradient descent.
 * `lambda_parem`: Regularization strength to prevent overfitting.
@@ -68,11 +78,14 @@ nn = NeuralNetwork([4, 8, 6, 6, 2])
 Example with added parameters:
 ```python
 nn = NeuralNetwork(
-    layers=[4, 12, 12, 3],
-    activation=["tanh", "tanh", "sigmoid"], # activation for individual layers 
+    layers=[
+        DenseLayer(4, 12, "tanh"),
+        DenseLayer(12, 12, "tanh"),
+        DenseLayer(12, 3, "sigmoid")
+    ],
     loss_function="BCE", # for multilabel classification
-    learn_rate=0.08,
-    lambda_parem=0.003,
+    learn_rate=0.05,
+    lambda_parem=0.002,
     momentum=0.75
 )
 ```
@@ -113,8 +126,11 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 ```python
 # Model configuration
 nn = NeuralNetwork(
-    layers=[4, 12, 12, 3],
-    activation=["prelu", "prelu", "sigmoid"],
+    layers=[
+        DenseLayer(4, 12, "prelu"),
+        DenseLayer(12, 12, "prelu"),
+        DenseLayer(12, 3, "sigmoid")
+    ],
     loss_function="BCE",
     learn_rate=0.06,
     lambda_parem=0.001,
@@ -148,8 +164,11 @@ Accuracy on each output:    96.48%   94.13%   93.05%
 ```python
 # Model configuration
 nn = NeuralNetwork(
-    layers=[4, 12, 12, 3],
-    activation=["swish", "swish", "softmax"],
+    layers=[
+        DenseLayer(4, 12, "swish"),
+        DenseLayer(12, 12, "swish"),
+        DenseLayer(12, 3, "softmax")
+    ],
     loss_function="CCE",
     learn_rate=0.02,
     lambda_parem=0.001,
@@ -186,8 +205,11 @@ Overall categorization accuracy:    93.72%
 ```python
 # Model configuration
 nn = NeuralNetwork(
-    layers=[4, 12, 12, 3],
-    activation=["prelu", "prelu", "id"],
+    layers=[
+        DenseLayer(4, 12, "prelu"),
+        DenseLayer(12, 12, "prelu"),
+        DenseLayer(12, 3, "id")
+    ],
     loss_function="MSE",
     learn_rate=0.001, # Low learning rate to prevent exploding gradients by MSE loss
     lambda_parem=0.001,
