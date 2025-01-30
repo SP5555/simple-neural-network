@@ -1,5 +1,5 @@
 import numpy as np
-from .dense_layer import DenseLayer
+from .layers import DenseLayer
 from .exceptions import InputValidationError
 from .metrics import Metrics
 from .print_utils import PrintUtils
@@ -143,10 +143,10 @@ class NeuralNetwork:
             a: np.ndarray = i_batch.T
             
             # desired output
-            # same as a
+            # same shape as a
             y: np.ndarray = o_batch.T
 
-            # forward pass
+            # FORWARD PASS: compute activations
             for layer in self._layers:
                 a: np.ndarray = layer.forward(a)
 
@@ -155,11 +155,11 @@ class NeuralNetwork:
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
             act_grad: np.ndarray = self._loss_deriv_func(a, y)
 
-            # backpropagation to calculate gradients
+            # BACKPROPAGATION: calculate gradients
             for layer in reversed(self._layers):
                 act_grad = layer.backward(act_grad)
             
-            # apply calculated gradients
+            # OPTIMIZATION: apply gradients
             for layer in self._layers:
                 layer.optimize(LR=self.LR, l2_lambda=self.l2_lambda, m_beta=self.m_beta)
             

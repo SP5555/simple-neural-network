@@ -1,4 +1,4 @@
 from .core import NeuralNetwork
-from .dense_layer import DenseLayer
+from .layers import DenseLayer
 
 __all__ = ["NeuralNetwork", "DenseLayer"]

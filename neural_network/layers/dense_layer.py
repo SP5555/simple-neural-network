@@ -1,7 +1,7 @@
 import numpy as np
-from .activations import Activations
-from .exceptions import InputValidationError
-from .utils import Utils
+from ..activations import Activations
+from ..exceptions import InputValidationError
+from ..utils import Utils
 
 class DenseLayer:
     
@@ -45,7 +45,7 @@ class DenseLayer:
         init_value = Activations._learn_param_values.get(self.act_name, (None,))[0] # default to None if not found
         self.alpha = np.full((self.output_size, 1), init_value)
 
-        # inialized with None for efficiency
+        # initialized with None for efficiency
         # gradients
         self._w_grad = None          # same shape as self.weights
         self._b_grad = None          #      //       self.biases
