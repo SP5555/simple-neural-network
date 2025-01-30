@@ -3,7 +3,7 @@ from .exceptions import InputValidationError
 
 class DataGenerator:
     def __init__(self):
-        pass
+        self.rng = np.random.default_rng()
 
     def generate(self, n: int, name: str):
         generators = {
@@ -18,10 +18,10 @@ class DataGenerator:
     def _generate_regression(self, n: int):
         # Make your own Data
         # Shape: (1, n)
-        i1 = np.random.uniform(-3, 3, size=n)
-        i2 = np.random.uniform(-3, 3, size=n)
-        i3 = np.random.uniform(-3, 3, size=n)
-        i4 = np.random.uniform(-3, 3, size=n)
+        i1 = self.rng.uniform(-3, 3, size=n)
+        i2 = self.rng.uniform(-3, 3, size=n)
+        i3 = self.rng.uniform(-3, 3, size=n)
+        i4 = self.rng.uniform(-3, 3, size=n)
 
         # Shape: (1, n)
         o1 = (i1*i4 + 5*i2 + 2*i1*i3 + i4)
@@ -42,10 +42,10 @@ class DataGenerator:
     def _generate_multilabel(self, n: int):
         # Make your own Data
         # Shape: (1, n)
-        i1 = np.random.uniform(-6, 6, size=n)
-        i2 = np.random.uniform(-6, 6, size=n)
-        i3 = np.random.uniform(-6, 6, size=n)
-        i4 = np.random.uniform(-6, 6, size=n)
+        i1 = self.rng.uniform(-6, 6, size=n)
+        i2 = self.rng.uniform(-6, 6, size=n)
+        i3 = self.rng.uniform(-6, 6, size=n)
+        i4 = self.rng.uniform(-6, 6, size=n)
 
         # Shape: (1, n)
         o1 = (i1*i4 - 5*i2 < 2*i1*i3 - i4).astype(float)
@@ -72,7 +72,7 @@ class DataGenerator:
         output_list = np.zeros((n, _output_classes))
 
         # (1, n) shape array of random class labels
-        class_labels = np.random.randint(0, _output_classes, size=n)
+        class_labels = self.rng.integers(0, _output_classes, size=n)
 
         # Define input data ranges for each class
         class_data = {
@@ -87,7 +87,7 @@ class DataGenerator:
 
             # generate/fill up data in input list
             for i, (low, high) in enumerate(class_data[c]):
-                input_list[indices, i] = np.random.uniform(low, high, size=len(indices))
+                input_list[indices, i] = self.rng.uniform(low, high, size=len(indices))
             # set correct class
             output_list[indices, c] = 1.0
         
@@ -96,6 +96,6 @@ class DataGenerator:
 
         return input_list.tolist(), output_list.tolist()
     
-    def _add_noise(self, data: np.ndarray, noise=0.5):
+    def _add_noise(self, data: np.ndarray, noise=0.5) -> np.ndarray:
         # Add uniform noise element-wise to the entire NumPy array
-        return data + np.random.uniform(-noise, noise, size=data.shape)
+        return data + self.rng.uniform(-noise, noise, size=data.shape)
