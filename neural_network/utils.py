@@ -21,8 +21,14 @@ class Utils:
             print(self.core.biases[i])
             PrintUtils.print_info(f'learnable param L{i+1} -> L{i+2}:')
             print(self.core.alpha[i])
-
+    
     def _get_param_count(self) -> int:
+        c: int = 0
+        for layer in self.core._layers:
+            c += layer._get_param_count()
+        return c
+
+    def _get_param_count_old(self) -> int:
         c: int = 0
         for i in range(self.core._layer_count - 1):
             # c += self._layers[i + 1] * self._layers[i] # Weights

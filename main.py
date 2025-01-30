@@ -1,10 +1,21 @@
-from neural_network import NeuralNetwork
+from neural_network import NeuralNetwork, DenseLayer
 from data_generator import DataGenerator
 
 def main():
+    # nn = NeuralNetwork(
+    #     layers=[4, 12, 12, 3],
+    #     activation=["swish", "swish", "prelu"],
+    #     loss_function="BCE",
+    #     learn_rate=0.03,
+    #     lambda_parem=0.001,
+    #     momentum=0.75
+    # )
     nn = NeuralNetwork(
-        layers=[4, 12, 12, 3],
-        activation=["swish", "swish", "softmax"],
+        layers=[
+            DenseLayer(4, 12, "swish"),
+            DenseLayer(12, 12, "swish"),
+            DenseLayer(12, 3, "softmax")
+        ],
         loss_function="CCE",
         learn_rate=0.03,
         lambda_parem=0.001,
@@ -20,13 +31,13 @@ def main():
 
     nn.train(input_list=input_train_list,
              output_list=output_train_list,
-             epoch=2000,
+             epoch=1,
              batch_size=64)
     # nn.utils.inspect_weights_and_biases()
 
-    nn.metrics.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
+    # nn.metrics.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
 
-    nn.metrics.compare_predictions(input=showcase_i, output=showcase_o)
+    # nn.metrics.compare_predictions(input=showcase_i, output=showcase_o)
 
 if __name__ == "__main__":
     main()

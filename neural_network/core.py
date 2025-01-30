@@ -121,7 +121,7 @@ class NeuralNetwork:
         self.v_alpha = [np.zeros_like(x) for x in self.alpha]
 
         PrintUtils.print_info(f"Neural network with {layers} layers initialized.")
-        PrintUtils.print_info(f"Parameter Count: {self.utils._get_param_count():,}")
+        PrintUtils.print_info(f"Parameter Count: {self.utils._get_param_count_old():,}")
 
     # main feed forward function (single)
     def forward(self, input: list) -> list:
