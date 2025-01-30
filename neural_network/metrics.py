@@ -12,14 +12,14 @@ class Metrics:
         self.core = core_instance
 
     def check_accuracy_classification(self, test_input: list, test_output: list) -> None:
-        if self.core._act_func[-1].name not in Activations._LL_classification_acts:
+        if self.core._layers[-1].act_name not in Activations._LL_classification_acts:
             PrintUtils.print_warning("The Accuracy Classification function only works for models configured for classification tasks.")
             return
         if len(test_input) == 0 or len(test_output) == 0:
             raise InputValidationError("Datasets can't be empty.")
         if len(test_input) != len(test_output):
             raise InputValidationError("Input and Output data set sizes must be equal.")
-        if len(test_input[0]) != self.core._layers[0]:
+        if len(test_input[0]) != self.core._layers[0].input_size:
             raise InputValidationError("Input array size does not match the neural network.")
         
         _check_batch_size = 1024
@@ -43,7 +43,7 @@ class Metrics:
             # forward pass
             predictions = self.core.forward_batch(a, raw_ndarray_output=True).T
 
-            if self.core._act_func[-1].name in Activations._LL_exclusive:
+            if self.core._layers[-1].act_name in Activations._LL_exclusive:
                 actual_class = np.argmax(o, axis=1)
                 predicted_class = np.argmax(predictions, axis=1)
                 correct_predictions = actual_class == predicted_class
@@ -58,7 +58,7 @@ class Metrics:
         accuracy = correct_predictions_count / test_size * 100
         PrintUtils.print_info(f"Accuracy on {test_size:,} samples")
         PrintUtils.print_info("Accuracy on each output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
-        if self.core._act_func[-1].name in Activations._LL_exclusive:
+        if self.core._layers[-1].act_name in Activations._LL_exclusive:
             cat_accuracy = correctly_categorized / test_size * 100
             PrintUtils.print_info(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
 
