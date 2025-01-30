@@ -14,9 +14,17 @@ class Activations:
         "sigmoid", "swish", "swish_f", "id",
         "linear", "softmax"
     )
+    
+    # only usable in last layer
     _LL_exclusive = ("id", "linear", "softmax")
+
+    # used in last layer for classifications
     _LL_classification_acts = ("sigmoid", "tanh", "softmax")
+
+    # activations with learnable parameters
     _learnable_acts = ("prelu", "swish")
+    
+    # learnable parameter value dictionary
     _learn_param_values = {
         # name: (initial, low_cap, high_cap)
         "prelu": (0.01, 0.001, 0.1),
