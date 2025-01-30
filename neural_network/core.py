@@ -104,8 +104,8 @@ class NeuralNetwork:
         a: np.ndarray = np.array(input).T
 
         # forward pass
-        for i in range(self._layer_count):
-            a: np.ndarray = self._layers[i].forward(a)
+        for layer in self._layers:
+            a: np.ndarray = layer.forward(a)
 
         if raw_ndarray_output:
             return a
@@ -147,9 +147,8 @@ class NeuralNetwork:
             y: np.ndarray = o_batch.T
 
             # forward pass
-            for i in range(self._layer_count):
-
-                a: np.ndarray = self._layers[i].forward(a)
+            for layer in self._layers:
+                a: np.ndarray = layer.forward(a)
 
             # a holds columns of output here
             # y is desired output
