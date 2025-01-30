@@ -34,7 +34,12 @@ class Utils:
     
     # names must be already all lowercase
     @staticmethod
-    def _act_func_validator(names: list[str]):
+    def _act_func_validator(name: str):
+        if name not in Activations._supported_acts:
+            raise InputValidationError(f"Unsupported activation function: {name}")
+
+    @staticmethod
+    def _act_func_list_validator(names: list[str]):
         for i, name in enumerate(names):
             if name not in Activations._supported_acts:
                 raise InputValidationError(f"Unsupported activation function: {name}")

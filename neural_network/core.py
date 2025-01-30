@@ -71,7 +71,7 @@ class NeuralNetwork:
             raise InputValidationError(f"Expected {len(layers) - 1} activation functions, but got {len(activation)}.")
 
         # Validate names and check if LL exclusives are in hidden layers
-        self.utils._act_func_validator(activation)
+        self.utils._act_func_list_validator(activation)
         self.utils._loss_func_validator(loss_function)
         # ===== ===== INPUT VALIDATION END ===== =====
         
@@ -90,7 +90,7 @@ class NeuralNetwork:
         self._learnable_deriv_func = [self.utils._get_learnable_alpha_grad_func(i) for i in activation]
 
         # Learnable parameter bounds for each layer
-        # defaults to (1.0, 1.0, 1.0) for non-learnable functions
+        # defaults to (None, None, None) for non-learnable functions
         self._learnable_bounds = [
             (Activations._learn_param_values.get(x, (None, None, None))[1],
              Activations._learn_param_values.get(x, (None, None, None))[2])
@@ -112,7 +112,7 @@ class NeuralNetwork:
             # one per each neuron
             # learnable params of neurons in layers that don't use learnable parameters
             # will remain fixed at 1.0 throughout training
-            init_value = Activations._learn_param_values.get(activation[i], (None,))[0] # default to 1.0 if not found
+            init_value = Activations._learn_param_values.get(activation[i], (None,))[0] # default to None if not found
             self.alpha.append(np.full((layers[i + 1], 1), init_value))
 
         # velocities for momentum technique
