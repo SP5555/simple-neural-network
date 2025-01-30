@@ -1,7 +1,7 @@
 import numpy as np
 from .activations import Activations
-from .utils import Utils
 from .exceptions import InputValidationError
+from .utils import Utils
 
 class DenseLayer:
     

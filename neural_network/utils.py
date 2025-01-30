@@ -1,8 +1,8 @@
 import numpy as np
 from .activations import Activations, ActivationWrapper
-from .print_utils import PrintUtils
-from .losses import Losses
 from .exceptions import InputValidationError
+from .losses import Losses
+from .print_utils import PrintUtils
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

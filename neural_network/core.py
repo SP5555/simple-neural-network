@@ -1,10 +1,9 @@
 import numpy as np
 from .dense_layer import DenseLayer
-from .activations import Activations
-from .utils import Utils
+from .exceptions import InputValidationError
 from .metrics import Metrics
 from .print_utils import PrintUtils
-from .exceptions import InputValidationError
+from .utils import Utils
 
 class NeuralNetwork:
 

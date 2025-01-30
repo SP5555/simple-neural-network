@@ -1,7 +1,7 @@
 import numpy as np
 from .activations import Activations
-from .print_utils import PrintUtils
 from .exceptions import InputValidationError
+from .print_utils import PrintUtils
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

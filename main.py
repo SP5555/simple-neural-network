@@ -1,5 +1,5 @@
-from neural_network import NeuralNetwork, DenseLayer
 from data_generator import DataGenerator
+from neural_network import NeuralNetwork, DenseLayer
 
 def main():
     nn = NeuralNetwork(
