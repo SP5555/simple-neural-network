@@ -27,16 +27,6 @@ class Utils:
         for layer in self.core._layers:
             c += layer._get_param_count()
         return c
-
-    def _get_param_count_old(self) -> int:
-        c: int = 0
-        for i in range(self.core._layer_count - 1):
-            # c += self._layers[i + 1] * self._layers[i] # Weights
-            # c += self._layers[i + 1] # Biases
-            c += self.core._layers[i + 1] * (self.core._layers[i] + 1)
-            if (self.core._act_func[i].name in Activations._learnable_acts):
-                c += self.core._layers[i + 1]
-        return c
     
     # names must be already all lowercase
     @staticmethod

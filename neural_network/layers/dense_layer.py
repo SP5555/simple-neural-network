@@ -106,7 +106,7 @@ class DenseLayer(Layer):
         self._b_grad = np.sum(term_1_2, axis=1, keepdims=True) / batch_size
 
         if self.act_name in Activations._learnable_acts:
-            # CALCULATE derivative of loss with respect to learnable    parameter
+            # CALCULATE derivative of loss with respect to learnable parameter
             # dL/dlearn_b(n)
             # = dL/da(n) * da(n)/dlearn_b(n)
             dL_wrt_dlearn_alpha = self._learnable_deriv_func(self._z, self.alpha) * act_grad
