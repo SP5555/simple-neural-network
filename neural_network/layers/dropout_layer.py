@@ -75,10 +75,11 @@ class DropoutLayer(Layer):
         self._a: np.ndarray = self._act_func(self._z, self.alpha)
 
         if is_training:
-            # randomly disables neurons with self.dp probability
-            # 1 trials with 1-p probability to survive
+            # create a mask where each neuron has a 1-dp chance to remain active
             mask = np.random.binomial(n=1, p=1-self.dp, size=self._a.shape)
-            # kill p fraction of activations and amplify the surviving activations
+            
+            # Apply dropout
+            # zero out p fraction of activations and scale up the surviving activations
             self._a *= mask / (1-self.dp)
 
         return self._a
