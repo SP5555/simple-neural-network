@@ -31,7 +31,7 @@ class DataGenerator:
         # Shape: (n, count of input features)
         input_list = np.column_stack((i1, i2, i3, i4))
 
-        # Shape: (n, count of output features)
+        # Shape: (n, count of output targets)
         output_list = np.column_stack((o1, o2, o3))
 
         # input noise
@@ -55,7 +55,7 @@ class DataGenerator:
         # Shape: (n, count of input features)
         input_list = np.column_stack((i1, i2, i3, i4))
 
-        # Shape: (n, count of output features)
+        # Shape: (n, count of output targets)
         output_list = np.column_stack((o1, o2, o3))
 
         # input noise

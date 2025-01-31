@@ -5,8 +5,9 @@ from neural_network.layers import DenseLayer
 def main():
     nn = NeuralNetwork(
         layers=[
-            DenseLayer(4, 12, "swish"),
-            DenseLayer(12, 12, "swish"),
+            DenseLayer(4, 8, "prelu"),
+            DenseLayer(8, 10, "swish"),
+            DenseLayer(10, 12, "swish"),
             DenseLayer(12, 3, "softmax")
         ],
         loss_function="CCE",

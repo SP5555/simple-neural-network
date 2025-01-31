@@ -240,9 +240,9 @@ As shown, the neural network performs exceptionally well on the synthetic data. 
 ## Synthetic Data Generation
 With randomization, we can create diverse datasets that still follow a certain input-output relationship pattern to some extent (just like in the real world). This mimics the real world data and helps test the network's ability to generalize and perform well across different situations.
 
-To note, we are NOT harvesting the full power of randomization as it would only generate complete gibberish. This synthetic data helps in evaluating the model's performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
+To note, we are NOT harvesting the full power of randomization as it would only generate complete gibberish. Instead, we establish a relation between inputs and outputs while introducing randomness to it at the same time. This synthetically generated data helps in evaluating the model's performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
 
-*Monkey Language: The idea is, we define input-output relationships and generate data while heavily masking them with a reasonable level of randomization, making the patterns not immediately clear, even to humans. Then we evaluate the network's ability to cut through those random noise and uncover the underlying pattern.*
+*Monkey Language: The idea is, we define input-output relationships and generate data while heavily masking them with a reasonable level of randomness, making the patterns not immediately clear, even to humans. Then we evaluate the network's ability to cut through those random noise and uncover the underlying pattern.*
 
 For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
 ```python
@@ -262,7 +262,7 @@ o3 = (-i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4).astype(float)
 # Shape: (n, count of input features)
 input_list = np.column_stack((i1, i2, i3, i4))
 
-# Shape: (n, count of output features)
+# Shape: (n, count of output targets)
 output_list = np.column_stack((o1, o2, o3))
 ```
 ```python
@@ -310,7 +310,7 @@ o3 = (i1 + 0.3*i2 + 2*i3*i2 + 2*i4)
 # Shape: (n, count of input features)
 input_list = np.column_stack((i1, i2, i3, i4))
 
-# Shape: (n, count of output features)
+# Shape: (n, count of output targets)
 output_list = np.column_stack((o1, o2, o3))
 ```
 In all data generation, input features (`i1, i2, i3, i4, ...`) are exposed to some noise to better mimic real-world scenarios.

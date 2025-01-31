@@ -1,5 +1,5 @@
 import numpy as np
-from .layers import DenseLayer
+from .layers import Layer
 from .exceptions import InputValidationError
 from .metrics import Metrics
 from .print_utils import PrintUtils
@@ -8,7 +8,7 @@ from .utils import Utils
 class NeuralNetwork:
 
     def __init__(self,
-                 layers: list[DenseLayer],
+                 layers: list[Layer],
                  loss_function: str = "MSE",
                  learn_rate: float = 0.01,
                  lambda_parem: float = 0.0,
@@ -62,7 +62,7 @@ class NeuralNetwork:
         self.utils._loss_func_validator(loss_function)
         # ===== ===== INPUT VALIDATION END ===== =====
         
-        self._layers: list[DenseLayer] = layers
+        self._layers: list[Layer] = layers
         self._layer_count: int = len(layers)
         self.LR = learn_rate
         self.l2_lambda = lambda_parem
