@@ -23,6 +23,9 @@ class Activations:
 
     # activations with learnable parameters
     _learnable_acts = ("prelu", "swish")
+
+    # activations that are not compatible in dropout layer
+    _dropout_incomp_acts = ("softmax")
     
     # learnable parameter value dictionary
     _learn_param_values = {

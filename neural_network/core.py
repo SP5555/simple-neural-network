@@ -148,6 +148,9 @@ class NeuralNetwork:
 
             # FORWARD PASS: compute activations
             for layer in self._layers:
+                if layer.requires_training_flag:
+                    a: np.ndarray = layer.forward(a, is_training=True)
+                    continue
                 a: np.ndarray = layer.forward(a)
 
             # a holds columns of output here

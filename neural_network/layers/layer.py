@@ -2,6 +2,7 @@ from ..exceptions import InputValidationError
 from ..utils import Utils
 
 class Layer:
+
     def __init__(self, input_size: int, output_size: int, activation: str):
         if input_size == 0:
             raise InputValidationError("A layer can't have 0 input.")
@@ -29,3 +30,7 @@ class Layer:
     
     def _get_param_count(self):
         raise NotImplementedError
+    
+    @property
+    def requires_training_flag(self):
+        return False

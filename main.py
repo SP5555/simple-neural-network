@@ -1,13 +1,13 @@
 from data_generator import DataGenerator
 from neural_network import NeuralNetwork
-from neural_network.layers import DenseLayer
+from neural_network.layers import DenseLayer, DropoutLayer
 
 def main():
     nn = NeuralNetwork(
         layers=[
-            DenseLayer(4, 8, "prelu"),
-            DenseLayer(8, 10, "swish"),
-            DenseLayer(10, 12, "swish"),
+            DropoutLayer(4, 12, "prelu", 0.2),
+            DropoutLayer(12, 16, "tanh", 0.2),
+            DropoutLayer(16, 12, "swish", 0.2),
             DenseLayer(12, 3, "softmax")
         ],
         loss_function="CCE",
