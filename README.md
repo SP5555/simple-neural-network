@@ -1,7 +1,7 @@
 # Simple Neural Network
 
 ## Overview
-This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's an almost fully-fledged, fully functional, intermediate-level neural network built completely from scratch in Python.
+This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's an almost fully-fledged, fully functional, intermediate-level neural network built completely from scratch.
 
 White it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of numbers can learn to predict.
 
