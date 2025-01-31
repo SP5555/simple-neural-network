@@ -26,7 +26,7 @@ class DropoutLayer(Layer):
         if is_final:
             PrintUtils.print_warning("Using a dropout layer as the final layer is not recommended.")
         if self.act_name in Activations._dropout_incomp_acts:
-            PrintUtils.print_warning(f"Using {self.act_name} in dropout layer is not recommended.")
+            raise InputValidationError(f"{self.act_name} is not compatible in the dropout layer.")
         if not is_final and self.act_name in Activations._LL_exclusive:
             raise InputValidationError(f"{self.act_name} activation can't be used in hidden layers.")
 
@@ -92,18 +92,9 @@ class DropoutLayer(Layer):
         # term_1_2 = dL/da(n) * da(n)/dz(n)
         #          = dL/da(n) * actv'(z(n))
 
-        # Softmax case is different
-        if self._act_func.name == "softmax":
-
-            da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-            dL_wrt_da = self._act_deriv_func(self._z, self.alpha) # Jacobians; (batch_size, dim, dim)
-            
-            t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, dim, 1)
-            term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (dim, batch_size)
-        else:
-            # alpha is broadcasted to match z dimensions
-            alpha_extended = np.where(self.alpha == None, 1.0, self.alpha) * np.ones_like(self._z)
-            term_1_2: np.ndarray = self._act_deriv_func(self._z, alpha_extended) * act_grad
+        # alpha is broadcasted to match z dimensions
+        alpha_extended = np.where(self.alpha == None, 1.0, self.alpha) * np.ones_like(self._z)
+        term_1_2: np.ndarray = self._act_deriv_func(self._z, alpha_extended) * act_grad
    
         # BACKPROPAGATION
         
