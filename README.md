@@ -1,11 +1,11 @@
 # Simple Neural Network
 
 ## Overview
-This project is an intermediate level, fully functional neural network implemented from scratch in Python. Initially started out as a simple Python project to neural networks, it has gradually evolved into a more robust form.
+This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's an almost fully-fledged, fully functional, intermediate-level neural network built completely from scratch in Python.
 
-White it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of Linear Algebra and Calculus can learn to predict.
+White it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of numbers can learn to predict.
 
-First off, a huge shoutout to the awesome **NumPy** library, which is pretty much responsible for 99% of this neural network's speed.
+First off, a huge shoutout to the awesome **NumPy** library, because without it, this thing would be moving at the speed of a snail :snail:.
 
 - [Features](#features)
 - [Installation Instructions](#installation-instructions)
@@ -238,9 +238,11 @@ nn = NeuralNetwork(
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 
 ## Synthetic Data Generation
-Random data generation is used to simulate a variety of real-world scenarios where the relationship between input features and output targets is not immediately clear. By introducing randomization, we can create a diverse range of datasets that help test the network's ability to generalize and perform well across different situations.
+With randomization, we can create diverse datasets that still follow a certain input-output relationship pattern to some extent (just like in the real world). This mimics the real world data and helps test the network's ability to generalize and perform well across different situations.
 
-This synthetic data helps in evaluating the model's performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
+To note, we are NOT harvesting the full power of randomization as it would only generate complete gibberish. This synthetic data helps in evaluating the model's performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
+
+*Monkey Language: The idea is, we define input-output relationships and generate data while heavily masking them with a reasonable level of randomization, making the patterns not immediately clear, even to humans. Then we evaluate the network's ability to cut through those random noise and uncover the underlying pattern.*
 
 For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
 ```python
