@@ -35,16 +35,16 @@ class DropoutLayer(DenseLayer):
         self._a: np.ndarray = self._act_func(self._z, self.alpha)
 
         if is_training:
-            # create a mask where each neuron has a 1-dp chance to remain active
+            # standard dropout: randomly drops neurons individually within each sample
+            # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
+            shape = self._a.shape
             if self.batch_wise:
-                # same dropout pattern to all neurons within a mini-batch (batch-wise dropout)
-                mask = np.random.binomial(n=1, p=1-self.dp, size=(self._a.shape[0], 1))
-            else:
-                # randomly drops neurons individually within each training sample (standard dropout)
-                mask = np.random.binomial(n=1, p=1-self.dp, size=self._a.shape)
+                shape = (self._a.shape[0], 1)
+            # create a mask where a neuron has a 1-dp chance to remain active
+            mask = np.random.binomial(n=1, p=1-self.dp, size=shape)
             
             # Apply dropout
-            # zero out p fraction of activations and scale up the surviving activations
+            # zero out dp fraction of activations and scale up the surviving activations
             self._a *= mask / (1-self.dp)
 
         return self._a
