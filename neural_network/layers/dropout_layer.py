@@ -3,11 +3,10 @@ from .dense_layer import DenseLayer
 from ..activations import Activations
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
-from ..utils import Utils
 
 class DropoutLayer(DenseLayer):
     
-    def __init__(self, input_size: int, output_size: int, activation: str, dropout_probability: float) -> None:
+    def __init__(self, input_size: int, output_size: int, activation: str, dropout_probability: float, batch_wise=False) -> None:
         super().__init__(input_size, output_size, activation)
 
         if dropout_probability < 0.0 or dropout_probability > 1.0:
@@ -16,6 +15,7 @@ class DropoutLayer(DenseLayer):
             PrintUtils.print_warning(f"Dropout Probability of {dropout_probability} is too high. Consider less than 0.5")
         
         self.dp = dropout_probability
+        self.batch_wise = batch_wise
 
     def build(self, is_first: bool = False, is_final: bool = False):
         if is_final:
@@ -36,7 +36,12 @@ class DropoutLayer(DenseLayer):
 
         if is_training:
             # create a mask where each neuron has a 1-dp chance to remain active
-            mask = np.random.binomial(n=1, p=1-self.dp, size=self._a.shape)
+            if self.batch_wise:
+                # same dropout pattern to all neurons within a mini-batch (batch-wise dropout)
+                mask = np.random.binomial(n=1, p=1-self.dp, size=(self._a.shape[0], 1))
+            else:
+                # randomly drops neurons individually within each training sample (standard dropout)
+                mask = np.random.binomial(n=1, p=1-self.dp, size=self._a.shape)
             
             # Apply dropout
             # zero out p fraction of activations and scale up the surviving activations
