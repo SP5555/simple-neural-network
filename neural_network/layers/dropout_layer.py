@@ -16,6 +16,14 @@ class DropoutLayer(DenseLayer):
             PrintUtils.print_warning(f"Dropout Probability of {dropout_probability} is too high. Consider less than 0.5")
         
         self.dp = dropout_probability
+
+    def build(self, is_first: bool = False, is_final: bool = False):
+        if is_final:
+            PrintUtils.print_warning("Using a dropout layer as the final layer is not recommended.")
+        if self.act_name in Activations._dropout_incomp_acts:
+            raise InputValidationError(f"{self.act_name} is not compatible in the dropout layer.")
+        
+        super().build(is_first, is_final)
     
     # compute a layer's output based on the input.
     def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
