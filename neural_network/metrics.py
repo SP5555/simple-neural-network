@@ -29,7 +29,7 @@ class Metrics:
         if self.core._layers[-1].act_name in Activations._LL_multiclass_acts:
             PrintUtils.print_info(f"Detected {self.core._layers[-1].act_name} in the last layer. Running accuracy check for multiclass.")
             return self._multiclass_accuracy(test_input, test_output)
-        PrintUtils.print_warning("The Accuracy Checker cannot determine the task type based on the current model configuration. " \
+        PrintUtils.print_warning("The Accuracy Checker cannot determine the task type based on the current model configuration.\n" \
                                  "Ensure the last layer activation matches the intended task.")
     
     def _regression_accuracy(self, test_input: list, test_output: list) -> None:
@@ -37,7 +37,7 @@ class Metrics:
         num_classes = len(test_output[0])
 
         # accumulated squared error per target
-        aae = np.zeros(num_classes)
+        ase = np.zeros(num_classes)
 
         index_start = 0
         while index_start < test_size:
@@ -51,15 +51,14 @@ class Metrics:
             # forward pass
             predictions = self.core.forward_batch(a, raw_ndarray_output=True).T
 
-            # squared error per target
-            aae += np.sum(np.square(np.abs(predictions - o)), axis=0)
+            # accumulate squared error
+            ase += np.sum(np.square(np.abs(predictions - o)), axis=0)
 
             index_start += self._check_batch_size
         
-        mae = aae / test_size # mean squared error
+        mse = ase / test_size # mean squared error
         PrintUtils.print_info(f"Mean Squared Error on {test_size:,} samples")
-        PrintUtils.print_info("Mean Squared Error per output: " + ''.join([f"{a:>8.2f}" for a in mae]))
-
+        PrintUtils.print_info("Mean Squared Error per output: " + ''.join([f"{e:>8.2f}" for e in mse]))
 
     def _multilabel_accuracy(self, test_input: list, test_output: list) -> None:
         test_size = len(test_input)

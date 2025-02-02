@@ -94,6 +94,6 @@ class Utils:
         loss_funcs = {
             'mse': Losses._mse_grad,
             'bce': Losses._bce_grad,
-            'cce': Losses._mce_grad
+            'cce': Losses._cce_grad
         }
         return loss_funcs[name]

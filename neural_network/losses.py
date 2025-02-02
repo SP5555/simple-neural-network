@@ -17,7 +17,7 @@ class Losses:
     
     # ===== Multiclass/Categorial Cross Entropy =====
     @staticmethod
-    def _mce_grad(a: np.ndarray, y:np.ndarray) -> np.ndarray:
+    def _cce_grad(a: np.ndarray, y:np.ndarray) -> np.ndarray:
         bound = 1e-12
         a = np.clip(a, bound, 1-bound)
         return -(y/a)

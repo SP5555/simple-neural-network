@@ -6,7 +6,7 @@ def main():
     nn = NeuralNetwork(
         layers=[
             DropoutLayer(4, 12, "prelu", 0.2),
-            DropoutLayer(12, 16, "tanh", 0.2),
+            DropoutLayer(12, 16, "tanh", 0.3, batch_wise=True),
             DropoutLayer(16, 12, "swish", 0.2),
             DenseLayer(12, 3, "softmax")
         ],
