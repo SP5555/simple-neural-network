@@ -18,8 +18,10 @@ class Activations:
     # only usable in last layer
     _LL_exclusive = ("id", "linear", "softmax")
 
-    # used in last layer for classifications
-    _LL_classification_acts = ("sigmoid", "tanh", "softmax")
+    # last layer check for accuracy calculation
+    _LL_regression_acts = ("id", "linear",)
+    _LL_multilabel_acts = ("sigmoid",)
+    _LL_multiclass_acts = ("softmax",)
 
     # activations with learnable parameters
     _learnable_acts = ("prelu", "swish")

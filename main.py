@@ -6,7 +6,7 @@ def main():
     nn = NeuralNetwork(
         layers=[
             DropoutLayer(4, 12, "prelu", 0.2),
-            DropoutLayer(12, 16, "tanh", 0.2, batch_wise=True),
+            DropoutLayer(12, 16, "tanh", 0.2),
             DropoutLayer(16, 12, "swish", 0.2),
             DenseLayer(12, 3, "softmax")
         ],
@@ -29,7 +29,7 @@ def main():
              batch_size=32)
     # nn.utils.inspect_weights_and_biases()
 
-    nn.metrics.check_accuracy_classification(test_input=input_test_list, test_output=output_test_list)
+    nn.metrics.check_accuracy(test_input=input_test_list, test_output=output_test_list)
 
     nn.metrics.compare_predictions(input=showcase_i, output=showcase_o)
 
