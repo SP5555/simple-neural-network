@@ -29,9 +29,9 @@ class DropoutLayer(DenseLayer):
     def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
         
         self._a_in: np.ndarray = input
-        # z = W*A + b
-        self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases.reshape(-1, 1) # broadcasting
-        # A = activation(z)
+        # z = W*A_in + b
+        self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
+        # A_out = activation(z, learn_b)
         self._a: np.ndarray = self._act_func(self._z, self.alpha)
 
         if is_training:

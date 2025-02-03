@@ -138,12 +138,10 @@ class NeuralNetwork:
             i_batch = input_ndarray[indices]
             o_batch = output_ndarray[indices]
 
-            # activation
-            # a contains columns of sample inputs, each column is an individual sample
+            # activation (input_size, batch_size)
             a: np.ndarray = i_batch.T
             
-            # desired output
-            # same shape as a
+            # desired output (output_size, batch_size)
             y: np.ndarray = o_batch.T
 
             # FORWARD PASS: compute activations
@@ -152,9 +150,8 @@ class NeuralNetwork:
                     a: np.ndarray = layer.forward(a, is_training=True)
                     continue
                 a: np.ndarray = layer.forward(a)
+            # dims of a after forward pass: (output_size, batch_size)
 
-            # a holds columns of output here
-            # y is desired output
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
             act_grad: np.ndarray = self._loss_deriv_func(a, y)
 

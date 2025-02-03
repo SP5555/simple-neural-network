@@ -35,18 +35,15 @@ class Utils:
             raise InputValidationError(f"Unsupported activation function: {name}")
 
     @staticmethod
-    def _act_func_list_validator(names: list[str]):
-        for i, name in enumerate(names):
-            if name not in Activations._supported_acts:
-                raise InputValidationError(f"Unsupported activation function: {name}")
-            if name in Activations._LL_exclusive and i < len(names) - 1:
-                raise InputValidationError(f"{name} activation can't be used in hidden layers.")
-
-    @staticmethod
     def _loss_func_validator(name: str):
         if name not in Losses._supported_loss:
             raise InputValidationError(f"Unsupported loss function: {name}")
 
+    # === for all activation related functions =====
+    # z (logits; raw score) comes in with the dimensions of (n, batch_size)
+    # b (learnable parameter) comes in with the dimensions of (n, 1)
+    # b contains None if function is not learnable; appropriate values if learnable
+    # b is auto-broadcasted by element-wise operations inside the functions
     @staticmethod
     def _get_act_func(name: str):
         actv_funcs = {

@@ -30,7 +30,7 @@ class Activations:
     _dropout_incomp_acts = ("softmax")
     
     # learnable parameter value dictionary
-    _learn_param_values = {
+    _learn_param_constraints = {
         # name: (initial, low_cap, high_cap)
         "prelu": (0.01, 0.001, 0.1),
         "swish": (1.0, 0.5, 5.0)

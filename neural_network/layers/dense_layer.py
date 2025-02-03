@@ -24,7 +24,7 @@ class DenseLayer(Layer):
 
         # Learnable parameter bounds for each layer
         # defaults to None for non-learnable functions
-        bounds = Activations._learn_param_values.get(self.act_name, None)
+        bounds = Activations._learn_param_constraints.get(self.act_name, None)
         self._learnable_bounds = (bounds[1], bounds[2]) if bounds else None
 
         self.weights = np.random.randn(self.output_size, self.input_size) * np.sqrt(2/self.input_size)
@@ -34,7 +34,7 @@ class DenseLayer(Layer):
         # one per each neuron
         # learnable params of neurons in layers that don't use learnable parameters
         # will remain fixed at 1.0 throughout training
-        init_value = Activations._learn_param_values.get(self.act_name, (None,))[0] # default to None if not found
+        init_value = Activations._learn_param_constraints.get(self.act_name, (None,))[0] # default to None if not found
         self.alpha = np.full((self.output_size, 1), init_value)
 
         # initialized with None for efficiency
@@ -57,17 +57,20 @@ class DenseLayer(Layer):
     def forward(self, input: np.ndarray) -> np.ndarray:
         
         self._a_in: np.ndarray = input
-        # z = W*A + b
-        self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases.reshape(-1, 1) # broadcasting
-        # A = activation(z)
+        # z = W*A_in + b
+        self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
+        # A_out = activation(z, learn_b)
         self._a: np.ndarray = self._act_func(self._z, self.alpha)
 
         return self._a
     
     # computes gradients for weights, biases, alpha, and inputs based on the loss.
-    # returns the input gradient to be used in the previous layer's backward pass.
+    # returns the input gradient which is required for the previous layer's backward pass.
+    # basically BACKPROPAGATION
     def backward(self, act_grad: np.ndarray) -> np.ndarray:
-    
+
+        batch_size = self._a.shape[1]
+
         # important component for backpropagation
         # term_1_2 = dL/da(n) * da(n)/dz(n)
         #          = dL/da(n) * actv'(z(n))
@@ -75,41 +78,42 @@ class DenseLayer(Layer):
         # Softmax case is different
         if self._act_func.name == "softmax":
 
-            da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, dim, 1)
-            dL_wrt_da = self._act_deriv_func(self._z, self.alpha) # Jacobians; (batch_size, dim, dim)
+            da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, out, 1)
+            dL_wrt_da = self._act_deriv_func(self._z, self.alpha) # Jacobians; (batch_size, out, out)
             
-            t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, dim, 1)
-            term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (dim, batch_size)
+            t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, out, 1)
+            term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (out, batch_size)
         else:
-            # alpha is broadcasted to match z dimensions
-            alpha_extended = np.where(self.alpha == None, 1.0, self.alpha) * np.ones_like(self._z)
-            term_1_2: np.ndarray = self._act_deriv_func(self._z, alpha_extended) * act_grad
-   
-        # BACKPROPAGATION
-        
-        batch_size = self._a.shape[1]
+            # alpha is broadcasted to match z dimensions automatically in _act_deriv_func
+            # alpha_extended = np.where(self.alpha == None, 1.0, self.alpha) * np.ones_like(self._z)
+            # matrix dims: (out, batch_size) = [(out, batch_size) ele-wise-opt (out, batch_size)] ele-wise-opt-mult (out, batch_size)
+            term_1_2: np.ndarray = self._act_deriv_func(self._z, self.alpha) * act_grad
 
         # Math
         # z(n) = w(n)*a(n-1) + b(n)
-        # a(n) = activation(z(n,learn_b)) # learnable parem is used only in some activations
+        # a(n) = activation(z(n, learn_b)) # learnable parem is used only in some activations
 
         # CALCULATE derivative of loss with respect to weights
         # dL/dw(n)
         # = dL/da(n) * da(n)/dz(n) * dz(n)/dw(n)
         # = dL/da(n) * actv'(z(n)) * a(n-1)
+        # matrix dims: (out, in) = (out, batch_size) * (batch_size, in)
         self._w_grad = np.matmul(term_1_2, self._a_in.T) / batch_size
 
         # CALCULATE derivative of loss with respect to biases
         # dL/db(n)
         # = dL/da(n) * da(n)/dz(n) * dz(n)/db(n)
         # = dL/da(n) * actv'(z(n)) * 1
+        # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
         self._b_grad = np.sum(term_1_2, axis=1, keepdims=True) / batch_size
 
         if self.act_name in Activations._learnable_acts:
             # CALCULATE derivative of loss with respect to learnable parameter
             # dL/dlearn_b(n)
             # = dL/da(n) * da(n)/dlearn_b(n)
+            # matrix dims: (out, batch_size) = (out, batch_size) ele-wise-opt (out, batch_size)
             dL_wrt_dlearn_alpha = self._learnable_deriv_func(self._z, self.alpha) * act_grad
+            # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
             self._alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
 
         # first layer does not have previous layer
@@ -121,6 +125,7 @@ class DenseLayer(Layer):
         # dL/da(n-1)
         # = column-wise sum in w matrix [dz(n)/da(n-1) * dL/da(n) * da(n)/dz(n)]
         # = column-wise sum in w matrix [w(n) * dL/da(n) * actv'(z(n))]
+        # matrix dims: (in, batch_size) = (in, out) * (out, batch_size)
         act_grad = np.matmul(self.weights.T, term_1_2)
         return act_grad
 
