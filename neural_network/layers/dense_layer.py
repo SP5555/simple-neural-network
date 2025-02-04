@@ -151,7 +151,5 @@ class DenseLayer(Layer):
     def _get_param_count(self) -> int:
         w = self.input_size * self.output_size
         s = self.output_size
-        lp = 0
-        if self.act_name in Activations._learnable_acts:
-            lp = self.output_size
+        lp = self.output_size if self.act_name in Activations._learnable_acts else 0
         return w + s + lp

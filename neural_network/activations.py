@@ -9,25 +9,25 @@ class ActivationWrapper:
         return self.func(*args, **kwargs)
 
 class Activations:
-    _supported_acts = (
+    _supported_acts = {
         "relu", "leaky_relu", "prelu", "tanh",
         "sigmoid", "swish", "swish_f", "id",
         "linear", "softmax"
-    )
+    }
     
     # only usable in last layer
-    _LL_exclusive = ("id", "linear", "softmax")
+    _LL_exclusive = {"id", "linear", "softmax"}
 
     # last layer check for accuracy calculation
-    _LL_regression_acts = ("id", "linear",)
-    _LL_multilabel_acts = ("sigmoid",)
-    _LL_multiclass_acts = ("softmax",)
+    _LL_regression_acts = {"id", "linear"}
+    _LL_multilabel_acts = {"sigmoid"}
+    _LL_multiclass_acts = {"softmax"}
 
     # activations with learnable parameters
-    _learnable_acts = ("prelu", "swish")
+    _learnable_acts = {"prelu", "swish"}
 
     # activations that are not compatible in dropout layer
-    _dropout_incomp_acts = ("softmax")
+    _dropout_incomp_acts = {"softmax"}
     
     # learnable parameter value dictionary
     _learn_param_constraints = {
