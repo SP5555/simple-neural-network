@@ -5,14 +5,13 @@ from neural_network.layers import DenseLayer, DropoutLayer
 def main():
     nn = NeuralNetwork(
         layers=[
-            DropoutLayer(4, 12, "prelu", 0.2),
-            DropoutLayer(12, 16, "tanh", 0.3, batch_wise=True),
-            DropoutLayer(16, 12, "swish", 0.2),
-            DenseLayer(12, 3, "softmax")
+            DropoutLayer(4, 12, "prelu", 0.2, l2_regularizer=0.001),
+            DropoutLayer(12, 16, "tanh", 0.3, batch_wise=True, l2_regularizer=0.001),
+            DropoutLayer(16, 12, "swish", 0.2, l2_regularizer=0.001),
+            DenseLayer(12, 3, "softmax", l2_regularizer=0.001)
         ],
         loss_function="CCE",
         learn_rate=0.02,
-        lambda_parem=0.001,
         momentum=0.75
     )
 

@@ -11,7 +11,6 @@ class NeuralNetwork:
                  layers: list[Layer],
                  loss_function: str = "MSE",
                  learn_rate: float = 0.01,
-                 lambda_parem: float = 0.0,
                  momentum: float = 0.8) -> None:
         
         self.utils = Utils(self)
@@ -23,29 +22,18 @@ class NeuralNetwork:
         
         # Learn Rate
         # How fast or slow this network learns
-        #     new_parameter = old_parameter - velocity * learn_rate 
+        #     new_parameter = old_parameter - velocity * learn_rate
         if learn_rate <= 0.0:
             raise InputValidationError("Learn rate must be positive.")
         if learn_rate >= 0.1:
             PrintUtils.print_warning(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
-
-        # L2 Regularization Strength
-        # low reg strength -> cook in class, and fail in exam; overfit
-        # high reg strength -> I am dumb dumb, can't learn; underfit
-        # Large weights and biases will are penalized more aggressively than small ones
-        # Don't set it too large, at most 0.01 (unless you know what you're doing)
-        #     new_velocity = momentum * old_velocity + (1-momentum) * (parameter_gradient + lambda_parem * parameter)
-        if lambda_parem < 0.0:
-            raise InputValidationError("Regularization Strength can't be negative.")
-        if lambda_parem > 0.01:
-            PrintUtils.print_warning(f"Warning: Regularization Strength {lambda_parem:.3f} is strong. Consider keeping it less than 0.01")
 
         # Momentum Beta for Momentum Gradient Descent
         # 0.0 disables the momentum behavior
         # having momentum beta helps escape the high loss "plateaus" better
         # high values result in smoother/stronger "gliding" descent
         # MUST be less than 1.0
-        #     new_velocity = momentum * old_velocity + (1-momentum) * (parameter_gradient + lambda_parem * parameter)
+        #     new_velocity = momentum * old_velocity + (1-momentum) * parameter_gradient
         if momentum < 0.0:
             raise InputValidationError("Momentum can't be negative.")
         if momentum >= 1.0:
@@ -65,7 +53,6 @@ class NeuralNetwork:
         self._layers: list[Layer] = layers
         self._layer_count: int = len(layers)
         self.LR = learn_rate
-        self.l2_lambda = lambda_parem
         self.m_beta = momentum
 
         # Activate/Build/Initialize/whatever the layers
@@ -161,7 +148,7 @@ class NeuralNetwork:
             
             # OPTIMIZATION: apply gradients
             for layer in self._layers:
-                layer.optimize(LR=self.LR, l2_lambda=self.l2_lambda, m_beta=self.m_beta)
+                layer.optimize(LR=self.LR, m_beta=self.m_beta)
             
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')

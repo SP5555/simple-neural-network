@@ -6,8 +6,15 @@ from ..print_utils import PrintUtils
 
 class DropoutLayer(DenseLayer):
     
-    def __init__(self, input_size: int, output_size: int, activation: str, dropout_probability: float, batch_wise=False) -> None:
-        super().__init__(input_size, output_size, activation)
+    def __init__(self,
+                 input_size: int,
+                 output_size: int,
+                 activation: str,
+                 dropout_probability: float,
+                 batch_wise=False,
+                 l2_regularizer: float = 0.0) -> None:
+
+        super().__init__(input_size, output_size, activation, l2_regularizer)
 
         if dropout_probability < 0.0 or dropout_probability > 1.0:
             raise InputValidationError("Dropout Probability can't be less than must be within 0.0 and 1.0")

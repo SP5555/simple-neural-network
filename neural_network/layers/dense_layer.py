@@ -6,8 +6,13 @@ from ..utils import Utils
 
 class DenseLayer(Layer):
     
-    def __init__(self, input_size: int, output_size: int, activation: str) -> None:
-        super().__init__(input_size, output_size, activation)
+    def __init__(self,
+                 input_size: int,
+                 output_size: int,
+                 activation: str,
+                 l2_regularizer: float = 0.0) -> None:
+
+        super().__init__(input_size, output_size, activation, l2_regularizer)
 
     def build(self, is_first: bool = False, is_final: bool = False) -> None:
 
@@ -99,6 +104,8 @@ class DenseLayer(Layer):
         # = dL/da(n) * actv'(z(n)) * a(n-1)
         # matrix dims: (out, in) = (out, batch_size) * (batch_size, in)
         self._w_grad = np.matmul(term_1_2, self._a_in.T) / batch_size
+        l2_term_for_w: np.ndarray = self.weights * self.l2_lambda # Compute regularization term
+        self._w_grad += l2_term_for_w
 
         # CALCULATE derivative of loss with respect to biases
         # dL/db(n)
@@ -106,6 +113,8 @@ class DenseLayer(Layer):
         # = dL/da(n) * actv'(z(n)) * 1
         # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
         self._b_grad = np.sum(term_1_2, axis=1, keepdims=True) / batch_size
+        l2_term_for_b: np.ndarray = self.biases * self.l2_lambda # Compute regularization term
+        self._b_grad += l2_term_for_b
 
         if self.act_name in Activations._learnable_acts:
             # CALCULATE derivative of loss with respect to learnable parameter
@@ -115,6 +124,8 @@ class DenseLayer(Layer):
             dL_wrt_dlearn_alpha = self._learnable_deriv_func(self._z, self.alpha) * act_grad
             # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
             self._alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
+            l2_term_for_alpha: np.ndarray = self.alpha * self.l2_lambda # Compute regularization term
+            self._alpha_grad += l2_term_for_alpha
 
         # first layer does not have previous layer
         # not need to return input gradient   
@@ -130,21 +141,18 @@ class DenseLayer(Layer):
         return act_grad
 
     # updates the parameters (weights, biases, alpha) based on gradients calculated by backward().
-    def optimize(self, LR: float, l2_lambda: float, m_beta: float):
+    def optimize(self, LR: float, m_beta: float):
         # UPDATE/APPLY negative of average gradient change to weights
-        l2_term_for_w: np.ndarray = self.weights * l2_lambda # Compute regularization term
-        self._v_w = m_beta * self._v_w + (1 - m_beta) * (self._w_grad + l2_term_for_w)
+        self._v_w = m_beta * self._v_w + (1 - m_beta) * self._w_grad
         self.weights += -1 * self._v_w * LR
 
         # UPDATE/APPLY negative of average gradient change to biases
-        l2_term_for_b: np.ndarray = self.biases * l2_lambda # Compute regularization term
-        self._v_b = m_beta * self._v_b + (1 - m_beta) * (self._b_grad + l2_term_for_b)
+        self._v_b = m_beta * self._v_b + (1 - m_beta) * self._b_grad
         self.biases += -1 * self._v_b * LR
 
         if self.act_name in Activations._learnable_acts:
             # UPDATE/APPLY negative of average gradient change to learnable parameter
-            l2_term_for_alpha: np.ndarray = self.alpha * l2_lambda # Compute regularization term
-            self._v_alpha = m_beta * self._v_alpha + (1 - m_beta) * (self._alpha_grad + l2_term_for_alpha)
+            self._v_alpha = m_beta * self._v_alpha + (1 - m_beta) * self._alpha_grad
             self.alpha += -1 * self._v_alpha * LR
             self.alpha = np.clip(self.alpha, *self._learnable_bounds)
     
