@@ -1,4 +1,5 @@
-from .sgd import SGD
+from .adagrad import AdaGrad
 from .momentum import Momentum
+from .sgd import SGD
 
-__all__ = ["SGD", "Momentum"]
+__all__ = ["AdaGrad", "Momentum", "SGD"]

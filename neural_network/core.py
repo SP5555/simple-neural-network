@@ -10,7 +10,7 @@ class NeuralNetwork:
 
     def __init__(self,
                  layers: list[Layer],
-                 optimizer: Optimizer,
+                 optimizer: Optimizer = None,
                  loss_function: str = "MSE") -> None:
         
         self.utils = Utils(self)
@@ -25,7 +25,7 @@ class NeuralNetwork:
             if layers[i].output_size != layers[i + 1].input_size:
                 raise InputValidationError(f"Layer {i+1} and {i+2} can't connect.")
         
-        if optimizer == None:
+        if not optimizer:
             raise InputValidationError("Neural Network is missing an optimizer.")
 
         loss_function = loss_function.strip().lower()
@@ -34,7 +34,7 @@ class NeuralNetwork:
         
         self._layers: list[Layer] = layers
         self._layer_count: int = len(layers)
-        self.optimizer = optimizer
+        self._loss_deriv_func = self.utils._get_loss_deriv_func(loss_function)
 
         # Activate/Build/Initialize/whatever the layers
         for i in range(self._layer_count):
@@ -45,11 +45,13 @@ class NeuralNetwork:
                 self._layers[i].build(is_final=True)
                 continue
             self._layers[i].build()
+        PrintUtils.print_info(f"[{self.__class__.__name__}] Layers built.")
 
-        self._loss_deriv_func = self.utils._get_loss_deriv_func(loss_function)
-        
-        PrintUtils.print_info(f"Neural network initialization successful.")
-        PrintUtils.print_info(f"Parameter Count: {self.utils._get_param_count():,}")
+        self.optimizer = optimizer
+        PrintUtils.print_info(f"[{self.__class__.__name__}] {self.optimizer.__class__.__name__} Optimizer initialized.")
+
+        PrintUtils.print_info(f"[{self.__class__.__name__}] Neural network initialized.")
+        PrintUtils.print_info(f"[{self.__class__.__name__}] Parameter Count: {self.utils._get_param_count():,}")
 
     # main feed forward function (single)
     def forward(self, input: list) -> list:
@@ -134,8 +136,8 @@ class NeuralNetwork:
 
             # OPTIMIZATION: apply gradients
             self.optimizer.step(all_params)
-            
+
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
-        
+
         PrintUtils.print_success("\n===== ===== ===== Training Completed ===== ===== =====")

@@ -1,9 +1,9 @@
 import numpy as np
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
-from .sgd import SGD
+from .optimizer import Optimizer
 
-class Momentum(SGD):
+class Momentum(Optimizer):
     def __init__(self, learn_rate: float, momentum: float):
         super().__init__(learn_rate)
 
@@ -21,10 +21,10 @@ class Momentum(SGD):
             PrintUtils.print_warning(f"Warning: Momentum value {momentum:.3f} may cause strong \"gliding\" behavior. Consider keeping it less than 0.95")
 
         self.mom = momentum
-        # velocity storage
+        # velocities
         self.v = {}
 
-    def step(self, parameters: list) -> None:
+    def step(self, parameters: list[dict]) -> None:
         # parameter is a list of dictionaries
         # Keys: 'weight', 'grad'
         for param in parameters:
@@ -38,4 +38,3 @@ class Momentum(SGD):
             
             # UPDATE weights
             param['weight'] += -1 * self.v[param_id] * self.LR
-

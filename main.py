@@ -6,12 +6,12 @@ from neural_network.optimizers import *
 def main():
     nn = NeuralNetwork(
         layers=[
-            DropoutLayer(4, 12, "prelu", dropout_rate=0.2, weight_decay=0.001),
-            DropoutLayer(12, 16, "tanh", dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-            DropoutLayer(16, 12, "swish", dropout_rate=0.2, weight_decay=0.001),
-            DenseLayer(12, 3, "softmax", weight_decay=0.001)
+            DropoutLayer    (4, 12, "prelu",   dropout_rate=0.2,                  weight_decay=0.001),
+            DropoutLayer    (12, 16, "tanh",   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
+            DropoutLayer    (16, 12, "swish",  dropout_rate=0.2,                  weight_decay=0.001),
+            DenseLayer      (12, 3, "softmax",                                    weight_decay=0.001)
         ],
-        # optimizer=SGD(learn_rate=0.02),
+        # optimizer=AdaGrad(learn_rate=0.01),
         optimizer=Momentum(learn_rate=0.02, momentum=0.75),
         loss_function="CCE"
     )
@@ -32,6 +32,8 @@ def main():
     nn.metrics.check_accuracy(test_input=input_test_list, test_output=output_test_list)
 
     nn.metrics.compare_predictions(input=showcase_i, output=showcase_o)
+
+    input("Press any key to exit.")
 
 if __name__ == "__main__":
     main()
