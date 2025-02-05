@@ -8,7 +8,7 @@ class Layer:
                  input_size: int,
                  output_size: int,
                  activation: str,
-                 l2_regularizer: float) -> None:
+                 weight_decay: float) -> None:
 
         if input_size == 0:
             raise InputValidationError("A layer can't have 0 input.")
@@ -22,10 +22,10 @@ class Layer:
         # Don't set it too large, at most 0.01 (unless you know what you're doing)
         #     regularized_loss     = parameter_los      + 1/2 * lambda_param * parameter^2
         #     regularized_gradient = parameter_gradient +       lambda_param * parameter
-        if l2_regularizer < 0.0:
+        if weight_decay < 0.0:
             raise InputValidationError("Regularization Strength can't be negative.")
-        if l2_regularizer > 0.01:
-            PrintUtils.print_warning(f"Warning: Regularization Strength {l2_regularizer:.3f} is strong. Consider keeping it less than 0.01")
+        if weight_decay > 0.01:
+            PrintUtils.print_warning(f"Warning: Regularization Strength {weight_decay:.3f} is strong. Consider keeping it less than 0.01")
 
         activation = activation.strip().lower()
         Utils._act_func_validator(activation)
@@ -34,7 +34,7 @@ class Layer:
         self.output_size = output_size
         self.act_name = activation
 
-        self.l2_lambda = l2_regularizer
+        self.l2_lambda = weight_decay
 
     def build(self, is_first: bool, is_final: bool):
         raise NotImplementedError
@@ -45,10 +45,10 @@ class Layer:
     def backward(self):
         raise NotImplementedError
     
-    def optimize(self):
+    def _get_params(self) -> list[dict]:
         raise NotImplementedError
-    
-    def _get_param_count(self):
+
+    def _get_param_count(self) -> int:
         raise NotImplementedError
     
     @property

@@ -1,8 +1,8 @@
 import numpy as np
-from .layer import Layer
 from ..activations import Activations
 from ..exceptions import InputValidationError
 from ..utils import Utils
+from .layer import Layer
 
 class DenseLayer(Layer):
     
@@ -10,9 +10,9 @@ class DenseLayer(Layer):
                  input_size: int,
                  output_size: int,
                  activation: str,
-                 l2_regularizer: float = 0.0) -> None:
+                 weight_decay: float = 0.0) -> None:
 
-        super().__init__(input_size, output_size, activation, l2_regularizer)
+        super().__init__(input_size, output_size, activation, weight_decay)
 
     def build(self, is_first: bool = False, is_final: bool = False) -> None:
 
@@ -140,21 +140,14 @@ class DenseLayer(Layer):
         act_grad = np.matmul(self.weights.T, term_1_2)
         return act_grad
 
-    # updates the parameters (weights, biases, alpha) based on gradients calculated by backward().
-    def optimize(self, LR: float, m_beta: float):
-        # UPDATE/APPLY negative of average gradient change to weights
-        self._v_w = m_beta * self._v_w + (1 - m_beta) * self._w_grad
-        self.weights += -1 * self._v_w * LR
-
-        # UPDATE/APPLY negative of average gradient change to biases
-        self._v_b = m_beta * self._v_b + (1 - m_beta) * self._b_grad
-        self.biases += -1 * self._v_b * LR
-
+    def _get_params(self) -> list[dict]:
+        params = [
+            {'weight': self.weights, 'grad': self._w_grad},
+            {'weight': self.biases, 'grad': self._b_grad}
+        ]
         if self.act_name in Activations._learnable_acts:
-            # UPDATE/APPLY negative of average gradient change to learnable parameter
-            self._v_alpha = m_beta * self._v_alpha + (1 - m_beta) * self._alpha_grad
-            self.alpha += -1 * self._v_alpha * LR
-            self.alpha = np.clip(self.alpha, *self._learnable_bounds)
+            params.append({'weight': self.alpha, 'grad': self._alpha_grad})
+        return params
     
     def _get_param_count(self) -> int:
         w = self.input_size * self.output_size

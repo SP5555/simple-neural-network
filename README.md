@@ -36,7 +36,7 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
     - **Multilabel classification**: Binary Cross-Entropy (BCE)
     - **Multiclass classification**: Categorial Cross-Entropy (CCE)
 - **Training Algorithms**: Mini-batch gradient descent
-- **Techniques**: L2 (Ridge) regularization, Momentum
+- **Optimizers**: Stochastic Gradient Descent (SGD), Momentum
 
 ## Dependencies
 * **Python 3.0**
@@ -57,39 +57,39 @@ To create a neural network with customizable layer configurations:
 ```python
 # Example 1:
 # A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
-# with leaky_relu activation in hidden layer and sigmoid activation in final layer
+# leaky_relu activation in hidden layer and sigmoid activation in final layer and SGD optimizer
 nn = NeuralNetwork(layers=[
-    DenseLayer(4, 6, "leaky_relu"),
-    DenseLayer(6, 2, "sigmoid")
-])
+        DenseLayer(4, 6, "leaky_relu"),
+        DenseLayer(6, 2, "sigmoid"),
+    ],
+    optimizer=SGD(learn_rate=0.02)
+)
 
-# Example 2: A deeper network with multiple hidden layers
+# Example 2: A deeper network with multiple hidden layers, regularization strengths and Momentum optimizer
 nn = NeuralNetwork(layers=[
-    DenseLayer(4, 10, "leaky_relu"),
-    DropoutLayer(10, 16, "tanh", 0.2),
-    DropoutLayer(16, 14, "tanh", 0.2),
-    DenseLayer(14, 2, "sigmoid")
-])
+        DenseLayer(4, 10, "leaky_relu", weight_decay=0.001),
+        DropoutLayer(10, 16, "tanh", dropout_rate=0.2, weight_decay=0.001),
+        DropoutLayer(16, 14, "tanh", dropout_rate=0.2, weight_decay=0.001),
+        DenseLayer(14, 2, "sigmoid", weight_decay=0.001)
+    ],
+    optimizer=Momentum(learn_rate=0.02, momentum=0.75)
+)
 ```
 #### Parameters
 * `layers`: List of supported layer classes.
 * `loss_function`: Loss function for training (E.g., `"MSE"`, `"BCE"`)
-* `learn_rate`: Learning rate for gradient descent.
-* `lambda_parem`: Regularization strength to prevent overfitting.
-* `momentum`: Momentum to accelerate convergence.
+* `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
 
 Example with added parameters:
 ```python
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 12, "tanh"),
-        DenseLayer(12, 12, "tanh"),
-        DenseLayer(12, 3, "sigmoid")
+        DenseLayer(4, 12, "tanh", weight_decay=0.002),
+        DenseLayer(12, 12, "tanh", weight_decay=0.002),
+        DenseLayer(12, 3, "sigmoid", weight_decay=0.002)
     ],
     loss_function="BCE", # for multilabel classification
-    learn_rate=0.05,
-    lambda_parem=0.002,
-    momentum=0.75
+    optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
 ```
 ### Training
@@ -132,15 +132,13 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 10, "tanh"),
-        DropoutLayer(10, 16, "tanh", 0.1),
-        DenseLayer(16, 12, "tanh"),
-        DenseLayer(12, 3, "sigmoid")
+        DenseLayer(4, 10, "tanh", weight_decay=0.001),
+        DropoutLayer(10, 16, "tanh", dropout_rate=0.1, weight_decay=0.001),
+        DenseLayer(16, 12, "tanh", weight_decay=0.001),
+        DenseLayer(12, 3, "sigmoid", weight_decay=0.001)
     ],
     loss_function="BCE",
-    learn_rate=0.04,
-    lambda_parem=0.001,
-    momentum=0.75
+    optimizer=Momentum(learn_rate=0.04, momentum=0.75)
 )
 ```
 ```
@@ -172,15 +170,13 @@ Accuracy per output:    94.77%   90.57%   94.07%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DropoutLayer(4, 12, "prelu", 0.2),
-        DropoutLayer(12, 16, "tanh", 0.2),
-        DropoutLayer(16, 12, "swish", 0.2),
-        DenseLayer(12, 3, "softmax")
+        DropoutLayer(4, 12, "prelu", dropout_rate=0.2, weight_decay=0.001),
+        DropoutLayer(12, 16, "tanh", dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
+        DropoutLayer(16, 12, "swish", dropout_rate=0.2, weight_decay=0.001),
+        DenseLayer(12, 3, "softmax", weight_decay=0.001)
     ],
-    loss_function="CCE",
-    learn_rate=0.02,
-    lambda_parem=0.001,
-    momentum=0.75
+    optimizer=Momentum(learn_rate=0.02, momentum=0.75),
+    loss_function="CCE"
 )
 ```
 ```
@@ -215,15 +211,13 @@ Overall categorization accuracy:    93.60%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 12, "prelu"),
-        DropoutLayer(12, 16, "tanh", 0.2),
-        DropoutLayer(16, 16, "swish", 0.2),
-        DenseLayer(16, 3, "id")
+        DenseLayer(4, 12, "prelu", weight_decay=0.005),
+        DropoutLayer(12, 16, "tanh", 0.2, weight_decay=0.005),
+        DropoutLayer(16, 16, "swish", 0.2, weight_decay=0.005),
+        DenseLayer(16, 3, "id", weight_decay=0.005)
     ],
     loss_function="MSE",
-    learn_rate=0.002,
-    lambda_parem=0.005,
-    momentum=0.75
+    optimizer=Momentum(learn_rate=0.002, momentum=0.75)
 )
 ```
 ```
@@ -462,7 +456,7 @@ Rather than trying to balance everything from the start, we begin with a highly 
 
 $$Regularized\ Loss=Loss+\frac{1}{2} \lambda w^{2}$$
 
-What is the intuition? In neural networks, large parameter values have a stronger influence on the output. If these large parameters begin to "memorize" the given data, the **L2 regularization** term, $\frac{1}{2} \lambda w^{2}$ adds to the overall loss and heavily penalizes them with the squared values. This makes stronger parameters decay more quickly back toward zero. In other words, it is like a void pulling all parameters toward zero, ensuring that no value in the network explodes into huge negatives or positives. This process thereby reduces the risk of "memorizing" the data and helps the network generalize better. The $\lambda$ controls the strength of regularization.
+What is the intuition? In neural networks, large parameter values have a stronger influence on the output. If these large parameters begin to "memorize" the given data, the **L2 regularization** term (weight decay), $\frac{1}{2} \lambda w^{2}$ adds to the overall loss and heavily penalizes them with the squared values. This makes stronger parameters decay more quickly back toward zero. In other words, it is like a void pulling all parameters toward zero, ensuring that no value in the network explodes into huge negatives or positives. This process thereby reduces the risk of "memorizing" the data and helps the network generalize better. The $\lambda$ controls the strength of regularization.
 
 ### Momentum
 In physics, when an object is moving, it has momentum. Objects with momentum continue to maintain that momentum unless external forces act upon them. Similarly, in neural networks, when parameters are moving toward a local minimum to minimize the loss, the momentum technique gives them the ability to "glide." This "gliding" helps them escape high-loss plateaus faster, allowing them to reach the local minimum more efficiently. It introduces the concept of "velocity" for each parameter in the model. The velocity is updated as follows:

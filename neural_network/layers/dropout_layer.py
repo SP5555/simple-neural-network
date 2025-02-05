@@ -1,8 +1,8 @@
 import numpy as np
-from .dense_layer import DenseLayer
 from ..activations import Activations
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
+from .dense_layer import DenseLayer
 
 class DropoutLayer(DenseLayer):
     
@@ -10,18 +10,18 @@ class DropoutLayer(DenseLayer):
                  input_size: int,
                  output_size: int,
                  activation: str,
-                 dropout_probability: float,
+                 dropout_rate: float,
                  batch_wise=False,
-                 l2_regularizer: float = 0.0) -> None:
+                 weight_decay: float = 0.0) -> None:
 
-        super().__init__(input_size, output_size, activation, l2_regularizer)
+        super().__init__(input_size, output_size, activation, weight_decay)
 
-        if dropout_probability < 0.0 or dropout_probability > 1.0:
+        if dropout_rate < 0.0 or dropout_rate > 1.0:
             raise InputValidationError("Dropout Probability can't be less than must be within 0.0 and 1.0")
-        if dropout_probability > 0.5:
-            PrintUtils.print_warning(f"Dropout Probability of {dropout_probability} is too high. Consider less than 0.5")
+        if dropout_rate > 0.5:
+            PrintUtils.print_warning(f"Dropout Probability of {dropout_rate} is too high. Consider less than 0.5")
         
-        self.dp = dropout_probability
+        self.dp = dropout_rate
         self.batch_wise = batch_wise
 
     def build(self, is_first: bool = False, is_final: bool = False):

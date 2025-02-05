@@ -1,7 +1,8 @@
 import numpy as np
-from .layers import Layer
 from .exceptions import InputValidationError
+from .layers.layer import Layer
 from .metrics import Metrics
+from .optimizers.optimizer import Optimizer
 from .print_utils import PrintUtils
 from .utils import Utils
 
@@ -9,9 +10,8 @@ class NeuralNetwork:
 
     def __init__(self,
                  layers: list[Layer],
-                 loss_function: str = "MSE",
-                 learn_rate: float = 0.01,
-                 momentum: float = 0.8) -> None:
+                 optimizer: Optimizer,
+                 loss_function: str = "MSE") -> None:
         
         self.utils = Utils(self)
         self.metrics = Metrics(self)
@@ -19,32 +19,14 @@ class NeuralNetwork:
         # ===== ===== INPUT VALIDATION START ===== =====
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
-        
-        # Learn Rate
-        # How fast or slow this network learns
-        #     new_parameter = old_parameter - velocity * learn_rate
-        if learn_rate <= 0.0:
-            raise InputValidationError("Learn rate must be positive.")
-        if learn_rate >= 0.1:
-            PrintUtils.print_warning(f"Warning: Learn rate {learn_rate:.3f} may cause instability. Consider keeping it less than 0.1.")
-
-        # Momentum Beta for Momentum Gradient Descent
-        # 0.0 disables the momentum behavior
-        # having momentum beta helps escape the high loss "plateaus" better
-        # high values result in smoother/stronger "gliding" descent
-        # MUST be less than 1.0
-        #     new_velocity = momentum * old_velocity + (1-momentum) * parameter_gradient
-        if momentum < 0.0:
-            raise InputValidationError("Momentum can't be negative.")
-        if momentum >= 1.0:
-            raise InputValidationError("Momentum must be less than 1.0.")
-        if momentum >= 0.95:
-            PrintUtils.print_warning(f"Warning: Momentum value {momentum:.3f} may cause strong \"gliding\" behavior. Consider keeping it less than 0.95")
 
         # Neuron connection check
         for i in range(len(layers) - 1):
             if layers[i].output_size != layers[i + 1].input_size:
                 raise InputValidationError(f"Layer {i+1} and {i+2} can't connect.")
+        
+        if optimizer == None:
+            raise InputValidationError("Neural Network is missing an optimizer.")
 
         loss_function = loss_function.strip().lower()
         self.utils._loss_func_validator(loss_function)
@@ -52,8 +34,7 @@ class NeuralNetwork:
         
         self._layers: list[Layer] = layers
         self._layer_count: int = len(layers)
-        self.LR = learn_rate
-        self.m_beta = momentum
+        self.optimizer = optimizer
 
         # Activate/Build/Initialize/whatever the layers
         for i in range(self._layer_count):
@@ -145,10 +126,14 @@ class NeuralNetwork:
             # BACKPROPAGATION: calculate gradients
             for layer in reversed(self._layers):
                 act_grad = layer.backward(act_grad)
-            
-            # OPTIMIZATION: apply gradients
+
+            # collect params to pass into optimizer
+            all_params = []
             for layer in self._layers:
-                layer.optimize(LR=self.LR, m_beta=self.m_beta)
+                all_params.extend(layer._get_params())
+
+            # OPTIMIZATION: apply gradients
+            self.optimizer.step(all_params)
             
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
