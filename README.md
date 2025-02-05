@@ -36,7 +36,7 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
     - **Multilabel classification**: Binary Cross-Entropy (BCE)
     - **Multiclass classification**: Categorial Cross-Entropy (CCE)
 - **Training Algorithms**: Mini-batch gradient descent
-- **Optimizers**: Stochastic Gradient Descent (SGD), Momentum
+- **Optimizers**: Stochastic Gradient Descent (SGD), AdaGrad, Momentum
 
 ## Dependencies
 * **Python 3.0**
