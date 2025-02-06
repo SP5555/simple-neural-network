@@ -27,7 +27,6 @@ class Huber(Loss):
         self.d = delta
 
     def grad(self, a: np.ndarray, y: np.ndarray) -> np.ndarray:
-        self.d = 1.0 # Delta Huber Loss for future implementation
         return np.clip(a - y, -self.d, self.d)
 
 # ===== Binary Cross Entropy =====
