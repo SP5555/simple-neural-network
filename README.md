@@ -54,41 +54,30 @@ pip install -r requirements.txt
 
 ### Creating a Neural Network
 To create a neural network with customizable layer configurations:
+#### Parameters
+* `layers`: List of supported layer classes.
+* `loss_function`: Loss function for training (E.g., `MSE`, `BCE`)
+* `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
 ```python
 # Example 1:
 # A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
-# leaky_relu activation in hidden layer and sigmoid activation in final layer and SGD optimizer
+# leaky_relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
 nn = NeuralNetwork(layers=[
         DenseLayer(4, 6, "leaky_relu"),
         DenseLayer(6, 2, "sigmoid"),
     ],
+    loss_function=BCE(),
     optimizer=SGD(learn_rate=0.02)
 )
 
-# Example 2: A deeper network with multiple hidden layers, regularization strengths and Momentum optimizer
-nn = NeuralNetwork(layers=[
-        DenseLayer(4, 10, "leaky_relu", weight_decay=0.001),
-        DropoutLayer(10, 16, "tanh", dropout_rate=0.2, weight_decay=0.001),
-        DropoutLayer(16, 14, "tanh", dropout_rate=0.2, weight_decay=0.001),
-        DenseLayer(14, 2, "sigmoid", weight_decay=0.001)
-    ],
-    optimizer=Momentum(learn_rate=0.02, momentum=0.75)
-)
-```
-#### Parameters
-* `layers`: List of supported layer classes.
-* `loss_function`: Loss function for training (E.g., `"MSE"`, `"BCE"`)
-* `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
-
-Example with added parameters:
-```python
+# Example 2: with decaying rates
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 12, "tanh", weight_decay=0.002),
-        DenseLayer(12, 12, "tanh", weight_decay=0.002),
-        DenseLayer(12, 3, "sigmoid", weight_decay=0.002)
+        DenseLayer(4, 12, "prelu", weight_decay=0.002),
+        DenseLayer(12, 12, "swish", weight_decay=0.002),
+        DenseLayer(12, 3, "id", weight_decay=0.002)
     ],
-    loss_function="BCE", # for multilabel classification
+    loss_function=Huber(delta=1.0), # for regression tasks
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
 ```
@@ -132,12 +121,12 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 10, "tanh", weight_decay=0.001),
-        DropoutLayer(10, 16, "tanh", dropout_rate=0.1, weight_decay=0.001),
-        DenseLayer(16, 12, "tanh", weight_decay=0.001),
-        DenseLayer(12, 3, "sigmoid", weight_decay=0.001)
+        DenseLayer  (4, 10, "tanh",                      weight_decay=0.001),
+        DropoutLayer(10, 16, "tanh",   dropout_rate=0.1, weight_decay=0.001),
+        DenseLayer  (16, 12, "tanh",                     weight_decay=0.001),
+        DenseLayer  (12, 3, "sigmoid",                   weight_decay=0.001)
     ],
-    loss_function="BCE",
+    loss_function=BCE(),
     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
 )
 ```
@@ -170,13 +159,13 @@ Accuracy per output:    94.77%   90.57%   94.07%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DropoutLayer(4, 12, "prelu", dropout_rate=0.2, weight_decay=0.001),
-        DropoutLayer(12, 16, "tanh", dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-        DropoutLayer(16, 12, "swish", dropout_rate=0.2, weight_decay=0.001),
-        DenseLayer(12, 3, "softmax", weight_decay=0.001)
+        DropoutLayer(4, 12, "prelu",   dropout_rate=0.2,                  weight_decay=0.001),
+        DropoutLayer(12, 16, "tanh",   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
+        DropoutLayer(16, 12, "swish",  dropout_rate=0.2,                  weight_decay=0.001),
+        DenseLayer  (12, 3, "softmax",                                    weight_decay=0.001)
     ],
-    optimizer=Momentum(learn_rate=0.02, momentum=0.75),
-    loss_function="CCE"
+    loss_function=CCE(),
+    optimizer=Momentum(learn_rate=0.02, momentum=0.75)
 )
 ```
 ```
@@ -211,36 +200,36 @@ Overall categorization accuracy:    93.60%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 12, "prelu", weight_decay=0.005),
-        DropoutLayer(12, 16, "tanh", 0.2, weight_decay=0.005),
-        DropoutLayer(16, 16, "swish", 0.2, weight_decay=0.005),
-        DenseLayer(16, 3, "id", weight_decay=0.005)
+        DenseLayer  (4, 12, "prelu",                                     weight_decay=0.001),
+        DropoutLayer(12, 16, "tanh",  dropout_rate=0.1, batch_wise=True, weight_decay=0.001),
+        DropoutLayer(16, 12, "swish", dropout_rate=0.1,                  weight_decay=0.001),
+        DenseLayer  (12, 3, "id",                                        weight_decay=0.001)
     ],
-    loss_function="MSE",
-    optimizer=Momentum(learn_rate=0.002, momentum=0.75)
+    loss_function=Huber(delta=1.0),
+    optimizer=Adam(learn_rate=0.01)
 )
 ```
 ```
 Detected id in the last layer. Running accuracy check for regression.
 Mean Squared Error on 20,000 samples
-Mean Squared Error per output:    14.78   11.97   10.32
+Mean Squared Error per output:    10.49    8.62    6.45
                    Expected |                   Predicted | Input Data
- -15.0956   7.0886  13.2429 |  -11.0299   4.5329   6.6916 |   0.409 -2.981 -2.589 -0.056
-  -2.0905  -3.7435   1.7605 |    0.3256  -6.1848   1.9393 |  -1.774 -1.726 -2.052 -1.780
-  14.2939   0.0466   4.7773 |   13.6543  -4.2726  -0.0451 |  -0.752  2.411 -0.441  1.996
-   8.3577  18.5535  17.3255 |    9.9526  16.2348   9.1615 |  -1.138  2.502  2.549  1.449
-  -7.3252  -0.4041   8.5418 |   -4.7877  -3.0463   4.4140 |   0.213 -2.190 -0.430  2.616
-  -4.8442   5.7603  -9.7178 |   -4.1012   4.3620  -6.8332 |   1.202 -1.593  2.441 -1.181
-   2.4884   0.1766  -1.4539 |    1.0466  -1.4732  -2.7237 |  -1.489  0.703  0.982 -1.470
-  -3.7609  -2.5958  -7.0268 |   -0.7536  -1.8787  -5.0473 |   2.204  2.107 -1.330 -1.880
- -12.8934   7.2461  10.5115 |   -8.2320   5.1170   6.4492 |   1.802 -2.262 -1.163  1.489
-   1.2291   1.1229   4.9442 |    0.9945  -0.4608   2.5233 |  -0.139 -0.274  0.636  2.134
- -19.1591  -9.7890  -3.8286 |  -11.8359  -8.1007  -5.9463 |  -2.475 -0.974  2.115  1.738
- -13.2498  -8.7462  -1.7948 |  -11.9267  -7.3710  -4.8182 |  -1.696 -3.002  0.108  0.408
-  10.4913  -2.0566   3.2149 |   11.5092  -2.3142   0.7362 |  -0.479  1.897 -0.314  1.747
- -12.9225  -7.6929 -12.1723 |  -12.9688  -7.2508  -9.3203 |  -2.145 -2.865  1.064 -2.808
-  10.0013   5.5798   6.5370 |    9.1354   8.2387   5.6040 |   0.258  1.224  0.568  2.242
- -15.7351  -5.5822 -18.0392 |  -13.6024  -5.9286  -9.7555 |  -0.955 -2.773  2.757 -1.816
+   3.3575   8.6284   2.0535 |    4.3044   7.0457   3.2634 |  -0.477  1.323  1.722 -1.149
+   2.7508  12.1666  10.5097 |    2.9617   9.1734   9.1678 |  -1.294  1.482  2.548  2.170
+   6.6238  -6.0965   0.6740 |    5.4853  -4.6592   1.2948 |  -0.567  0.732 -1.052  1.659
+  -3.4430  -2.5150   3.8812 |   -1.1821  -3.3759   2.5114 |  -0.526 -0.603 -0.282  1.821
+ -13.8840   5.9988  -6.5019 |  -14.2842   6.2277  -3.9771 |   1.020 -2.153  0.174 -2.594
+ -17.6580  -4.4838  -2.7950 |  -12.7972  -6.4664  -5.0047 |  -2.922 -0.688  2.721  0.720
+  10.7379  10.2664   4.8267 |    7.7191   4.6950   3.5262 |  -0.108  1.782  0.897 -0.521
+   8.4002  -4.2949   2.0537 |    6.5684  -4.1226   0.9138 |  -0.616  1.107 -0.611  1.614
+ -17.9570  11.0277   4.5498 |  -16.9253   8.7957   3.9602 |   1.865 -3.061 -0.416 -0.702
+   6.6330   6.4195  -2.6285 |    5.2088   8.2387   2.6677 |   2.963 -2.033  1.470  2.273
+  -4.6607   1.4500  -2.7037 |   -3.5027   2.3028  -4.0241 |  -2.310  0.734  2.595 -2.845
+  -5.2267   2.6799  -1.7481 |  -10.8543   4.6627  -1.7596 |   1.865  0.004 -1.047 -1.951
+  -9.9641  -9.2251  -1.0424 |   -8.9206  -6.6737  -1.5643 |  -1.671 -1.222  0.538  1.052
+  -6.8193  -2.7790  -1.0872 |   -6.8343  -4.9253  -1.0165 |  -2.280  0.075  1.504 -0.221
+  -2.8018  10.5346   1.8449 |    0.8403   9.9028   1.7210 |   2.909  0.152 -0.170 -0.496
+ -17.1167   9.0309   9.3532 |  -15.1465   7.5856   8.9784 |   2.454 -1.220 -2.901  0.861
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 

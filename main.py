@@ -1,19 +1,19 @@
 from data_generator import DataGenerator
 from neural_network import NeuralNetwork
 from neural_network.layers import *
+from neural_network.losses import *
 from neural_network.optimizers import *
 
 def main():
     nn = NeuralNetwork(
         layers=[
             DenseLayer      (4, 12, "prelu",                                      weight_decay=0.001),
-            DropoutLayer    (12, 16, "tanh",   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-            DropoutLayer    (16, 12, "swish",  dropout_rate=0.2,                  weight_decay=0.001),
+            DropoutLayer    (12, 16, "tanh",   dropout_rate=0.1, batch_wise=True, weight_decay=0.001),
+            DropoutLayer    (16, 12, "swish",  dropout_rate=0.1,                  weight_decay=0.001),
             DenseLayer      (12, 3, "id",                                         weight_decay=0.001)
         ],
-        # optimizer=Momentum(learn_rate=0.002, momentum=0.75),
         optimizer=Adam(learn_rate=0.01),
-        loss_function="huber"
+        loss_function=Huber(delta=1.0)
     )
 
     data_generator = DataGenerator()

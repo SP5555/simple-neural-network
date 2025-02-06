@@ -1,7 +1,6 @@
 import numpy as np
 from .activations import Activations, ActivationWrapper
 from .exceptions import InputValidationError
-from .losses import Losses
 from .print_utils import PrintUtils
 
 from typing import TYPE_CHECKING
@@ -33,11 +32,6 @@ class Utils:
     def _act_func_validator(name: str):
         if name not in Activations._supported_acts:
             raise InputValidationError(f"Unsupported activation function: {name}")
-
-    @staticmethod
-    def _loss_func_validator(name: str):
-        if name not in Losses._supported_loss:
-            raise InputValidationError(f"Unsupported loss function: {name}")
 
     # === for all activation related functions =====
     # z (logits; raw score) comes in with the dimensions of (n, batch_size)
@@ -85,14 +79,3 @@ class Utils:
         if name in learnable_alpha_grad_funcs:
             return learnable_alpha_grad_funcs[name]
         return ActivationWrapper(lambda z, b: 0, "N/A")
-
-    @staticmethod
-    def _get_loss_deriv_func(name: str):
-        loss_funcs = {
-            'mae':      Losses._mae_grad,
-            'mse':      Losses._mse_grad,
-            'huber':    Losses._huber_grad,
-            'bce':      Losses._bce_grad,
-            'cce':      Losses._cce_grad
-        }
-        return loss_funcs[name]

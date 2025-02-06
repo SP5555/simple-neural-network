@@ -1,5 +1,6 @@
 import numpy as np
 from .exceptions import InputValidationError
+from .losses.loss import Loss
 from .layers.layer import Layer
 from .metrics import Metrics
 from .optimizers.optimizer import Optimizer
@@ -11,7 +12,7 @@ class NeuralNetwork:
     def __init__(self,
                  layers: list[Layer],
                  optimizer: Optimizer = None,
-                 loss_function: str = "MSE") -> None:
+                 loss_function: Loss = None) -> None:
         
         self.utils = Utils(self)
         self.metrics = Metrics(self)
@@ -28,13 +29,13 @@ class NeuralNetwork:
         if not optimizer:
             raise InputValidationError("Neural Network is missing an optimizer.")
 
-        loss_function = loss_function.strip().lower()
-        self.utils._loss_func_validator(loss_function)
+        if not loss_function:
+            raise InputValidationError("Neural Network is missing a loss function.")
         # ===== ===== INPUT VALIDATION END ===== =====
         
         self._layers: list[Layer] = layers
         self._layer_count: int = len(layers)
-        self._loss_deriv_func = self.utils._get_loss_deriv_func(loss_function)
+        self._loss_func = loss_function
 
         # Activate/Build/Initialize/whatever the layers
         for i in range(self._layer_count):
@@ -123,7 +124,7 @@ class NeuralNetwork:
             # dims of a after forward pass: (output_size, batch_size)
 
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
-            act_grad: np.ndarray = self._loss_deriv_func(a, y)
+            act_grad: np.ndarray = self._loss_func.grad(a, y)
 
             # BACKPROPAGATION: calculate gradients
             for layer in reversed(self._layers):
