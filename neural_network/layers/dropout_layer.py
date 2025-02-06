@@ -8,7 +8,8 @@ class DropoutLayer(DenseLayer):
     """
     A fully connected layer with dropout regularization technique.
 
-    ===== Parameters =====
+    Parameters
+    ----------
     input_size : int
         Number of input neurons. Must match the output size of the previous layer
         or the input dimension if this is the first layer.
@@ -28,7 +29,7 @@ class DropoutLayer(DenseLayer):
     batch_wise : bool, optional
         If True, the same dropout mask is applied across the entire batch.
         If False, dropout is applied independently to each sample.
-        Default is False.
+        Default is `False`.
 
     weight_decay : float, optional
         Strength of L2 regularization.
@@ -39,8 +40,8 @@ class DropoutLayer(DenseLayer):
                  output_size: int,
                  activation: str,
                  dropout_rate: float,
-                 batch_wise: bool=False,
-                 weight_decay: float=0.0) -> None:
+                 batch_wise: bool = False,
+                 weight_decay: float = 0.0) -> None:
 
         super().__init__(input_size, output_size, activation, weight_decay)
 

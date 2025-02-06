@@ -9,7 +9,8 @@ class DenseLayer(Layer):
     A fully connected (dense) layer where every input neuron 
     is connected to every output neuron.
 
-    ===== Parameters =====
+    Parameters
+    ----------
     input_size : int
         Number of input neurons. Must match the output size of the previous layer 
         or the input dimension if this is the first layer.
