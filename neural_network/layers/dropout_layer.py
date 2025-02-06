@@ -5,14 +5,42 @@ from ..print_utils import PrintUtils
 from .dense_layer import DenseLayer
 
 class DropoutLayer(DenseLayer):
-    
+    """
+    A fully connected layer with dropout regularization technique.
+
+    ===== Parameters =====
+    input_size : int
+        Number of input neurons. Must match the output size of the previous layer
+        or the input dimension if this is the first layer.
+
+    output_size : int
+        Number of output neurons. Must match the input size of the next layer
+        or the final output dimension if this is the last layer.
+
+    activation : str
+        Activation function to apply to the output neurons.
+
+    dropout_rate : float
+        Fraction of neurons to drop during training. Should be between 0.0
+        (no dropout) and 1.0 (drop everything, never do this).
+        Typical values are between 0.2 and 0.5.
+
+    batch_wise : bool, optional
+        If True, the same dropout mask is applied across the entire batch.
+        If False, dropout is applied independently to each sample.
+        Default is False.
+
+    weight_decay : float, optional
+        Strength of L2 regularization.
+        Default is 0.0, meaning no regularization.
+    """
     def __init__(self,
                  input_size: int,
                  output_size: int,
                  activation: str,
                  dropout_rate: float,
-                 batch_wise=False,
-                 weight_decay: float = 0.0) -> None:
+                 batch_wise: bool=False,
+                 weight_decay: float=0.0) -> None:
 
         super().__init__(input_size, output_size, activation, weight_decay)
 

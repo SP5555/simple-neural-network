@@ -1,12 +1,16 @@
 from .optimizer import Optimizer
 
 class SGD(Optimizer):
+    """
+    Stochastic Gradient Descent
+
+    w_(t+1) = w_(t) - LR * grad(w_(t))
+    """
     def __init__(self, learn_rate: float):
         super().__init__(learn_rate)
 
     def step(self, parameters: list[dict]) -> None:
-        # parameter is a list of dictionaries
-        # Keys: 'weight', 'grad'
+
         for param in parameters:
-            # UPDATE weights
-            param['weight'] += -1 * param['grad'] * self.LR
+            # update weights
+            param['weight'] += -1 * self.LR * param['grad'] 

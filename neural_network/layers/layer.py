@@ -3,7 +3,13 @@ from ..print_utils import PrintUtils
 from ..utils import Utils
 
 class Layer:
+    """
+    Abstract base class for all neural network layers.
 
+    This class serves as a template and cannot be used directly in the models.
+    Methods in this class raise `NotImplementedError` to enforce implementation 
+    in derived child classes.
+    """
     def __init__(self,
                  input_size: int,
                  output_size: int,
@@ -20,8 +26,8 @@ class Layer:
         # high reg strength -> I am dumb dumb, can't learn; underfit
         # Large weights and biases will are penalized more aggressively than small ones
         # Don't set it too large, at most 0.01 (unless you know what you're doing)
-        #     regularized_loss     = parameter_los      + 1/2 * lambda_param * parameter^2
-        #     regularized_gradient = parameter_gradient +       lambda_param * parameter
+        #     regularized_loss     = parameter_los      + 1/2 * L2_lambda * parameter^2
+        #     regularized_gradient = parameter_gradient +       L2_lambda * parameter
         if weight_decay < 0.0:
             raise InputValidationError("Regularization Strength can't be negative.")
         if weight_decay > 0.01:
@@ -34,7 +40,7 @@ class Layer:
         self.output_size = output_size
         self.act_name = activation
 
-        self.l2_lambda = weight_decay
+        self.L2_lambda = weight_decay
 
     def build(self, is_first: bool, is_final: bool):
         raise NotImplementedError

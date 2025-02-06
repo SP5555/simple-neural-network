@@ -29,14 +29,14 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
     - **Dense Layer**: Fully-connected layer
     - **Dropout Layer**: Dense layer with dropout technique that drops a fraction of neurons during training, with an adjustable dropout rate
 - **Activation functions**:
-    - **Bounded**: Sigmoid, Tanh, Softmax
-    - **Unbounded**: ReLU, Leaky ReLU, PReLU (Learnable), Swish (Fixed/Learnable), Linear
+    - **Bounded**: Sigmoid, Softmax, Tanh
+    - **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Swish (Fixed/Learnable)
 - **Loss functions**:
-    - **Regression**: Mean-Squared Error (MSE)
+    - **Regression**: Mean-Squared Error (MSE), Mean-Absolute Error (MAE), Huber Loss
     - **Multilabel classification**: Binary Cross-Entropy (BCE)
     - **Multiclass classification**: Categorial Cross-Entropy (CCE)
 - **Training Algorithms**: Mini-batch gradient descent
-- **Optimizers**: Stochastic Gradient Descent (SGD), AdaGrad, Momentum
+- **Optimizers**: Adam, AdaGrad, Momentum, RMSprop, Stochastic Gradient Descent (SGD)
 
 ## Dependencies
 * **Python 3.0**

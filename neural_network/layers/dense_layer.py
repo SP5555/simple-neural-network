@@ -5,7 +5,26 @@ from ..utils import Utils
 from .layer import Layer
 
 class DenseLayer(Layer):
+    """
+    A fully connected (dense) layer where every input neuron 
+    is connected to every output neuron.
+
+    ===== Parameters =====
+    input_size : int
+        Number of input neurons. Must match the output size of the previous layer 
+        or the input dimension if this is the first layer.
     
+    output_size : int
+        Number of output neurons. Must match the input size of the next layer 
+        or the final output dimension if this is the last layer.
+    
+    activation : str
+        Activation function to apply to the output neurons.
+    
+    weight_decay : float, optional
+        Strength of L2 regularization.
+        Default is 0.0, meaning no regularization.
+    """
     def __init__(self,
                  input_size: int,
                  output_size: int,
@@ -104,7 +123,7 @@ class DenseLayer(Layer):
         # = dL/da(n) * actv'(z(n)) * a(n-1)
         # matrix dims: (out, in) = (out, batch_size) * (batch_size, in)
         self._w_grad = np.matmul(term_1_2, self._a_in.T) / batch_size
-        l2_term_for_w: np.ndarray = self.weights * self.l2_lambda # Compute regularization term
+        l2_term_for_w: np.ndarray = self.weights * self.L2_lambda # Compute regularization term
         self._w_grad += l2_term_for_w
 
         # CALCULATE derivative of loss with respect to biases
@@ -113,7 +132,7 @@ class DenseLayer(Layer):
         # = dL/da(n) * actv'(z(n)) * 1
         # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
         self._b_grad = np.sum(term_1_2, axis=1, keepdims=True) / batch_size
-        l2_term_for_b: np.ndarray = self.biases * self.l2_lambda # Compute regularization term
+        l2_term_for_b: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
         self._b_grad += l2_term_for_b
 
         if self.act_name in Activations._learnable_acts:
@@ -124,7 +143,7 @@ class DenseLayer(Layer):
             dL_wrt_dlearn_alpha = self._learnable_deriv_func(self._z, self.alpha) * act_grad
             # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
             self._alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
-            l2_term_for_alpha: np.ndarray = self.alpha * self.l2_lambda # Compute regularization term
+            l2_term_for_alpha: np.ndarray = self.alpha * self.L2_lambda # Compute regularization term
             self._alpha_grad += l2_term_for_alpha
 
         # first layer does not have previous layer

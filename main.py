@@ -6,22 +6,22 @@ from neural_network.optimizers import *
 def main():
     nn = NeuralNetwork(
         layers=[
-            DropoutLayer    (4, 12, "prelu",   dropout_rate=0.2,                  weight_decay=0.001),
+            DenseLayer      (4, 12, "prelu",                                      weight_decay=0.001),
             DropoutLayer    (12, 16, "tanh",   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
             DropoutLayer    (16, 12, "swish",  dropout_rate=0.2,                  weight_decay=0.001),
-            DenseLayer      (12, 3, "softmax",                                    weight_decay=0.001)
+            DenseLayer      (12, 3, "id",                                         weight_decay=0.001)
         ],
-        # optimizer=AdaGrad(learn_rate=0.01),
-        optimizer=Momentum(learn_rate=0.02, momentum=0.75),
-        loss_function="CCE"
+        # optimizer=Momentum(learn_rate=0.002, momentum=0.75),
+        optimizer=Adam(learn_rate=0.01),
+        loss_function="huber"
     )
 
     data_generator = DataGenerator()
-    problem_type = "multiclass"
+    problem_type = "regression"
 
     input_train_list, output_train_list = data_generator.generate(40000, problem_type)
-    input_test_list, output_test_list = data_generator.generate(20000, problem_type)
-    showcase_i, showcase_o = data_generator.generate(16, problem_type)
+    input_test_list,  output_test_list  = data_generator.generate(20000, problem_type)
+    showcase_i,       showcase_o        = data_generator.generate(16, problem_type)
 
     nn.train(input_list=input_train_list,
              output_list=output_train_list,

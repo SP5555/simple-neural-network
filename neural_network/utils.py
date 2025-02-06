@@ -89,8 +89,10 @@ class Utils:
     @staticmethod
     def _get_loss_deriv_func(name: str):
         loss_funcs = {
-            'mse': Losses._mse_grad,
-            'bce': Losses._bce_grad,
-            'cce': Losses._cce_grad
+            'mae':      Losses._mae_grad,
+            'mse':      Losses._mse_grad,
+            'huber':    Losses._huber_grad,
+            'bce':      Losses._bce_grad,
+            'cce':      Losses._cce_grad
         }
         return loss_funcs[name]
