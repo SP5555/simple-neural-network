@@ -1,7 +1,9 @@
 # Optimizers
 After activation functions and loss functions compute gradients, what's next? Gradients points in the direction of the steepest climb. In this case, toward higher loss. So, intuitively speaking, to minimize the loss, parameters must move in the opposite direction of the gradient.
 
-$\eta$ is the **learn rate**, a dominant hyperparameter that exists in all optimization algorithms. It controls how fast or slow the parameter updates. Typically, $\eta$ values less than 0.01 are preferred. It can go as low as 0.0001 in some cases. That said, take it with a grain of salt. The optimal $\eta$ value really depends on what you're doing.
+- $\eta$ is the **learn rate**, a dominant hyperparameter that exists in all optimization algorithms. It controls how fast or slow the parameter updates. Typically, $\eta$ values less than 0.01 are preferred. It can go as low as 0.0001 in some cases. That said, take it with a grain of salt. The optimal $\eta$ value really depends on what you're doing.
+
+- $\epsilon$ is a very small positive number. You will find it occasionally down here. Its only purpose is to prevent some problematic math operations like dividing by zero.
 
 ## Stochastic Gradient Descent
 
