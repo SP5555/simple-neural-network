@@ -27,8 +27,14 @@ $$w_{t+1} =w_{t} -\eta v_{t}$$
 
 The idea behind **RMSprop** is similar to **Momentum**. Instead of using velocity term to update the weights directly, **RMSprop** maintains an exponentially decaying average of past squared gradients and re-scales the **learn rate** with it. This slow down updates for frequently changing weights while speeding up updates for more stable weights. This helps distribute learning across the network rather than letting a few strong weights dominate the training process.
 
-$$v_{t} =\beta v_{t-1} +( 1-\beta )\left(\frac{\partial L}{\partial w_{t}}\right)^{2}$$
+```math
+v_{t} =\beta v_{t-1} +( 1-\beta )\left(\frac{\partial L}{\partial w_{t}}\right)^{2}
+```
 
-$$\eta _{scaled} =\frac{\eta }{\sqrt{v_{t} +\epsilon }}$$
+```math
+\eta _{scaled} =\frac{\eta }{\sqrt{v_{t} +\epsilon }}
+```
 
-$$w_{t+1} =w_{t} -\eta _{scaled}\frac{\partial L}{\partial w_{t}}$$
+```math
+w_{t+1} =w_{t} -\eta _{scaled}\frac{\partial L}{\partial w_{t}}
+```
