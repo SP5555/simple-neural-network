@@ -1,3 +1,4 @@
+from ..exceptions import InputValidationError
 import numpy as np
 
 class Loss:
@@ -24,6 +25,8 @@ class MSE(Loss):
 # ===== Huber Loss =====
 class Huber(Loss):
     def __init__(self, delta: float):
+        if delta <= 0.0:
+            raise InputValidationError("Huber constant delta must be positive.")
         self.d = delta
 
     def grad(self, a: np.ndarray, y: np.ndarray) -> np.ndarray:

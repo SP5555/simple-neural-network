@@ -13,8 +13,8 @@ class Adam(Optimizer):
     m_(t) = beta1 * m_(t-1) + (1 - beta1) * grad(w_(t))
     v_(t) = beta2 * v_(t-1) + (1 - beta2) * grad(w_(t))^2
 
-    m_hat = m_(t) / (1 - beta1)
-    v_hat = v_(t) / (1 - beta2)
+    m_hat = m_(t) / (1 - beta1^t)
+    v_hat = v_(t) / (1 - beta2^t)
 
     w_(t+1) = w_(t) - LR * m_hat / sqrt(v_hat + 1e-12)
     """
@@ -38,8 +38,11 @@ class Adam(Optimizer):
         self.m = {}
         # 2nd moment
         self.v = {}
+        # step counter
+        self.t = 0
 
     def step(self, parameters: list[dict]):
+        self.t += 1
 
         for param in parameters:
 
@@ -53,8 +56,8 @@ class Adam(Optimizer):
             self.v[param_id] = self.beta2 * self.v[param_id] + (1 - self.beta2) * np.square(param['grad'])
 
             # this is some sort of scaling, known as "bias-correction"
-            m_hat = self.m[param_id] / (1 - self.beta1)
-            v_hat = self.v[param_id] / (1 - self.beta2)
+            m_hat = self.m[param_id] / (1 - self.beta1 ** self.t)
+            v_hat = self.v[param_id] / (1 - self.beta2 ** self.t)
 
             # update weights
             param['weight'] += -1 * self.LR * m_hat / np.sqrt(v_hat + 1e-12)

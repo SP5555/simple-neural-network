@@ -42,6 +42,9 @@ This slow down updates for frequently changing weights while speeding up updates
 ```math
 w_{t+1} =w_{t} -\eta _{scaled}\frac{\partial L}{\partial w_{t}}
 ```
+
+Noticed something? Yes. **RMSprop** is like **SGD**. It is also a "drunk-man" optimizer but with a little more sense, knowing how far it should step.
+
 ## Adaptive Gradient (AdaGrad)
 
 **Adaptive Gradient** has a special term that accumulates the squared of gradients (meaning it is never negative) that grows slowly throughout the training.
@@ -65,3 +68,37 @@ w_{t+1} =w_{t} -\eta _{scaled}\frac{\partial L}{\partial w_{t}}
 You might have already guessed it at this point. Since $G$ is non-decreasing and continuously grows, the scaled learn rate $\eta _{scaled}$ will eventually perish to dust (I mean, it will shrink to near zero). This means, at some point, the **AdaGrad** will cause the entire network to stop learning.
 
 Is it a good thing or a bad thing? The answer is, both. If training halts too early, the network may underfit and perform poorly. However, since learn rate gradually dies out, it works well when the network is already close to convergence, where only small parameter adjustments are needed.
+
+## Adaptive Moment Estimation (Adam)
+
+**Momentum** smooths out the updates with *moving average of gradients*. However, because the learning rate remains constant, it can overshoot, especially in abrupt "steep" or "narrow" regions of the loss landscape. $m$ is known as the *first moment*:
+
+```math
+m_{t} =\beta _{1} m_{t-1} +( 1-\beta _{1})\frac{\partial L}{\partial w_{t}}
+```
+
+**RMSprop**, on the other hand, does a good job at adapting the learn rate dynamically with the *moving average of squared gradients*. But it lacks directional awareness (due to squaring of the loss gradient), making it behave similar to "drunk-man" wandering in random directions but with controlled step sizes. $v$ is known as the *second moment*:
+
+```math
+v_{t} =\beta _{2} v_{t-1} +( 1-\beta _{2})\left(\frac{\partial L}{\partial w_{t}}\right)^{2}
+```
+
+What does **Adam** do? It combines the strength of **Momentum** (smooth updates) and **RMSprop** (adaptive learn rate). One thing to note. **Adam** applies "bias correction" on $m_{t}$ and $v_{t}$ first.
+
+```math
+\widehat{m_{t}} =\frac{m_{t}}{1-\beta _{1}^{t}}
+,\quad
+\widehat{v_{t}} =\frac{v_{t}}{1-\beta _{2}^{t}}
+```
+
+Unfortunately, This "bias correction" is naturally not so intuitive. But here is a dumb way to understand it intuitively. Since $m_t$ and $v_t$ both initialize as zero, the moving average nature requires some iterations for them to become strong enough to actually start working. the factors $\frac{1}{1-\beta _{1}^{t}}$ and $\frac{1}{1-\beta _{2}^{t}}$ "warm up" the early training cycles so that $\widehat{m_{t}}$ and $\widehat{v_{t}}$ are relatively strong to produce noticeable updates.
+- $\widehat{m_{t}}$ influences the direction and magnitude of the update step as in **Momentum**.
+- $\widehat{v_{t}}$ controls the learn rate adaptively as in **RMSprop**.
+
+Then weights are updated as follows:
+
+```math
+w_{t+1} =w_{t} -\frac{\eta }{\sqrt{\widehat{v_{t}} +\epsilon }}\widehat{m_{t}}
+```
+
+**Adam** takes the best of both **Momentum** and **RMSprop** worlds. It's so powerful and efficient that you can pretty much slap it into any random network, whatever it is, and it'll still give you good results.

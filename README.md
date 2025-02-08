@@ -358,7 +358,7 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 # Abyssal Zone (Recommended to not proceed)
 You made it this far. A scrolling enthusiast. Let's see where this takes you.
 
-- [Activation Functions](neural_network/README.md)
+- [Activation Functions](neural_network/activations/README.md)
 - [Loss Functions](neural_network/losses/README.md)
 - [Optimizers](neural_network/optimizers/README.md)
 
