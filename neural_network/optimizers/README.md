@@ -91,7 +91,7 @@ What does **Adam** do? It combines the strength of **Momentum** (smooth updates)
 \widehat{v_{t}} =\frac{v_{t}}{1-\beta _{2}^{t}}
 ```
 
-Unfortunately, This "bias correction" is naturally not so intuitive. But here is a dumb way to understand it intuitively. Since $m_t$ and $v_t$ both initialize as zero, the moving average nature requires some iterations for them to become strong enough to actually start working. the factors $\frac{1}{1-\beta _{1}^{t}}$ and $\frac{1}{1-\beta _{2}^{t}}$ "warm up" the early training cycles so that $\widehat{m_{t}}$ and $\widehat{v_{t}}$ are relatively strong to produce noticeable updates.
+Unfortunately, this "bias correction" is naturally not so intuitive. But here is a dumb way to understand it intuitively. Since $m_t$ and $v_t$ both initialize as zero, the moving average nature requires some iterations for them to become strong enough to actually start working. The factors in the denominators "warm up" the early training cycles so that $\widehat{m_{t}}$ and $\widehat{v_{t}}$ are relatively strong to produce noticeable updates.
 - $\widehat{m_{t}}$ influences the direction and magnitude of the update step as in **Momentum**.
 - $\widehat{v_{t}}$ controls the learn rate adaptively as in **RMSprop**.
 
