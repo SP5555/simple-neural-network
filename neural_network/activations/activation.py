@@ -19,8 +19,8 @@ class Activation:
                  is_LL_multiclass_act = False,
                  is_learnable = False,
                  is_dropout_incompatible = False,
-                 L_param_initial: float = None,
-                 L_param_constraints: tuple = None):
+                 alpha_initial: float = None,
+                 alpha_constraints: tuple = None):
         self.is_LL_exclusive         = is_LL_exclusive
         self.is_LL_regression_act    = is_LL_regression_act
         self.is_LL_multilabel_act    = is_LL_multilabel_act
@@ -28,10 +28,12 @@ class Activation:
         self.is_learnable            = is_learnable
         self.is_dropout_incompatible = is_dropout_incompatible
         
-        self.learnable_param_initial: float = L_param_initial
-        self.learnable_param_constraints: tuple = L_param_constraints
-        self.learnable_params: np.ndarray = None
-        self.learnable_param_grad: np.ndarray = None
+        # alphas are learnable parameters
+        # we're running out of Greek alphabets
+        self.alpha_initial: float = alpha_initial
+        self.alpha_constraints: tuple = alpha_constraints
+        self.alpha: np.ndarray = None
+        self.alpha_grad: np.ndarray = None
 
     def build_parameters(self, output_size: int) -> None:
         raise NotImplementedError
@@ -47,8 +49,8 @@ class Activation:
         return None # Default: no learnable parameters
     
     def clip_param(self) -> None:
-        low, high = self.learnable_param_constraints
-        self.learnable_params = np.clip(self.learnable_params, low, high)
+        low, high = self.alpha_constraints
+        self.alpha = np.clip(self.alpha, low, high)
 
 class Sigmoid(Activation):
     def __init__(self):
@@ -97,17 +99,17 @@ class LeakyReLU(Activation):
 class PReLU(Activation):
     def __init__(self):
         super().__init__(is_learnable=True,
-                         L_param_initial=0.01,
-                         L_param_constraints=(0.001, 0.1))
+                         alpha_initial=0.01,
+                         alpha_constraints=(0.001, 0.1))
     
     def build_parameters(self, output_size: int) -> None:
-        self.learnable_params = np.full((output_size, 1), self.learnable_param_initial)
+        self.alpha = np.full((output_size, 1), self.alpha_initial)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, x, self.learnable_params * x)
+        return np.where(x > 0, x, self.alpha * x)
 
     def backward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 1, self.learnable_params)
+        return np.where(x > 0, 1, self.alpha)
 
     def get_param_grad(self, x: np.ndarray) -> np.ndarray:
         return np.where(x > 0, 0, x)
@@ -129,26 +131,26 @@ class Swish_Fixed(Activation):
 class Swish(Activation):
     def __init__(self):
         super().__init__(is_learnable=True,
-                         L_param_initial=1.0,
-                         L_param_constraints=(0.5, 5.0))
+                         alpha_initial=1.0,
+                         alpha_constraints=(0.5, 5.0))
     
     def build_parameters(self, output_size: int) -> None:
-        self.learnable_params = np.full((output_size, 1), self.learnable_param_initial)
+        self.alpha = np.full((output_size, 1), self.alpha_initial)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # swish(x, b) = x * s(bx)
-        s = _sigmoid(self.learnable_params * x)
+        s = _sigmoid(self.alpha * x)
         return x * s
 
     def backward(self, x: np.ndarray) -> np.ndarray:
         # dswish(x, b)/dx = s(bx) * (1 + bx * (1 - s(bx)))
-        alpx = self.learnable_params * x
+        alpx = self.alpha * x
         s = _sigmoid(alpx)
         return s * (1 + alpx * (1 - s))
 
     def get_param_grad(self, x: np.ndarray) -> np.ndarray:
         # dswish(x, b)/db = x^2 * s(bx) * (1 - s(bx))
-        s = _sigmoid(self.learnable_params * x)
+        s = _sigmoid(self.alpha * x)
         return x * x * s * (1 - s)
     
 class Linear(Activation):

@@ -31,7 +31,7 @@ x & \text{if}\ x >0\\
 \alpha x & \text{if}\ x\leqslant 0
 \end{cases}$$
 
-## PReLU (Parametric ReLU)
+## Parametric ReLU (PReLU)
 Disturbed by the fixed slope $\alpha$ in **Leaky ReLU**? This is where **PReLU** comes in. Here, $\alpha$ becomes a *learnable* variable which means it is also updated during backpropagation. With each neuron learning its own negative slope, the network becomes more flexible and capable of better performance. However, this comes at a small computational cost, as the learnable $\alpha$ introduces additional parameters to optimize.
 
 ## Linear (Identity)

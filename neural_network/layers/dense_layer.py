@@ -120,9 +120,9 @@ class DenseLayer(Layer):
             # matrix dims: (out, batch_size) = (out, batch_size) ele-wise-opt (out, batch_size)
             dL_wrt_dlearn_alpha = self.activation.get_param_grad(self._z) * act_grad
             # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
-            self.activation.learnable_param_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
-            l2_term_for_alpha: np.ndarray = self.activation.learnable_params * self.L2_lambda # Compute regularization term
-            self.activation.learnable_param_grad += l2_term_for_alpha
+            self.activation.alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
+            l2_term_for_alpha: np.ndarray = self.activation.alpha * self.L2_lambda # Compute regularization term
+            self.activation.alpha_grad += l2_term_for_alpha
 
         # first layer does not have previous layer
         # not need to return input gradient   
@@ -143,7 +143,7 @@ class DenseLayer(Layer):
             {'weight': self.biases, 'grad': self._b_grad}
         ]
         if self.activation.is_learnable:
-            params.append({'weight': self.activation.learnable_params, 'grad': self.activation.learnable_param_grad})
+            params.append({'weight': self.activation.alpha, 'grad': self.activation.alpha_grad})
         return params
     
     def _get_param_count(self) -> int:

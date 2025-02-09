@@ -18,7 +18,7 @@ class Utils:
             PrintUtils.print_info(f'biases L{i+1} -> L{i+2}:')
             print(layer.biases)
             PrintUtils.print_info(f'learnable param L{i+1} -> L{i+2}:')
-            print(layer.activation.learnable_params)
+            print(layer.activation.alpha)
     
     def _get_param_count(self) -> int:
         c: int = 0
