@@ -138,6 +138,11 @@ class NeuralNetwork:
             # OPTIMIZATION: apply gradients
             self.optimizer.step(all_params)
 
+            # Learnable Param Clip
+            for layer in self._layers:
+                if layer.activation.is_learnable:
+                    layer.activation.clip_param()
+
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
 

@@ -1,5 +1,4 @@
 import numpy as np
-from .activations import Activations
 from .exceptions import InputValidationError
 from .print_utils import PrintUtils
 
@@ -20,14 +19,14 @@ class Metrics:
         if len(test_input[0]) != self.core._layers[0].input_size:
             raise InputValidationError("The input array size does not match the expected size for the neural network.")
 
-        if self.core._layers[-1].act_name in Activations._LL_regression_acts:
-            PrintUtils.print_info(f"Detected {self.core._layers[-1].act_name} in the last layer. Running accuracy check for regression.")
+        if self.core._layers[-1].activation.is_LL_regression_act:
+            PrintUtils.print_info(f"Detected {self.core._layers[-1].activation.__class__.__name__} in the last layer. Running accuracy check for regression.")
             return self._regression_accuracy(test_input, test_output)
-        if self.core._layers[-1].act_name in Activations._LL_multilabel_acts:
-            PrintUtils.print_info(f"Detected {self.core._layers[-1].act_name} in the last layer. Running accuracy check for multilabel.")
+        if self.core._layers[-1].activation.is_LL_multilabel_act:
+            PrintUtils.print_info(f"Detected {self.core._layers[-1].activation.__class__.__name__} in the last layer. Running accuracy check for multilabel.")
             return self._multilabel_accuracy(test_input, test_output)
-        if self.core._layers[-1].act_name in Activations._LL_multiclass_acts:
-            PrintUtils.print_info(f"Detected {self.core._layers[-1].act_name} in the last layer. Running accuracy check for multiclass.")
+        if self.core._layers[-1].activation.is_LL_multiclass_act:
+            PrintUtils.print_info(f"Detected {self.core._layers[-1].activation.__class__.__name__} in the last layer. Running accuracy check for multiclass.")
             return self._multiclass_accuracy(test_input, test_output)
         PrintUtils.print_warning("The Accuracy Checker cannot determine the task type based on the current model configuration.\n" \
                                  "Ensure the last layer activation matches the intended task.")

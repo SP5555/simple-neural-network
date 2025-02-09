@@ -1,6 +1,6 @@
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
-from ..utils import Utils
+from ..activations.activation import Activation
 
 class Layer:
     """
@@ -13,7 +13,7 @@ class Layer:
     def __init__(self,
                  input_size: int,
                  output_size: int,
-                 activation: str,
+                 activation: Activation,
                  weight_decay: float) -> None:
 
         if input_size == 0:
@@ -33,12 +33,12 @@ class Layer:
         if weight_decay > 0.01:
             PrintUtils.print_warning(f"Warning: Regularization Strength {weight_decay:.3f} is strong. Consider keeping it less than 0.01")
 
-        activation = activation.strip().lower()
-        Utils._act_func_validator(activation)
-
         self.input_size = input_size
         self.output_size = output_size
-        self.act_name = activation
+
+        self.activation = activation
+        if (self.activation.is_learnable):
+            self.activation.build_parameters(output_size)
 
         self.L2_lambda = weight_decay
 

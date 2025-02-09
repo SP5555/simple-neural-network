@@ -1,7 +1,6 @@
 import numpy as np
-from ..activations import Activations
+from ..activations.activation import Activation
 from ..exceptions import InputValidationError
-from ..utils import Utils
 from .layer import Layer
 
 class DenseLayer(Layer):
@@ -19,7 +18,7 @@ class DenseLayer(Layer):
         Number of output neurons. Must match the input size of the next layer 
         or the final output dimension if this is the last layer.
     
-    activation : str
+    activation : Activation
         Activation function to apply to the output neurons.
     
     weight_decay : float, optional
@@ -29,7 +28,7 @@ class DenseLayer(Layer):
     def __init__(self,
                  input_size: int,
                  output_size: int,
-                 activation: str,
+                 activation: Activation,
                  weight_decay: float = 0.0) -> None:
 
         super().__init__(input_size, output_size, activation, weight_decay)
@@ -40,43 +39,21 @@ class DenseLayer(Layer):
         self._is_first = is_first
         self._is_final = is_final
 
-        if not is_final and self.act_name in Activations._LL_exclusive:
-            raise InputValidationError(f"{self.act_name} activation can't be used in hidden layers.")
-
-        self._act_func = Utils._get_act_func(self.act_name)
-        self._act_deriv_func = Utils._get_act_deriv_func(self.act_name)
-        self._learnable_deriv_func = Utils._get_learnable_alpha_grad_func(self.act_name)
-
-        # Learnable parameter bounds for each layer
-        # defaults to None for non-learnable functions
-        bounds = Activations._learn_param_constraints.get(self.act_name, None)
-        self._learnable_bounds = (bounds[1], bounds[2]) if bounds else None
+        if not is_final and self.activation.is_LL_exclusive:
+            raise InputValidationError(f"{self.activation.__class__.__name__} activation can't be used in hidden layers.")
 
         self.weights = np.random.randn(self.output_size, self.input_size) * np.sqrt(2/self.input_size)
         self.biases = np.random.randn(self.output_size, 1)
-                
-        # extra learnable parameters
-        # one per each neuron
-        # learnable params of neurons in layers that don't use learnable parameters
-        # will remain fixed at 1.0 throughout training
-        init_value = Activations._learn_param_constraints.get(self.act_name, (None,))[0] # default to None if not found
-        self.alpha = np.full((self.output_size, 1), init_value)
-
+ 
         # initialized with None for efficiency
         # gradients
-        self._w_grad = None          # same shape as self.weights
-        self._b_grad = None          #      //       self.biases
-        self._alpha_grad = None      #      //       self.alpha
-
-        # velocities
-        self._v_w = np.zeros_like(self.weights)
-        self._v_b = np.zeros_like(self.biases)
-        self._v_alpha = np.zeros_like(self.alpha)
+        self._w_grad = None     # same shape as self.weights
+        self._b_grad = None     #      //       self.biases
 
         # raw input, raw output and activation
-        self._a_in = None            # shape: (input_size, batch_size)
-        self._z = None               # shape: (output_size, batch_size)
-        self._a = None               # shape: (output_size, batch_size)
+        self._a_in = None       # shape: (input_size, batch_size)
+        self._z = None          # shape: (output_size, batch_size)
+        self._a = None          # shape: (output_size, batch_size)
     
     # compute a layer's output based on the input.
     def forward(self, input: np.ndarray) -> np.ndarray:
@@ -85,7 +62,7 @@ class DenseLayer(Layer):
         # z = W*A_in + b
         self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
         # A_out = activation(z, learn_b)
-        self._a: np.ndarray = self._act_func(self._z, self.alpha)
+        self._a: np.ndarray = self.activation.forward(self._z)
 
         return self._a
     
@@ -101,10 +78,10 @@ class DenseLayer(Layer):
         #          = dL/da(n) * actv'(z(n))
 
         # Softmax case is different
-        if self._act_func.name == "softmax":
+        if self.activation.__class__.__name__ == "Softmax":
 
             da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, out, 1)
-            dL_wrt_da = self._act_deriv_func(self._z, self.alpha) # Jacobians; (batch_size, out, out)
+            dL_wrt_da = self.activation.backward(self._z) # Jacobians; (batch_size, out, out)
             
             t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, out, 1)
             term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (out, batch_size)
@@ -112,7 +89,7 @@ class DenseLayer(Layer):
             # alpha is broadcasted to match z dimensions automatically in _act_deriv_func
             # alpha_extended = np.where(self.alpha == None, 1.0, self.alpha) * np.ones_like(self._z)
             # matrix dims: (out, batch_size) = [(out, batch_size) ele-wise-opt (out, batch_size)] ele-wise-opt-mult (out, batch_size)
-            term_1_2: np.ndarray = self._act_deriv_func(self._z, self.alpha) * act_grad
+            term_1_2: np.ndarray = self.activation.backward(self._z) * act_grad
 
         # Math
         # z(n) = w(n)*a(n-1) + b(n)
@@ -136,16 +113,16 @@ class DenseLayer(Layer):
         l2_term_for_b: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
         self._b_grad += l2_term_for_b
 
-        if self.act_name in Activations._learnable_acts:
+        if self.activation.is_learnable:
             # CALCULATE derivative of loss with respect to learnable parameter
             # dL/dlearn_b(n)
             # = dL/da(n) * da(n)/dlearn_b(n)
             # matrix dims: (out, batch_size) = (out, batch_size) ele-wise-opt (out, batch_size)
-            dL_wrt_dlearn_alpha = self._learnable_deriv_func(self._z, self.alpha) * act_grad
+            dL_wrt_dlearn_alpha = self.activation.get_param_grad(self._z) * act_grad
             # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
-            self._alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
-            l2_term_for_alpha: np.ndarray = self.alpha * self.L2_lambda # Compute regularization term
-            self._alpha_grad += l2_term_for_alpha
+            self.activation.learnable_param_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
+            l2_term_for_alpha: np.ndarray = self.activation.learnable_params * self.L2_lambda # Compute regularization term
+            self.activation.learnable_param_grad += l2_term_for_alpha
 
         # first layer does not have previous layer
         # not need to return input gradient   
@@ -165,12 +142,12 @@ class DenseLayer(Layer):
             {'weight': self.weights, 'grad': self._w_grad},
             {'weight': self.biases, 'grad': self._b_grad}
         ]
-        if self.act_name in Activations._learnable_acts:
-            params.append({'weight': self.alpha, 'grad': self._alpha_grad})
+        if self.activation.is_learnable:
+            params.append({'weight': self.activation.learnable_params, 'grad': self.activation.learnable_param_grad})
         return params
     
     def _get_param_count(self) -> int:
         w = self.input_size * self.output_size
         s = self.output_size
-        lp = self.output_size if self.act_name in Activations._learnable_acts else 0
+        lp = self.output_size if self.activation.is_learnable else 0
         return w + s + lp

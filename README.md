@@ -61,10 +61,10 @@ To create a neural network with customizable layer configurations:
 ```python
 # Example 1:
 # A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
-# leaky_relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
+# Leaky Relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
 nn = NeuralNetwork(layers=[
-        DenseLayer(4, 6, "leaky_relu"),
-        DenseLayer(6, 2, "sigmoid"),
+        DenseLayer(4, 6, LeakyReLU()),
+        DenseLayer(6, 2, Sigmoid()),
     ],
     loss_function=BCE(),
     optimizer=SGD(learn_rate=0.02)
@@ -73,9 +73,9 @@ nn = NeuralNetwork(layers=[
 # Example 2: with decaying rates
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 12, "prelu", weight_decay=0.002),
-        DenseLayer(12, 12, "swish", weight_decay=0.002),
-        DenseLayer(12, 3, "id", weight_decay=0.002)
+        DenseLayer(4, 12, PReLU(), weight_decay=0.002),
+        DenseLayer(12, 12, Swish(), weight_decay=0.002),
+        DenseLayer(12, 3, Linear(), weight_decay=0.002)
     ],
     loss_function=Huber(delta=1.0), # for regression tasks
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
@@ -121,17 +121,17 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer  (4, 10, "tanh",                      weight_decay=0.001),
-        DropoutLayer(10, 16, "tanh",   dropout_rate=0.1, weight_decay=0.001),
-        DenseLayer  (16, 12, "tanh",                     weight_decay=0.001),
-        DenseLayer  (12, 3, "sigmoid",                   weight_decay=0.001)
+        DenseLayer  (4, 10, Tanh(),                      weight_decay=0.001),
+        DropoutLayer(10, 16, Tanh(),   dropout_rate=0.1, weight_decay=0.001),
+        DenseLayer  (16, 12, Tanh(),                     weight_decay=0.001),
+        DenseLayer  (12, 3, Sigmoid(),                   weight_decay=0.001)
     ],
     loss_function=BCE(),
     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
 )
 ```
 ```
-Detected sigmoid in the last layer. Running accuracy check for multilabel.
+Detected Sigmoid in the last layer. Running accuracy check for multilabel.
 Accuracy on 20,000 samples
 Accuracy per output:    94.77%   90.57%   94.07%
                    Expected |                   Predicted | Input Data
@@ -159,17 +159,17 @@ Accuracy per output:    94.77%   90.57%   94.07%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DropoutLayer(4, 12, "prelu",   dropout_rate=0.2,                  weight_decay=0.001),
-        DropoutLayer(12, 16, "tanh",   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-        DropoutLayer(16, 12, "swish",  dropout_rate=0.2,                  weight_decay=0.001),
-        DenseLayer  (12, 3, "softmax",                                    weight_decay=0.001)
+        DropoutLayer(4, 12, PReLU(),   dropout_rate=0.2,                  weight_decay=0.001),
+        DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
+        DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
+        DenseLayer  (12, 3, Softmax(),                                    weight_decay=0.001)
     ],
     loss_function=CCE(),
     optimizer=Momentum(learn_rate=0.02, momentum=0.75)
 )
 ```
 ```
-Detected softmax in the last layer. Running accuracy check for multiclass.
+Detected Softmax in the last layer. Running accuracy check for multiclass.
 Accuracy on 20,000 samples
 Accuracy per output:    95.40%   91.58%   96.43%
 Overall categorization accuracy:    93.60%
@@ -200,17 +200,17 @@ Overall categorization accuracy:    93.60%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer  (4, 12, "prelu",                                     weight_decay=0.001),
-        DropoutLayer(12, 16, "tanh",  dropout_rate=0.1, batch_wise=True, weight_decay=0.001),
-        DropoutLayer(16, 12, "swish", dropout_rate=0.1,                  weight_decay=0.001),
-        DenseLayer  (12, 3, "id",                                        weight_decay=0.001)
+        DenseLayer  (4, 12, PReLU(),                                     weight_decay=0.001),
+        DropoutLayer(12, 16, Tanh(),  dropout_rate=0.1, batch_wise=True, weight_decay=0.001),
+        DropoutLayer(16, 12, Swish(), dropout_rate=0.1,                  weight_decay=0.001),
+        DenseLayer  (12, 3, Linear(),                                    weight_decay=0.001)
     ],
     loss_function=Huber(delta=1.0),
     optimizer=Adam(learn_rate=0.01)
 )
 ```
 ```
-Detected id in the last layer. Running accuracy check for regression.
+Detected Linear in the last layer. Running accuracy check for regression.
 Mean Squared Error on 20,000 samples
 Mean Squared Error per output:    10.49    8.62    6.45
                    Expected |                   Predicted | Input Data

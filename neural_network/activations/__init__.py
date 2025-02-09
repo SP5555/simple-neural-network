@@ -1,3 +1,11 @@
-from .activations import Activations, ActivationWrapper
+from .activation import ReLU, LeakyReLU, PReLU, Tanh, Sigmoid, Swish, Swish_Fixed, Linear, Softmax
 
-__all__ = ["Activations", "ActivationWrapper"]
+__all__ = ["ReLU",
+           "LeakyReLU",
+           "PReLU",
+           "Tanh",
+           "Sigmoid",
+           "Swish",
+           "Swish_Fixed",
+           "Linear",
+           "Softmax"]

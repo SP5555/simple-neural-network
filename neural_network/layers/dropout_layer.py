@@ -1,5 +1,5 @@
 import numpy as np
-from ..activations import Activations
+from ..activations.activation import Activation
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 from .dense_layer import DenseLayer
@@ -18,7 +18,7 @@ class DropoutLayer(DenseLayer):
         Number of output neurons. Must match the input size of the next layer
         or the final output dimension if this is the last layer.
 
-    activation : str
+    activation : Activation
         Activation function to apply to the output neurons.
 
     dropout_rate : float
@@ -38,7 +38,7 @@ class DropoutLayer(DenseLayer):
     def __init__(self,
                  input_size: int,
                  output_size: int,
-                 activation: str,
+                 activation: Activation,
                  dropout_rate: float,
                  batch_wise: bool = False,
                  weight_decay: float = 0.0) -> None:
@@ -56,8 +56,8 @@ class DropoutLayer(DenseLayer):
     def build(self, is_first: bool = False, is_final: bool = False):
         if is_final:
             PrintUtils.print_warning("Using a dropout layer as the final layer is not recommended.")
-        if self.act_name in Activations._dropout_incomp_acts:
-            raise InputValidationError(f"{self.act_name} is not compatible in the dropout layer.")
+        if self.activation.is_dropout_incompatible:
+            raise InputValidationError(f"{self.activation.__class__.__name__} is not compatible in the dropout layer.")
         
         super().build(is_first, is_final)
     
@@ -68,7 +68,7 @@ class DropoutLayer(DenseLayer):
         # z = W*A_in + b
         self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
         # A_out = activation(z, learn_b)
-        self._a: np.ndarray = self._act_func(self._z, self.alpha)
+        self._a: np.ndarray = self.activation.forward(self._z)
 
         if is_training:
             # standard dropout: randomly drops neurons individually within each sample
