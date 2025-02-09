@@ -14,3 +14,5 @@ class SGD(Optimizer):
         for param in parameters:
             # update weights
             param['weight'] += -1 * self.LR * param['grad'] 
+
+        self._clip_params(parameters)

@@ -9,8 +9,9 @@ class RMSprop(Optimizer):
 
     v_(0) = 0.0
 
-    v_(t) = momentum * v_(t-1) + (1 - momentum) * grad(w_(t))^2
+    v_(t) = momentum * v_(t-1) + (1 - momentum) * grad(w_(t))^2 \\
     LR_scaled = LR / sqrt(v_(t) + 1e-12)
+
     w_(t+1) = w_(t) - LR_scaled * grad(w_(t))
     """
     def __init__(self, learn_rate: float, avg_decay_rate: float = 0.8):
@@ -48,3 +49,5 @@ class RMSprop(Optimizer):
             
             # update weights
             param['weight'] += -1 * LR_scaled * param['grad']
+
+        self._clip_params(parameters)

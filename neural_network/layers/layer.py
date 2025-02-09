@@ -6,7 +6,7 @@ class Layer:
     """
     Abstract base class for all neural network layers.
 
-    This class serves as a template and cannot be used directly in the models.
+    This class serves as a template and cannot be used directly in the models. \\
     Methods in this class raise `NotImplementedError` to enforce implementation 
     in derived child classes.
     """

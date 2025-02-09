@@ -10,10 +10,10 @@ class Adam(Optimizer):
     m_(0) = 0.0
     v_(0) = 0.0
 
-    m_(t) = beta1 * m_(t-1) + (1 - beta1) * grad(w_(t))
+    m_(t) = beta1 * m_(t-1) + (1 - beta1) * grad(w_(t)) \\
     v_(t) = beta2 * v_(t-1) + (1 - beta2) * grad(w_(t))^2
 
-    m_hat = m_(t) / (1 - beta1^t)
+    m_hat = m_(t) / (1 - beta1^t) \\
     v_hat = v_(t) / (1 - beta2^t)
 
     w_(t+1) = w_(t) - LR * m_hat / sqrt(v_hat + 1e-12)
@@ -61,3 +61,5 @@ class Adam(Optimizer):
 
             # update weights
             param['weight'] += -1 * self.LR * m_hat / np.sqrt(v_hat + 1e-12)
+
+        self._clip_params(parameters)

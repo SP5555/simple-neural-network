@@ -1,3 +1,4 @@
+import numpy as np
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 
@@ -5,7 +6,7 @@ class Optimizer:
     """
     Abstract base class for all optimizers.
 
-    This class serves as a template and cannot be used directly in the models.
+    This class serves as a template and cannot be used directly in the models. \\
     Methods in this class raise `NotImplementedError` to enforce implementation 
     in derived child classes.
     """
@@ -24,3 +25,10 @@ class Optimizer:
         # parameter is a list of dictionaries
         # Keys: 'weight', 'grad'
         raise NotImplementedError
+
+    def _clip_params(self, parameters: list[dict]) -> None:
+        """Clips learnable parameters."""
+        for param in parameters:
+            if 'learnable' in param:
+                low, high = param['constraints']
+                param['weight'][:] = np.clip(param['weight'], low, high)

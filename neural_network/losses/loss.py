@@ -5,7 +5,7 @@ class Loss:
     """
     Abstract base class for all loss functions.
 
-    This class serves as a template and cannot be used directly in the models.
+    This class serves as a template and cannot be used directly in the models. \\
     Methods in this class raise `NotImplementedError` to enforce implementation 
     in derived child classes.
     """

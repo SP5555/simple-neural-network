@@ -143,7 +143,12 @@ class DenseLayer(Layer):
             {'weight': self.biases, 'grad': self._b_grad}
         ]
         if self.activation.is_learnable:
-            params.append({'weight': self.activation.alpha, 'grad': self.activation.alpha_grad})
+            params.append({
+                'weight': self.activation.alpha,
+                'grad': self.activation.alpha_grad,
+                'learnable': True,
+                'constraints': self.activation.alpha_constraints
+            })
         return params
     
     def _get_param_count(self) -> int:

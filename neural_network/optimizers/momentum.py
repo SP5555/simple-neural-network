@@ -10,6 +10,7 @@ class Momentum(Optimizer):
     v_(0) = 0.0
 
     v_(t) = momentum * v_(t-1) + (1 - momentum) * grad(w_(t))
+
     w_(t+1) = w_(t) - LR * v_(t)
     """
     def __init__(self, learn_rate: float, momentum: float = 0.8):
@@ -45,3 +46,5 @@ class Momentum(Optimizer):
             
             # update weights
             param['weight'] += -1 * self.LR * self.v[param_id]
+
+        self._clip_params(parameters)

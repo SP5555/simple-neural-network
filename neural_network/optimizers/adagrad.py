@@ -7,8 +7,9 @@ class AdaGrad(Optimizer):
 
     G_(0) = 0.0
 
-    G_(t) = G_(t-1) + grad(w_(t))^2
+    G_(t) = G_(t-1) + grad(w_(t))^2 \\
     LR_scaled = LR / sqrt(G_(t) + 1e-12)
+
     w_(t+1) = w_(t) - LR_scaled * grad(w_(t))
     """
     def __init__(self, learn_rate: float):
@@ -33,3 +34,5 @@ class AdaGrad(Optimizer):
 
             # update weights
             param['weight'] += -1 * LR_scaled * param['grad']
+
+        self._clip_params(parameters)
