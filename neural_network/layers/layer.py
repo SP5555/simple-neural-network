@@ -37,8 +37,8 @@ class Layer:
         self.output_size = output_size
 
         self.activation = activation
-        if (self.activation.is_learnable):
-            self.activation.build_parameters(output_size)
+        # build parameter for learnable activations
+        self.activation.build_parameters(output_size)
 
         self.L2_lambda = weight_decay
 

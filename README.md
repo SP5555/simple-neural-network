@@ -193,7 +193,7 @@ Overall categorization accuracy:    93.60%
 ```
 
 ### Regression Performance
-**Regression** is where each input is mapped to a continuous value, rather than a discrete class. This model uses **Linear (Identity)** activation in the output layer and **mean-squared error (MSE)** loss for training.
+**Regression** is where each input is mapped to a continuous value, rather than a discrete class. This model uses **Linear (Identity)** activation in the output layer and **Huber** loss for training.
 
 *Note: Regression tasks generally require more rigorous data preparation and training control. Since output values can have a wider range compared to classification tasks, achieving high performance often demands more careful tuning of the model and training process.*
 ```python
@@ -353,7 +353,7 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 - [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
 
 ## Future Improvements
-- Chill out. Not today.
+- **Auto Differentiation**: I'm lazy enough to take derivatives manually. Time to adopt Automation over Manual.
 
 # Abyssal Zone (Recommended to not proceed)
 You made it this far. A scrolling enthusiast. Let's see where this takes you.
