@@ -6,7 +6,18 @@ from .optimizer import Optimizer
 class Adam(Optimizer):
     """
     Adaptive Moment Estimation
+    =====
 
+    Parameters
+    ----------
+    learn_rate : float
+    
+    beta1 : float
+
+    beta2 : float
+
+    Math
+    ----
     m_(0) = 0.0
     v_(0) = 0.0
 

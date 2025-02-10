@@ -4,7 +4,14 @@ from .optimizer import Optimizer
 class AdaGrad(Optimizer):
     """
     Adaptive Gradient
+    =====
 
+    Parameters
+    ----------
+    learn_rate : float
+
+    Math
+    ----
     G_(0) = 0.0
 
     G_(t) = G_(t-1) + grad(w_(t))^2 \\

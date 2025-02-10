@@ -8,7 +8,24 @@ from .print_utils import PrintUtils
 from .utils import Utils
 
 class NeuralNetwork:
+    """
+    Simple Neural Network
+    =====
+    A basic implementation of a feedforward neural network
+    with support for multiple layer types, optimization methods, and loss functions. 
+    It can be easily extended for various tasks such as classification and regression.
 
+    Parameters
+    ----------
+    layers : list[Layer]
+        List of supported layer classes. Minimum of one layer required.
+
+    optimizer : Optimizer
+        An instance of a class derived from the Optimizer base class.
+
+    loss_function : Loss
+        An instance of a class derived from the Loss base class for training.
+    """
     def __init__(self,
                  layers: list[Layer],
                  optimizer: Optimizer = None,

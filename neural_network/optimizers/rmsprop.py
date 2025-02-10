@@ -6,7 +6,16 @@ from .optimizer import Optimizer
 class RMSprop(Optimizer):
     """
     Root Mean Square Propagation
+    =====
 
+    Parameters
+    ----------
+    learn_rate : float
+    
+    avg_decay_rate : float
+
+    Math
+    ----
     v_(0) = 0.0
 
     v_(t) = momentum * v_(t-1) + (1 - momentum) * grad(w_(t))^2 \\

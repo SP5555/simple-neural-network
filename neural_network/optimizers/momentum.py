@@ -6,6 +6,16 @@ from .optimizer import Optimizer
 class Momentum(Optimizer):
     """
     Momentum
+    =====
+
+    Parameters
+    ----------
+    learn_rate : float
+    
+    momentum : float
+
+    Math
+    ----
 
     v_(0) = 0.0
 

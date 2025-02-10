@@ -3,7 +3,14 @@ from .optimizer import Optimizer
 class SGD(Optimizer):
     """
     Stochastic Gradient Descent
+    =====
 
+    Parameters
+    ----------
+    learn_rate : float
+
+    Math
+    ----
     w_(t+1) = w_(t) - LR * grad(w_(t))
     """
     def __init__(self, learn_rate: float):
