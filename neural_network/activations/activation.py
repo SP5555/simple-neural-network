@@ -81,7 +81,9 @@ class ReLU(Activation):
         super().__init__()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        self.expression = Tensor(np.maximum(0, x), "Z")
+        Z = Tensor(x, "Z")
+        Z_p = Tensor(x >= 0)
+        self.expression = Z * Z_p
         return self.expression.forward()
 
     def backward(self) -> np.ndarray:
