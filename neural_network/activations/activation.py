@@ -1,4 +1,5 @@
 import numpy as np
+from ..auto_diff.auto_diff import Tensor, Sigmoid as SigOp, Tanh as TanhOp
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     # s(x) = (tanh(x/2) + 1) / 2
@@ -42,7 +43,7 @@ class Activation:
     def forward(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError
     
-    def backward(self, x: np.ndarray) -> np.ndarray:
+    def backward(self) -> np.ndarray:
         raise NotImplementedError
     
     # ===== only for learnable activations =====
@@ -58,44 +59,47 @@ class Sigmoid(Activation):
         super().__init__(is_LL_multilabel_act=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return _sigmoid(x)
+        self.expression = SigOp(Tensor(x, "Z"))
+        return self.expression.forward()
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        # s'(x) = s(x) * (1 - s(x))
-        s: np.ndarray = _sigmoid(x)
-        return s*(1-s)
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
 class Tanh(Activation):
     def __init__(self):
         super().__init__()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return np.tanh(x)
+        self.expression = TanhOp(Tensor(x, "Z"))
+        return self.expression.forward()
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        # tanh'(x) = 1 - tanh(x)^2
-        t = np.tanh(x)
-        return 1 - t*t
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
 class ReLU(Activation):
     def __init__(self):
         super().__init__()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return np.maximum(0, x)
+        self.expression = Tensor(np.maximum(0, x), "Z")
+        return self.expression.forward(cc=True) # standalone Tensor needs clear cache flag
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 1, 0)
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
 class LeakyReLU(Activation):
     def __init__(self):
         super().__init__()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, x, 0.01 * x)
+        Z = Tensor(x, "Z")
+        Z_p = Tensor(x >= 0)
+        Z_n = Tensor(x < 0)
+        self.expression = (Z * Z_p) + (Tensor(0.01) * Z * Z_n)
+        return self.expression.forward()
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 1, 0.01)
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
 class PReLU(Activation):
     def __init__(self):
@@ -104,13 +108,18 @@ class PReLU(Activation):
                          alpha_constraints=(0.001, 0.1))
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, x, self.alpha * x)
+        # return np.where(x > 0, x, self.alpha * x)
+        Z = Tensor(x, "Z")
+        Z_p = Tensor(x > 0)
+        Z_n = Tensor(x <= 0)
+        self.expression = (Z * Z_p) + (Tensor(self.alpha, "alpha") * Z * Z_n)
+        return self.expression.forward()
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 1, self.alpha)
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
-    def get_param_grad(self, x: np.ndarray) -> np.ndarray:
-        return np.where(x > 0, 0, x)
+    def get_param_grad(self) -> np.ndarray:
+        return self.expression.backward("alpha")
 
 class Swish_Fixed(Activation):
     def __init__(self):
@@ -118,13 +127,12 @@ class Swish_Fixed(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # swish(x) = x * s(x)
-        s = _sigmoid(x)
-        return x * s
+        Z = Tensor(x, "Z")
+        self.expression = Z * SigOp(Z)
+        return self.expression.forward()
     
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        # dswish(x)/dx = s(x) * (1 + x * (1 - s(x)))
-        s = _sigmoid(x)
-        return s * (1 + x * (1 - s))
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
 class Swish(Activation):
     def __init__(self):
@@ -134,19 +142,16 @@ class Swish(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # swish(x, b) = x * s(bx)
-        s = _sigmoid(self.alpha * x)
-        return x * s
+        Z = Tensor(x, "Z")
+        alpha = Tensor(self.alpha, "alpha")
+        self.expression = Z * SigOp(alpha * Z)
+        return self.expression.forward()
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        # dswish(x, b)/dx = s(bx) * (1 + bx * (1 - s(bx)))
-        alpx = self.alpha * x
-        s = _sigmoid(alpx)
-        return s * (1 + alpx * (1 - s))
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
-    def get_param_grad(self, x: np.ndarray) -> np.ndarray:
-        # dswish(x, b)/db = x^2 * s(bx) * (1 - s(bx))
-        s = _sigmoid(self.alpha * x)
-        return x * x * s * (1 - s)
+    def get_param_grad(self) -> np.ndarray:
+        return self.expression.backward("alpha")
     
 class Linear(Activation):
     def __init__(self):
@@ -154,10 +159,11 @@ class Linear(Activation):
                          is_LL_regression_act=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return x
+        self.expression = Tensor(x, "Z")
+        return self.expression.forward(cc=True) # standalone Tensor needs clear cache flag
 
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        return np.ones_like(x)
+    def backward(self) -> np.ndarray:
+        return self.expression.backward("Z")
 
 class Softmax(Activation):
     def __init__(self):

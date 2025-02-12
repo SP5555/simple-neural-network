@@ -1,0 +1,3 @@
+[submodule "neural_network/auto_diff"]
+	path = neural_network/auto_diff
+	url = https://github.com/SP5555/lazy-differentiation.git

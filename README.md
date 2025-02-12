@@ -45,7 +45,7 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 ## Installation Instructions
 Run the following commands to install it locally. Require `pip`.
 ```
-git clone https://github.com/SP5555/simple-neural-network.git
+git clone --recurse-submodules https://github.com/SP5555/simple-neural-network.git
 cd simple-neural-network
 pip install -r requirements.txt
 ```

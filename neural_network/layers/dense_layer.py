@@ -89,7 +89,7 @@ class DenseLayer(Layer):
             # alpha is broadcasted to match z dimensions automatically in _act_deriv_func
             # alpha_extended = np.where(self.alpha == None, 1.0, self.alpha) * np.ones_like(self._z)
             # matrix dims: (out, batch_size) = [(out, batch_size) ele-wise-opt (out, batch_size)] ele-wise-opt-mult (out, batch_size)
-            term_1_2: np.ndarray = self.activation.backward(self._z) * act_grad
+            term_1_2: np.ndarray = self.activation.backward() * act_grad
 
         # Math
         # z(n) = w(n)*a(n-1) + b(n)
@@ -118,7 +118,7 @@ class DenseLayer(Layer):
             # dL/dlearn_b(n)
             # = dL/da(n) * da(n)/dlearn_b(n)
             # matrix dims: (out, batch_size) = (out, batch_size) ele-wise-opt (out, batch_size)
-            dL_wrt_dlearn_alpha = self.activation.get_param_grad(self._z) * act_grad
+            dL_wrt_dlearn_alpha = self.activation.get_param_grad() * act_grad
             # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
             self.activation.alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
             l2_term_for_alpha: np.ndarray = self.activation.alpha * self.L2_lambda # Compute regularization term
