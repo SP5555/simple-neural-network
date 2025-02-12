@@ -82,7 +82,7 @@ class ReLU(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.expression = Tensor(np.maximum(0, x), "Z")
-        return self.expression.forward(cc=True) # standalone Tensor needs clear cache flag
+        return self.expression.forward()
 
     def backward(self) -> np.ndarray:
         return self.expression.backward("Z")
@@ -160,7 +160,7 @@ class Linear(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.expression = Tensor(x, "Z")
-        return self.expression.forward(cc=True) # standalone Tensor needs clear cache flag
+        return self.expression.forward()
 
     def backward(self) -> np.ndarray:
         return self.expression.backward("Z")
