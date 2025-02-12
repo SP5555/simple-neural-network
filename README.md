@@ -24,19 +24,24 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 - [Resources *& Inspirations :)*](#resources--inspirations-)
 
 ## Features
-- **Architecture**: Feedforward Neural Network
-- **Layers**:
-    - **Dense Layer**: Fully-connected layer
-    - **Dropout Layer**: Dense layer with dropout technique that drops a fraction of neurons during training, with an adjustable dropout rate
-- **Activation functions**:
-    - **Bounded**: Sigmoid, Softmax, Tanh
-    - **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Swish (Fixed/Learnable)
-- **Loss functions**:
-    - **Regression**: Mean-Squared Error (MSE), Mean-Absolute Error (MAE), Huber Loss
-    - **Multilabel classification**: Binary Cross-Entropy (BCE)
-    - **Multiclass classification**: Categorial Cross-Entropy (CCE)
-- **Training Algorithms**: Mini-batch gradient descent
-- **Optimizers**: Adam, AdaGrad, Momentum, RMSprop, Stochastic Gradient Descent (SGD)
+### Architecture
+- Feedforward Neural Network
+### Layers
+- **Dense Layer**: Fully-connected layer
+- **Dropout Layer**: Dense layer with dropout technique that drops a fraction of neurons during training, with an adjustable dropout rate
+### Activation functions
+- **Bounded**: Sigmoid, Softmax, Tanh
+- **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Swish (Fixed/Learnable)
+### Loss functions
+- **Regression**: Mean-Squared Error (MSE), Mean-Absolute Error (MAE), Huber Loss
+- **Multilabel classification**: Binary Cross-Entropy (BCE)
+- **Multiclass classification**: Categorial Cross-Entropy (CCE)
+### Training Algorithms
+- Mini-batch gradient descent
+### Optimizers
+- Adam, AdaGrad, Momentum, RMSprop, Stochastic Gradient Descent (SGD)
+### Advanced Features
+- **Automatic Differentiation** ([LAZY Differentiation](https://github.com/SP5555/lazy-differentiation/)): A custom-built auto-differentiation engine, implemented from scratch, to compute gradients for all activation functions (except Softmax) during backpropagation.
 
 ## Dependencies
 * **Python 3.0**
@@ -355,7 +360,7 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 - [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
 
 ## Future Improvements
-- **Auto Differentiation**: I'm lazy enough to take derivatives manually. Time to adopt Automation over Manual.
+- **Auto Differentiation** on Softmax? (Absolute brain damage)
 
 # Abyssal Zone (Recommended to not proceed)
 You made it this far. A scrolling enthusiast. Let's see where this takes you.
