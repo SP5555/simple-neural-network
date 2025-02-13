@@ -9,8 +9,8 @@ def main():
     nn = NeuralNetwork(
         layers=[
             DenseLayer  (4, 12, PReLU(),                                      weight_decay=0.001),
-            DropoutLayer(12, 16, Tanh(),   dropout_rate=0.1, batch_wise=True, weight_decay=0.001),
-            DropoutLayer(16, 12, Swish(),  dropout_rate=0.1,                  weight_decay=0.001),
+            DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
+            DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
             DenseLayer  (12, 3, Linear(),                                     weight_decay=0.001)
         ],
         optimizer=Adam(learn_rate=0.01),
@@ -28,7 +28,7 @@ def main():
              output_list=output_train_list,
              epoch=2000,
              batch_size=32)
-    nn.utils.inspect_weights_and_biases()
+    # nn.utils.inspect_weights_and_biases()
 
     nn.metrics.check_accuracy(test_input=input_test_list, test_output=output_test_list)
 

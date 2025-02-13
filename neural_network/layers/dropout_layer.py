@@ -81,7 +81,7 @@ class DropoutLayer(DenseLayer):
             
             # Apply dropout
             # zero out dp fraction of activations and scale up the surviving activations
-            self._a *= mask / (1-self.dp)
+            return self._a * mask / (1-self.dp)
 
         return self._a
     
