@@ -68,7 +68,8 @@ class DropoutLayer(DenseLayer):
         # z = W*A_in + b
         self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
         # A_out = activation(z, learn_b)
-        self._a: np.ndarray = self.activation.forward(self._z)
+        self.activation.build_expression(self._z)
+        self._a: np.ndarray = self.activation.forward()
 
         if is_training:
             # standard dropout: randomly drops neurons individually within each sample
