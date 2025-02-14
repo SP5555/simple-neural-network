@@ -71,20 +71,20 @@ class DropoutLayer(DenseLayer):
         self.activation.build_expression(self._z)
         self._a: np.ndarray = self.activation.forward()
 
-        if is_training:
-            # standard dropout: randomly drops neurons individually within each sample
-            # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
-            shape = self._a.shape
-            if self.batch_wise:
-                shape = (self._a.shape[0], 1)
-            # create a mask where a neuron has a 1-dp chance to remain active
-            mask = np.random.binomial(n=1, p=1-self.dp, size=shape)
-            
-            # Apply dropout
-            # zero out dp fraction of activations and scale up the surviving activations
-            return self._a * mask / (1-self.dp)
+        if not is_training:
+            return self._a
 
-        return self._a
+        # standard dropout: randomly drops neurons individually within each sample
+        # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
+        shape = self._a.shape
+        if self.batch_wise:
+            shape = (self._a.shape[0], 1)
+        # create a mask where a neuron has a 1-dp chance to remain active
+        mask = np.random.binomial(n=1, p=1-self.dp, size=shape)
+        
+        # Apply dropout
+        # zero out dp fraction of activations and scale up the surviving activations
+        return self._a * mask / (1-self.dp)
     
     @property
     def requires_training_flag(self):
