@@ -60,16 +60,17 @@ class DropoutLayer(DenseLayer):
             raise InputValidationError(f"{self.activation.__class__.__name__} is not compatible in the dropout layer.")
         
         super().build(is_first, is_final)
-    
+
     # compute a layer's output based on the input.
     def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
-        
+
         self._a_in: np.ndarray = input
         # z = W*A_in + b
         self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
         # A_out = activation(z, learn_b)
         self.activation.build_expression(self._z)
-        self._a: np.ndarray = self.activation.forward()
+        self.activation.forward()
+        self._a: np.ndarray = self.activation.evaluate()
 
         if not is_training:
             return self._a

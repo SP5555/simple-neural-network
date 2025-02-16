@@ -1,6 +1,6 @@
 import numpy as np
-from ..auto_diff.auto_diff_forward import Tensor, Sigmoid as SigOp, Tanh as TanhOp, Log, Exp
-from ..auto_diff.auto_diff_forward.operations import Operation
+from ..auto_diff.auto_diff_reverse import Tensor, Sigmoid as SigOp, Tanh as TanhOp, Log, Exp
+from ..auto_diff.auto_diff_reverse.operations import Operation
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     # s(x) = (tanh(x/2) + 1) / 2
@@ -32,6 +32,9 @@ class Activation:
 
         # alphas are learnable parameters
         # we're running out of Greek alphabets
+        self.Z: Tensor = None
+        self.alpha_tensor: Tensor = None
+
         self.alpha_initial: float = alpha_initial
         self.alpha_constraints: tuple = alpha_constraints
         self.alpha: np.ndarray = None
@@ -46,49 +49,58 @@ class Activation:
     def build_expression(self, x: np.ndarray) -> None:
         raise NotImplementedError
     
-    def forward(self) -> np.ndarray:
+    def forward(self):
         self.expression.forward()
+    
+    def backward(self, seed: np.ndarray):
+        self.expression.backward(seed)
+    
+    def evaluate(self) -> np.ndarray:
         return self.expression.evaluate()
     
-    def backward(self) -> np.ndarray:
-        return self.expression.backward("Z")
+    @property
+    def grad(self) -> np.ndarray:
+        return self.Z.grad
     
     # ===== only for learnable activations =====
-    def get_param_grad(self) -> np.ndarray:
-        return self.expression.backward("alpha")
+    @property
+    def param_grad(self) -> np.ndarray:
+        return self.alpha_tensor.grad
 
 class Sigmoid(Activation):
     def __init__(self):
         super().__init__(is_LL_multilabel_act=True)
     
     def build_expression(self, x: np.ndarray) -> None:
-        self.expression = SigOp(Tensor(x, "Z"))
+        self.Z = Tensor(x)
+        self.expression = SigOp(self.Z)
 
 class Tanh(Activation):
     def __init__(self):
         super().__init__()
 
     def build_expression(self, x: np.ndarray) -> None:
-        self.expression = TanhOp(Tensor(x, "Z"))
+        self.Z = Tensor(x)
+        self.expression = TanhOp(self.Z)
 
 class ReLU(Activation):
     def __init__(self):
         super().__init__()
 
     def build_expression(self, x: np.ndarray) -> None:
-        Z = Tensor(x, "Z")
+        self.Z = Tensor(x)
         Z_p = Tensor(x >= 0)
-        self.expression = Z * Z_p
+        self.expression = self.Z * Z_p
 
 class LeakyReLU(Activation):
     def __init__(self):
         super().__init__()
 
     def build_expression(self, x: np.ndarray) -> None:
-        Z = Tensor(x, "Z")
+        self.Z = Tensor(x)
         Z_p = Tensor(x >= 0)
         Z_n = Tensor(x < 0)
-        self.expression = (Z * Z_p) + (Tensor(0.01) * Z * Z_n)
+        self.expression = (self.Z * Z_p) + (Tensor(0.01) * self.Z * Z_n)
 
 class PReLU(Activation):
     def __init__(self):
@@ -97,26 +109,27 @@ class PReLU(Activation):
                          alpha_constraints=(0.001, 0.1))
         
     def build_expression(self, x: np.ndarray) -> None:
-        Z = Tensor(x, "Z")
+        self.Z = Tensor(x)
+        self.alpha_tensor = Tensor(self.alpha)
         Z_p = Tensor(x > 0)
         Z_n = Tensor(x <= 0)
-        self.expression = (Z * Z_p) + (Tensor(self.alpha, "alpha") * Z * Z_n)
+        self.expression = (self.Z * Z_p) + (self.alpha_tensor * self.Z * Z_n)
 
 class Softplus(Activation):
     def __init__(self):
         super().__init__()
     
     def build_expression(self, x: np.ndarray) -> None:
-        Z = Tensor(x, "Z")
-        self.expression = Log(Tensor(1.0) + Exp(Z))
+        self.Z = Tensor(x)
+        self.expression = Log(Tensor(1.0) + Exp(self.Z))
 
 class Swish_Fixed(Activation):
     def __init__(self):
         super().__init__()
 
     def build_expression(self, x: np.ndarray) -> None:
-        Z = Tensor(x, "Z")
-        self.expression = Z * SigOp(Z)
+        self.Z = Tensor(x)
+        self.expression = self.Z * SigOp(self.Z)
 
 class Swish(Activation):
     def __init__(self):
@@ -125,9 +138,9 @@ class Swish(Activation):
                          alpha_constraints=(0.5, 5.0))
         
     def build_expression(self, x: np.ndarray) -> None:
-        Z = Tensor(x, "Z")
-        alpha = Tensor(self.alpha, "alpha")
-        self.expression = Z * SigOp(alpha * Z)
+        self.Z = Tensor(x)
+        self.alpha_tensor = Tensor(self.alpha)
+        self.expression = self.Z * SigOp(self.alpha_tensor * self.Z)
     
 class Linear(Activation):
     def __init__(self):
@@ -135,7 +148,8 @@ class Linear(Activation):
                          is_LL_regression_act=True)
         
     def build_expression(self, x: np.ndarray) -> None:
-        self.expression = Tensor(x, "Z")
+        self.Z = Tensor(x)
+        self.expression = self.Z
 
 class Softmax(Activation):
     def __init__(self):
