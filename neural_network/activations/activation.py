@@ -173,7 +173,7 @@ class Softmax(Activation):
         # (Simply put, it is an entry in Identity matrix, either 0 or 1)
 
         # dL/dS = seed
-        # dL/dz = dL/dS dot dS/dz = Jacobian dot seed
+        # dL/dz =  dS/dz dot dL/dS = Jacobian dot seed
 
         # But, we can avoid constructing Jacobian (which would be a sweet 3D tensor nightmare)
         # each input z's gradient dL/dz_i of dL/dz is given as follows:
