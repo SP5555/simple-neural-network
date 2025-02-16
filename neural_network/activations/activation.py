@@ -57,15 +57,6 @@ class Activation:
     
     def evaluate(self) -> np.ndarray:
         return self.expression.evaluate()
-    
-    @property
-    def grad(self) -> np.ndarray:
-        return self.Z.grad
-    
-    # ===== only for learnable activations =====
-    @property
-    def param_grad(self) -> np.ndarray:
-        return self.alpha_tensor.grad
 
 class Sigmoid(Activation):
     def __init__(self):
@@ -152,26 +143,55 @@ class Linear(Activation):
         self.expression = self.Z
 
 class Softmax(Activation):
+    # Softmax is one hell of a tricky activation
+    # to get the auto-diff system to work with
+    # in fact, everything is done in here without relying on auto-diff
     def __init__(self):
         super().__init__(is_LL_exclusive=True,
                          is_LL_multiclass_act=True,
                          is_dropout_incompatible=True)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        exp = np.exp(x - np.max(x, axis=0, keepdims=True))
-        return exp / np.sum(exp, axis=0, keepdims=True)
+    # expression.forward() would technically do nothing
+    def build_expression(self, x: np.ndarray) -> np.ndarray:
+        self.Z = Tensor(x)
+        self.expression = self.Z
 
-    # due to the nature of how softmax derivative is applied in backpropagation,
-    # this function returns "stacks" of jacobian matrices.
-    def backward(self, x: np.ndarray) -> np.ndarray:
-        dim = x.shape[0]
-        softmax = self.forward(x) # Shape: (dim, batch_size)
+    # instead of calling expression.forward(),
+    # the forwarded value is manually calculated here
+    # this is due to interdependencies between outputs as
+    # auto-diff system does not understand the use of np.sum and np.max
+    def forward(self):
+        exp = np.exp(self.Z.tensor - np.max(self.Z.tensor, axis=0, keepdims=True))
+        self.expression.tensor = exp / np.sum(exp, axis=0, keepdims=True)
 
-        softmax_expanded = softmax.T[:, :, None]  # Shape: (batch_size, dim, 1)
+    # same goes here
+    # since auto-diff system does not understand the use of np.sum and np.max,
+    # the manual gradient calculation is offloaded to this function here.
+    def backward(self, seed: np.ndarray) -> np.ndarray:
+        # math
+        # S_i is softmax(z_i)
+        # Jacobian = diag(S) - S dot S.T
+        # where each entry is
+        # dS_i/dz_j = S_i * (delta_ij - S_j)
+        # delta_ij is Kronecker delta term
+        # (Simply put, it is an entry in Identity matrix, either 0 or 1)
 
-        # Shape: (batch_size, dim, dim)
-        # matmul perform matrix multiplication on the last two dimensions here
-        # each sample "slice" on 0-th axis is: I * M_softmax(dim, 1) - np.dot(M_softmax, M_softmax.T)
-        jacobians = np.eye(dim)[None, :, :] * softmax_expanded - np.matmul(softmax_expanded, softmax_expanded.transpose(0, 2, 1))
+        # dL/dS = seed
+        # dL/dz = dL/dS dot dS/dz = Jacobian dot seed
 
-        return jacobians # Shape: (batch_size, dim, dim)
+        # But, we can avoid constructing Jacobian (which would be a sweet 3D tensor nightmare)
+        # each input z's gradient dL/dz_i of dL/dz is given as follows:
+        # dL/dz_i = Sum[ S_i * ( delta_ij - S_j ) * dL/dS_j ]  // j goes through all output neurons
+        # dL/dz_i = S_i * Sum[ ( delta_ij - S_j ) * dL/dS_j ]  // factor out S_i
+        # dL/dz_i = S_i * ( dL/dS_i - Sum[ S_j * dL/dS_j ] )   // break down delta_ij term
+        # dL/dz_i = S_i * ( seed_i - Sum[ S_j * seed_j ])
+
+        # this is softmax
+        S = self.expression.tensor
+
+        # this line took years off my lifespan
+        dL_dz = S * (seed - np.sum(S * seed, axis = 0, keepdims=True))
+
+        # this backward pass call just accumulates into partials
+        # because all calculations are already done inside dL/dz term 
+        self.expression.backward(dL_dz)

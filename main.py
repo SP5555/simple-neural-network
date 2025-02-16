@@ -6,19 +6,44 @@ from neural_network.losses import *
 from neural_network.optimizers import *
 
 def main():
+    # REGRESSION
+    # nn = NeuralNetwork(
+    #     layers=[
+    #         DenseLayer  (4, 12, PReLU(),                                      weight_decay=0.001),
+    #         DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
+    #         DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
+    #         DenseLayer  (12, 3, Linear(),                                     weight_decay=0.001)
+    #     ],
+    #     optimizer=Adam(learn_rate=0.01),
+    #     loss_function=Huber(delta=1.0)
+    # )
+
+    # MULTILABEL
+    # nn = NeuralNetwork(
+    #     layers=[
+    #         DenseLayer  (4, 10, Tanh(),                      weight_decay=0.001),
+    #         DropoutLayer(10, 16, Tanh(),   dropout_rate=0.1, weight_decay=0.001),
+    #         DenseLayer  (16, 12, Tanh(),                     weight_decay=0.001),
+    #         DenseLayer  (12, 3, Sigmoid(),                   weight_decay=0.001)
+    #     ],
+    #     loss_function=BCE(),
+    #     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
+    # )
+
+    # MULTICLASS
     nn = NeuralNetwork(
         layers=[
-            DenseLayer  (4, 12, PReLU(),                                      weight_decay=0.001),
+            DropoutLayer(4, 12, PReLU(),   dropout_rate=0.2,                  weight_decay=0.001),
             DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
             DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
-            DenseLayer  (12, 3, Linear(),                                     weight_decay=0.001)
+            DenseLayer  (12, 3, Softmax(),                                    weight_decay=0.001)
         ],
-        optimizer=Adam(learn_rate=0.01),
-        loss_function=Huber(delta=1.0)
+        loss_function=CCE(),
+        optimizer=Momentum(learn_rate=0.02, momentum=0.75)
     )
 
     data_generator = DataGenerator()
-    problem_type = "regression"
+    problem_type = "multiclass"
 
     input_train_list, output_train_list = data_generator.generate(40000, problem_type)
     input_test_list,  output_test_list  = data_generator.generate(20000, problem_type)

@@ -42,8 +42,8 @@ class DenseLayer(Layer):
         if not is_final and self.activation.is_LL_exclusive:
             raise InputValidationError(f"{self.activation.__class__.__name__} activation can't be used in hidden layers.")
 
-        self.weights = np.random.randn(self.output_size, self.input_size) * np.sqrt(2/self.input_size)
-        self.biases = np.random.randn(self.output_size, 1)
+        self.weights: np.ndarray = np.random.randn(self.output_size, self.input_size) * np.sqrt(2/self.input_size)
+        self.biases: np.ndarray = np.random.randn(self.output_size, 1)
  
         # initialized with None for efficiency
         # gradients
@@ -62,13 +62,6 @@ class DenseLayer(Layer):
         # z = W*A_in + b
         self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
 
-        # Softmax case is different
-        if self.activation.__class__.__name__ == "Softmax":
-
-            # A_out = activation(z)
-            self._a: np.ndarray = self.activation.forward(self._z)
-            return self._a
-
         # A_out = activation(z)
         self.activation.build_expression(self._z)
         self.activation.forward()
@@ -83,21 +76,12 @@ class DenseLayer(Layer):
         batch_size = self._a.shape[1]
 
         # important component for backpropagation
-        # term_1_2 = dL/da(n) * da(n)/dz(n)
-        #          = dL/da(n) * actv'(z(n))
+        # dL/dz = dL/da(n) * da(n)/dz(n)
+        #       = dL/da(n) * actv'(z(n))
 
-        # Softmax case is different
-        if self.activation.__class__.__name__ == "Softmax":
-
-            da_wrt_dz = act_grad[:, :, None].transpose(1, 0, 2) # (batch_size, out, 1)
-            dL_wrt_da = self.activation.backward(self._z) # Jacobians; (batch_size, out, out)
-            
-            t_1_2_3D = np.matmul(dL_wrt_da, da_wrt_dz) # (batch_size, out, 1)
-            term_1_2 = t_1_2_3D.squeeze(axis=-1).T # (out, batch_size)
-        else:
-            # matrix dims: (out, batch_size) = [(out, batch_size) ele-wise-opt (out, batch_size)] ele-wise-opt-mult (out, batch_size)
-            self.activation.backward(act_grad)
-            term_1_2: np.ndarray = self.activation.Z.grad
+        # matrix dims: (out, batch_size)
+        self.activation.backward(act_grad)
+        dL_dz: np.ndarray = self.activation.Z.grad
 
         # Math
         # z(n) = w(n)*a(n-1) + b(n)
@@ -106,18 +90,18 @@ class DenseLayer(Layer):
         # CALCULATE derivative of loss with respect to weights
         # dL/dw(n)
         # = dL/da(n) * da(n)/dz(n) * dz(n)/dw(n)
-        # = dL/da(n) * actv'(z(n)) * a(n-1)
+        # =         dL/dz          * a(n-1)
         # matrix dims: (out, in) = (out, batch_size) * (batch_size, in)
-        self._w_grad = np.matmul(term_1_2, self._a_in.T) / batch_size
+        self._w_grad = np.matmul(dL_dz, self._a_in.T) / batch_size
         l2_term_for_w: np.ndarray = self.weights * self.L2_lambda # Compute regularization term
         self._w_grad += l2_term_for_w
 
         # CALCULATE derivative of loss with respect to biases
         # dL/db(n)
         # = dL/da(n) * da(n)/dz(n) * dz(n)/db(n)
-        # = dL/da(n) * actv'(z(n)) * 1
+        # =         dL/dz          * 1
         # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
-        self._b_grad = np.sum(term_1_2, axis=1, keepdims=True) / batch_size
+        self._b_grad = np.sum(dL_dz, axis=1, keepdims=True) / batch_size
         l2_term_for_b: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
         self._b_grad += l2_term_for_b
 
@@ -126,7 +110,7 @@ class DenseLayer(Layer):
             # dL/dlearn_b(n)
             # = dL/da(n) * da(n)/dlearn_b(n)
             # matrix dims: (out, batch_size) = (out, batch_size) ele-wise-opt (out, batch_size)
-            dL_wrt_dlearn_alpha = self.activation.param_grad * act_grad
+            dL_wrt_dlearn_alpha = self.activation.alpha_tensor.grad * act_grad
             # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
             self.activation.alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
             l2_term_for_alpha: np.ndarray = self.activation.alpha * self.L2_lambda # Compute regularization term
@@ -140,9 +124,9 @@ class DenseLayer(Layer):
         # NOTE: a(n-1) affects all a(n), so backpropagation to a(n-1) will be related to all a(n)
         # dL/da(n-1)
         # = column-wise sum in w matrix [dz(n)/da(n-1) * dL/da(n) * da(n)/dz(n)]
-        # = column-wise sum in w matrix [w(n) * dL/da(n) * actv'(z(n))]
+        # = column-wise sum in w matrix [    w(n)      *         dL/dz         ]
         # matrix dims: (in, batch_size) = (in, out) * (out, batch_size)
-        act_grad = np.matmul(self.weights.T, term_1_2)
+        act_grad = np.matmul(self.weights.T, dL_dz)
         return act_grad
 
     def _get_params(self) -> list[dict]:
