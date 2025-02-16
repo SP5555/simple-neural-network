@@ -39,8 +39,13 @@ For those who love simplicity. It's lightning-fast since it involves literally n
 
 $$A(x)=x$$
 
+## Softplus (Smooth ReLU)
+When sharp changes in the gradient of **ReLU** variants do not fit your favor and you still want the power of **ReLU**, **Softplus** comes to the rescue. Thanks to its smooth gradient, it can outperform traditional **ReLU** variants in certain scenarios.
+
+$$A( x) =\ln\left( 1+e^{x}\right)$$
+
 ## Swish
-When sharp changes in gradient of **ReLU** variants do not fit your favor and you still want the power of **ReLU**, **Swish** comes to the rescue. Thanks to its smooth gradient, it can outperform traditional **ReLU** variants. What makes it even more powerful? The addition of a learnable parameter, $\beta$, ensuring a high performance uplift. Of course, with great power comes great cost, **Swish** is by far the most computationally expensive activation to calculate. Alternatively, learnable parameter $\beta$ can be disabled (permanently set to 1) to reduce computation while maintaining relatively high performance.
+Want to add some sprinkle of learnable parameter to **Softplus**-like activation? **Swish** is here. With $\beta$, ensuring a performance uplift (again, in certain scenarios). Of course, with great power comes great cost, **Swish** is by far the most computationally expensive activation to calculate. Alternatively, learnable parameter $\beta$ can be disabled (permanently set to 1) to reduce computation while maintaining relatively high performance.
 
 $$A(x)=x\sigma(\beta x)=\frac{x}{1+e^{-\beta x}}$$
 

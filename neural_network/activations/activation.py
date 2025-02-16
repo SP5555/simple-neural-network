@@ -1,6 +1,6 @@
 import numpy as np
-from ..auto_diff.auto_diff import Tensor, Sigmoid as SigOp, Tanh as TanhOp
-from ..auto_diff.auto_diff.operations import Operation
+from ..auto_diff.auto_diff_forward import Tensor, Sigmoid as SigOp, Tanh as TanhOp, Log, Exp
+from ..auto_diff.auto_diff_forward.operations import Operation
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     # s(x) = (tanh(x/2) + 1) / 2
@@ -47,7 +47,8 @@ class Activation:
         raise NotImplementedError
     
     def forward(self) -> np.ndarray:
-        return self.expression.forward()
+        self.expression.forward()
+        return self.expression.evaluate()
     
     def backward(self) -> np.ndarray:
         return self.expression.backward("Z")
@@ -100,6 +101,14 @@ class PReLU(Activation):
         Z_p = Tensor(x > 0)
         Z_n = Tensor(x <= 0)
         self.expression = (Z * Z_p) + (Tensor(self.alpha, "alpha") * Z * Z_n)
+
+class Softplus(Activation):
+    def __init__(self):
+        super().__init__()
+    
+    def build_expression(self, x: np.ndarray) -> None:
+        Z = Tensor(x, "Z")
+        self.expression = Log(Tensor(1.0) + Exp(Z))
 
 class Swish_Fixed(Activation):
     def __init__(self):

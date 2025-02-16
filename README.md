@@ -31,7 +31,7 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 - **Dropout Layer**: Dense layer with dropout technique that drops a fraction of neurons during training, with an adjustable dropout rate
 ### Activation functions
 - **Bounded**: Sigmoid, Softmax, Tanh
-- **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Swish (Fixed/Learnable)
+- **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Softplus, Swish (Fixed/Learnable)
 ### Loss functions
 - **Regression**: Mean-Squared Error (MSE), Mean-Absolute Error (MAE), Huber Loss
 - **Multilabel classification**: Binary Cross-Entropy (BCE)
