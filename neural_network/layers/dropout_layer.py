@@ -1,5 +1,6 @@
 import numpy as np
 from ..activations.activation import Activation
+from ..auto_diff.auto_diff_reverse import Tensor, Matmul
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 from .dense_layer import DenseLayer
@@ -64,25 +65,29 @@ class DropoutLayer(DenseLayer):
     # compute a layer's output based on the input.
     def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
 
-        self._a_in: np.ndarray = input
         # z = W*A_in + b
-        self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
-        # A_out = activation(z, learn_b)
-        self.activation.build_expression(self._z)
+        self._A_in: Tensor = Tensor(input)
+        self._W: Tensor = Tensor(self.weights)
+        self._B: Tensor = Tensor(self.biases)
+        self._Z: Tensor = Matmul(self._W, self._A_in) + self._B # auto-broadcasting
+        self._Z.forward()
+
+        # A_out = activation(z)
+        self.activation.build_expression(self._Z)
         self.activation.forward()
-        self._a: np.ndarray = self.activation.evaluate()
+        _A_out: np.ndarray = self.activation.evaluate()
 
         if not is_training:
-            return self._a
+            return _A_out
 
         # standard dropout: randomly drops neurons individually within each sample
         # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
-        shape = self._a.shape
+        shape = _A_out.shape
         if self.batch_wise:
-            shape = (self._a.shape[0], 1)
+            shape = (_A_out.shape[0], 1)
         # create a mask where a neuron has a 1-dp chance to remain active
         mask = np.random.binomial(n=1, p=1-self.dp, size=shape)
         
         # Apply dropout
         # zero out dp fraction of activations and scale up the surviving activations
-        return self._a * mask / (1-self.dp)
+        return _A_out * mask / (1-self.dp)

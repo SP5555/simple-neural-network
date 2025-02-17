@@ -28,7 +28,6 @@ class Activation:
 
         # alphas are learnable parameters
         # we're running out of Greek alphabets
-        self.Z: Tensor = None
         self.alpha_tensor: Tensor = None
 
         self.alpha_initial: float = alpha_initial
@@ -42,7 +41,7 @@ class Activation:
             self.alpha = np.full((output_size, 1), self.alpha_initial)
     
     # builds expression using auto diff tensors
-    def build_expression(self, x: np.ndarray):
+    def build_expression(self, Z: Tensor):
         raise NotImplementedError
     
     def forward(self):
@@ -58,85 +57,76 @@ class Sigmoid(Activation):
     def __init__(self):
         super().__init__(is_LL_multilabel_act=True)
     
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        self.expression = SigOp(self.Z)
+    def build_expression(self, Z: Tensor):
+        self.expression = SigOp(Z)
 
 class Tanh(Activation):
     def __init__(self):
         super().__init__()
 
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        self.expression = TanhOp(self.Z)
+    def build_expression(self, Z: Tensor):
+        self.expression = TanhOp(Z)
 
 class ReLU(Activation):
     def __init__(self):
         super().__init__()
 
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        Z_p = Tensor(x >= 0)
-        self.expression = self.Z * Z_p
+    def build_expression(self, Z: Tensor):
+        Z_p = Tensor(Z.tensor >= 0)
+        self.expression = Z * Z_p
 
 class LeakyReLU(Activation):
     def __init__(self):
         super().__init__()
 
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        Z_p = Tensor(x >= 0)
-        Z_n = Tensor(x < 0)
-        self.expression = (self.Z * Z_p) + (Tensor(0.01) * self.Z * Z_n)
+    def build_expression(self, Z: Tensor):
+        Z_p = Tensor(Z.tensor >= 0)
+        Z_n = Tensor(Z.tensor < 0)
+        self.expression = (Z * Z_p) + (Tensor(0.01) * Z * Z_n)
 
 class PReLU(Activation):
     def __init__(self):
         super().__init__(is_learnable=True,
                          alpha_initial=0.01,
                          alpha_constraints=(0.001, 0.1))
-        
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
+
+    def build_expression(self, Z: Tensor):
         self.alpha_tensor = Tensor(self.alpha)
-        Z_p = Tensor(x > 0)
-        Z_n = Tensor(x <= 0)
-        self.expression = (self.Z * Z_p) + (self.alpha_tensor * self.Z * Z_n)
+        Z_p = Tensor(Z.tensor > 0)
+        Z_n = Tensor(Z.tensor <= 0)
+        self.expression = (Z * Z_p) + (self.alpha_tensor * Z * Z_n)
 
 class Softplus(Activation):
     def __init__(self):
         super().__init__()
-    
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        self.expression = Log(Tensor(1.0) + Exp(self.Z))
+
+    def build_expression(self, Z: Tensor):
+        self.expression = Log(Tensor(1.0) + Exp(Z))
 
 class Swish_Fixed(Activation):
     def __init__(self):
         super().__init__()
 
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        self.expression = self.Z * SigOp(self.Z)
+    def build_expression(self, Z: Tensor):
+        self.expression = self.Z * SigOp(Z)
 
 class Swish(Activation):
     def __init__(self):
         super().__init__(is_learnable=True,
                          alpha_initial=1.0,
                          alpha_constraints=(0.5, 5.0))
-        
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
+
+    def build_expression(self, Z: Tensor):
         self.alpha_tensor = Tensor(self.alpha)
-        self.expression = self.Z * SigOp(self.alpha_tensor * self.Z)
+        self.expression = Z * SigOp(self.alpha_tensor * Z)
     
 class Linear(Activation):
     def __init__(self):
         super().__init__(is_LL_exclusive=True,
                          is_LL_regression_act=True)
-        
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        self.expression = self.Z
+
+    def build_expression(self, Z: Tensor):
+        self.expression = Z
 
 class Softmax(Activation):
     # Softmax is one hell of a tricky activation
@@ -148,16 +138,15 @@ class Softmax(Activation):
                          is_dropout_incompatible=True)
 
     # expression.forward() would technically do nothing
-    def build_expression(self, x: np.ndarray):
-        self.Z = Tensor(x)
-        self.expression = self.Z
+    def build_expression(self, Z: Tensor):
+        self.expression = Z
 
     # instead of calling expression.forward(),
     # the forwarded value is manually calculated here
     # this is due to interdependencies between outputs as
     # auto-diff system does not understand the use of np.sum and np.max
     def forward(self):
-        exp = np.exp(self.Z.tensor - np.max(self.Z.tensor, axis=0, keepdims=True))
+        exp = np.exp(self.expression.tensor - np.max(self.expression.tensor, axis=0, keepdims=True))
         self.expression.tensor = exp / np.sum(exp, axis=0, keepdims=True)
 
     # same goes here

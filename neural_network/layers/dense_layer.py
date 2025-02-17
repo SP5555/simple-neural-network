@@ -1,5 +1,6 @@
 import numpy as np
 from ..activations.activation import Activation
+from ..auto_diff.auto_diff_reverse import Tensor, Matmul
 from ..exceptions import InputValidationError
 from .layer import Layer
 
@@ -46,93 +47,95 @@ class DenseLayer(Layer):
         self.biases: np.ndarray = np.random.randn(self.output_size, 1)
  
         # initialized with None for efficiency
-        # gradients
-        self._w_grad = None     # same shape as self.weights
-        self._b_grad = None     #      //       self.biases
+        # gradient container numpy array objects
+        self._W_grad = None
+        self._B_grad = None
 
-        # raw input, raw output and activation
-        self._a_in = None       # shape: (input_size, batch_size)
-        self._z = None          # shape: (output_size, batch_size)
-        self._a = None          # shape: (output_size, batch_size)
-    
+        # tensor/operation auto-diff objects
+        self._A_in = None   # shape: (input_size, batch_size)
+        self._W    = None   # shape: (output_size, input_size)
+        self._B    = None   # shape: (output_size, 1) broadcast to (output_size, batch_size)
+        self._Z    = None   # shape: (output_size, batch_size)
+
     # compute a layer's output based on the input.
     def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
 
-        self._a_in: np.ndarray = input
-        # z = W*A_in + b
-        self._z: np.ndarray = np.matmul(self.weights, self._a_in) + self.biases # auto-broadcasting
+        self._A_in: Tensor = Tensor(input)
+        self._W: Tensor = Tensor(self.weights)
+        self._B: Tensor = Tensor(np.repeat(self.biases, input.shape[1], axis=1)) # broadcast
 
-        # A_out = activation(z)
-        self.activation.build_expression(self._z)
+        # Z = W*A_in + B
+        self._Z = Matmul(self._W, self._A_in) + self._B
+        self._Z.forward()
+
+        # A_out = activation(Z)
+        self.activation.build_expression(self._Z)
         self.activation.forward()
-        self._a: np.ndarray = self.activation.evaluate()
-        return self._a
-    
-    # computes gradients for weights, biases, alpha, and inputs based on the loss.
-    # returns the input gradient which is required for the previous layer's backward pass.
+        return self.activation.evaluate()
+
     # basically BACKPROPAGATION
-    def backward(self, act_grad: np.ndarray) -> np.ndarray:
+    # returns the input gradient which is required for the previous layer's backward pass.
+    def backward(self, seed: np.ndarray) -> np.ndarray:
 
-        batch_size = self._a.shape[1]
+        batch_size = seed.shape[1]
 
-        # important component for backpropagation
-        # dL/dz = dL/da(n) * da(n)/dz(n)
-        #       = dL/da(n) * actv'(z(n))
-
-        # matrix dims: (out, batch_size)
-        self.activation.backward(act_grad)
-        dL_dz: np.ndarray = self.activation.Z.grad
+        # auto diff reverse mode backward call
+        # situates all tensors with their gradients
+        self.activation.backward(seed)
 
         # Math
-        # z(n) = w(n)*a(n-1) + b(n)
-        # a(n) = activation(z(n, learn_b)) # learnable parem is used only in some activations
+        # Z = W*A_in + B
+        # A = activation(Z, learn_b) # learnable parem is used only in some activations
 
         # CALCULATE derivative of loss with respect to weights
-        # dL/dw(n)
-        # = dL/da(n) * da(n)/dz(n) * dz(n)/dw(n)
-        # =         dL/dz          * a(n-1)
-        # matrix dims: (out, in) = (out, batch_size) * (batch_size, in)
-        self._w_grad = np.matmul(dL_dz, self._a_in.T) / batch_size
-        l2_term_for_w: np.ndarray = self.weights * self.L2_lambda # Compute regularization term
-        self._w_grad += l2_term_for_w
+        # dL/dW
+        # = dL/dA * dA/dZ * dZ/dW
+        # = dL/dA * dA/dZ * A_in
+        self._W_grad = self._W.grad / batch_size
+        l2_term_for_W: np.ndarray = self.weights * self.L2_lambda # Compute regularization term
+        self._W_grad += l2_term_for_W
 
         # CALCULATE derivative of loss with respect to biases
         # dL/db(n)
-        # = dL/da(n) * da(n)/dz(n) * dz(n)/db(n)
-        # =         dL/dz          * 1
-        # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
-        self._b_grad = np.sum(dL_dz, axis=1, keepdims=True) / batch_size
-        l2_term_for_b: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
-        self._b_grad += l2_term_for_b
+        # = dL/dA * dA/dZ * dZ/dB
+        # = dL/dA * dA/dZ * 1
+        self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / batch_size
+        l2_term_for_B: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
+        self._B_grad += l2_term_for_B
 
         if self.activation.is_learnable:
             # CALCULATE derivative of loss with respect to learnable parameter
-            # dL/dlearn_b(n)
-            # = dL/da(n) * da(n)/dlearn_b(n)
-            # matrix dims: (out, batch_size) = (out, batch_size) ele-wise-opt (out, batch_size)
-            dL_wrt_dlearn_alpha = self.activation.alpha_tensor.grad * act_grad
-            # matrix dims: (out, 1) = squash-add along axis 1 (out, batch_size)
-            self.activation.alpha_grad = np.sum(dL_wrt_dlearn_alpha, axis=1, keepdims=True) / batch_size
+            # dL/dlearn_b
+            # = dL/dA * dA/dlearn_b
+            self.activation.alpha_grad = np.sum(self.activation.alpha_tensor.grad, axis=1, keepdims=True) / batch_size
             l2_term_for_alpha: np.ndarray = self.activation.alpha * self.L2_lambda # Compute regularization term
             self.activation.alpha_grad += l2_term_for_alpha
 
+            # not strictly required
+            self.activation.alpha_tensor.zero_grad()
+
         # first layer does not have previous layer
-        # not need to return input gradient   
+        # not need to return gradient of loss
         if self._is_first: return
 
-        # actual backpropagation
-        # NOTE: a(n-1) affects all a(n), so backpropagation to a(n-1) will be related to all a(n)
-        # dL/da(n-1)
-        # = column-wise sum in w matrix [dz(n)/da(n-1) * dL/da(n) * da(n)/dz(n)]
-        # = column-wise sum in w matrix [    w(n)      *         dL/dz         ]
-        # matrix dims: (in, batch_size) = (in, out) * (out, batch_size)
-        act_grad = np.matmul(self.weights.T, dL_dz)
-        return act_grad
+        # "seed" or gradient of loss for previous layer
+        # NOTE: A_in affects all A, so backpropagation to A_in will be related to all A
+        # dL/dA_in
+        # = dL/dA * dA/dZ * dZ/dA_in
+        # = dL/dA * dA/dZ * W
+        seed = self._A_in.grad
+
+        # not strictly required
+        self._A_in.zero_grad()
+        self._W.zero_grad()
+        self._B.zero_grad()
+
+        return seed
 
     def _get_params(self) -> list[dict]:
         params = [
-            {'weight': self.weights, 'grad': self._w_grad},
-            {'weight': self.biases, 'grad': self._b_grad}
+            {'weight': self.weights, 'grad': self._W_grad},
+            {'weight': self.biases, 'grad': self._B_grad}
         ]
         if self.activation.is_learnable:
             params.append({
