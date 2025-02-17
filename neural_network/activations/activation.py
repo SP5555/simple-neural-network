@@ -180,7 +180,7 @@ class Softmax(Activation):
         # dL/dz_i = Sum[ S_i * ( delta_ij - S_j ) * dL/dS_j ]  // j goes through all output neurons
         # dL/dz_i = S_i * Sum[ ( delta_ij - S_j ) * dL/dS_j ]  // factor out S_i
         # dL/dz_i = S_i * ( dL/dS_i - Sum[ S_j * dL/dS_j ] )   // break down delta_ij term
-        # dL/dz_i = S_i * ( seed_i - Sum[ S_j * seed_j ])
+        # dL/dz_i = S_i * ( seed_i - Sum[ S_j * seed_j ] )
 
         # this is softmax
         S = self.expression.tensor

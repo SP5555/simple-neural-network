@@ -134,10 +134,7 @@ class NeuralNetwork:
 
             # FORWARD PASS: compute activations
             for layer in self._layers:
-                if layer.requires_training_flag:
-                    a: np.ndarray = layer.forward(a, is_training=True)
-                    continue
-                a: np.ndarray = layer.forward(a)
+                a: np.ndarray = layer.forward(a, is_training=True)
             # dims of a after forward pass: (output_size, batch_size)
 
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER

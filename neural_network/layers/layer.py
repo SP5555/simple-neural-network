@@ -45,7 +45,7 @@ class Layer:
     def build(self, is_first: bool, is_final: bool):
         raise NotImplementedError
 
-    def forward(self):
+    def forward(self, is_training: bool = False):
         raise NotImplementedError
     
     def backward(self):
@@ -56,7 +56,3 @@ class Layer:
 
     def _get_param_count(self) -> int:
         raise NotImplementedError
-    
-    @property
-    def requires_training_flag(self):
-        return False

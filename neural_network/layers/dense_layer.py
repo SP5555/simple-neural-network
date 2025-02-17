@@ -56,7 +56,7 @@ class DenseLayer(Layer):
         self._a = None          # shape: (output_size, batch_size)
     
     # compute a layer's output based on the input.
-    def forward(self, input: np.ndarray) -> np.ndarray:
+    def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
 
         self._a_in: np.ndarray = input
         # z = W*A_in + b

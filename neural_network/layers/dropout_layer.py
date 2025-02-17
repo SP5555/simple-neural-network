@@ -86,7 +86,3 @@ class DropoutLayer(DenseLayer):
         # Apply dropout
         # zero out dp fraction of activations and scale up the surviving activations
         return self._a * mask / (1-self.dp)
-    
-    @property
-    def requires_training_flag(self):
-        return True
