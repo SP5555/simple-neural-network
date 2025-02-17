@@ -44,8 +44,8 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 - **Automatic Differentiation** ([LAZY Differentiation](https://github.com/SP5555/lazy-differentiation/)): A custom-built auto-differentiation engine that abstracts away the heavy math load (with NumPy at its core) for efficient backpropagation.
 
 ## Dependencies
-* **Python 3.0**
-* **NumPy**
+- **Python 3.11** or **3.12**
+- **NumPy**
 
 ## Installation Instructions
 Run the following commands to install it locally. Require `pip`.
