@@ -1,5 +1,5 @@
 import numpy as np
-from ..auto_diff.auto_diff_reverse import Tensor, Sigmoid as SigOp, Tanh as TanhOp, Log, Exp
+from ..auto_diff.auto_diff_reverse import Tensor, Sigmoid as SigAD, Tanh as TanhAD, Log, Exp, Softmax as SoftmaxAD
 from ..auto_diff.auto_diff_reverse.operations import Operation
 
 class Activation:
@@ -58,14 +58,14 @@ class Sigmoid(Activation):
         super().__init__(is_LL_multilabel_act=True)
     
     def build_expression(self, Z: Tensor):
-        self.expression = SigOp(Z)
+        self.expression = SigAD(Z)
 
 class Tanh(Activation):
     def __init__(self):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        self.expression = TanhOp(Z)
+        self.expression = TanhAD(Z)
 
 class ReLU(Activation):
     def __init__(self):
@@ -108,7 +108,7 @@ class Swish_Fixed(Activation):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        self.expression = self.Z * SigOp(Z)
+        self.expression = Z * SigAD(Z)
 
 class Swish(Activation):
     def __init__(self):
@@ -118,7 +118,7 @@ class Swish(Activation):
 
     def build_expression(self, Z: Tensor):
         self.alpha_tensor = Tensor(self.alpha)
-        self.expression = Z * SigOp(self.alpha_tensor * Z)
+        self.expression = Z * SigAD(self.alpha_tensor * Z)
     
 class Linear(Activation):
     def __init__(self):
@@ -129,54 +129,10 @@ class Linear(Activation):
         self.expression = Z
 
 class Softmax(Activation):
-    # Softmax is one hell of a tricky activation
-    # to get the auto-diff system to work with
-    # in fact, everything is done in here without relying on auto-diff
     def __init__(self):
         super().__init__(is_LL_exclusive=True,
                          is_LL_multiclass_act=True,
                          is_dropout_incompatible=True)
 
-    # expression.forward() would technically do nothing
     def build_expression(self, Z: Tensor):
-        self.expression = Z
-
-    # instead of calling expression.forward(),
-    # the forwarded value is manually calculated here
-    # this is due to interdependencies between outputs as
-    # auto-diff system does not understand the use of np.sum and np.max
-    def forward(self):
-        exp = np.exp(self.expression.tensor - np.max(self.expression.tensor, axis=0, keepdims=True))
-        self.expression.tensor = exp / np.sum(exp, axis=0, keepdims=True)
-
-    # same goes here
-    # since auto-diff system does not understand the use of np.sum and np.max,
-    # the manual gradient calculation is offloaded to this function here
-    def backward(self, seed: np.ndarray):
-        # math
-        # S_i is softmax(z_i)
-        # Jacobian = diag(S) - S dot S.T
-        # where each entry is
-        # dS_i/dz_j = S_i * (delta_ij - S_j)
-        # delta_ij is Kronecker delta term
-        # (Simply put, it is an entry in Identity matrix, either 0 or 1)
-
-        # dL/dS = seed
-        # dL/dz =  dS/dz dot dL/dS = Jacobian dot seed
-
-        # But, we can avoid constructing Jacobian (which would be a sweet 3D tensor nightmare)
-        # each input z's gradient dL/dz_i of dL/dz is given as follows:
-        # dL/dz_i = Sum[ S_i * ( delta_ij - S_j ) * dL/dS_j ]  // j goes through all output neurons
-        # dL/dz_i = S_i * Sum[ ( delta_ij - S_j ) * dL/dS_j ]  // factor out S_i
-        # dL/dz_i = S_i * ( dL/dS_i - Sum[ S_j * dL/dS_j ] )   // break down delta_ij term
-        # dL/dz_i = S_i * ( seed_i - Sum[ S_j * seed_j ] )
-
-        # this is softmax
-        S = self.expression.tensor
-
-        # this line took years off my lifespan
-        dL_dz = S * (seed - np.sum(S * seed, axis = 0, keepdims=True))
-
-        # this backward pass call just accumulates into partials
-        # because all calculations are already done inside dL/dz term 
-        self.expression.backward(dL_dz)
+        self.expression = SoftmaxAD(Z)

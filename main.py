@@ -39,7 +39,7 @@ def main():
             DenseLayer  (12, 3, Softmax(),                                    weight_decay=0.001)
         ],
         loss_function=CCE(),
-        optimizer=Momentum(learn_rate=0.02, momentum=0.75)
+        optimizer=Adam(learn_rate=0.02)
     )
 
     data_generator = DataGenerator()
