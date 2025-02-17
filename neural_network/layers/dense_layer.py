@@ -126,6 +126,7 @@ class DenseLayer(Layer):
         seed = self._A_in.grad
 
         # not strictly required
+        # but if something breaks, you know where to find me
         self._A_in.zero_grad()
         self._W.zero_grad()
         self._B.zero_grad()

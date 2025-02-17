@@ -41,7 +41,7 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 ### Optimizers
 - Adam, AdaGrad, Momentum, RMSprop, Stochastic Gradient Descent (SGD)
 ### Advanced Features
-- **Automatic Differentiation** ([LAZY Differentiation](https://github.com/SP5555/lazy-differentiation/)): A custom-built auto-differentiation engine, implemented from scratch, to compute gradients for all activation functions (except Softmax) during backpropagation.
+- **Automatic Differentiation** ([LAZY Differentiation](https://github.com/SP5555/lazy-differentiation/)): A custom-built auto-differentiation engine that abstracts away the heavy math load (with NumPy at its core) for efficient backpropagation.
 
 ## Dependencies
 * **Python 3.0**
@@ -51,9 +51,12 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 Run the following commands to install it locally. Require `pip`.
 ```
 git clone --recurse-submodules https://github.com/SP5555/simple-neural-network.git
+
+cd simple-neural-network
+
 # OPTIONAL if submodules are not working
 # git submodule update --init --recursive
-cd simple-neural-network
+
 pip install -r requirements.txt
 ```
 
@@ -245,7 +248,7 @@ With randomization, we can create diverse datasets that still follow a certain i
 
 To note, we are NOT harvesting the full power of randomization as it would only generate complete gibberish. Instead, we establish a relation between inputs and outputs while introducing randomness to it at the same time. This synthetically generated data helps in evaluating the model's performance without the need for a real-world dataset, which can be difficult to acquire or pre-process.
 
-*Monkey Language: The idea is, we define input-output relationships and generate data while heavily masking them with a reasonable level of randomness, making the patterns not immediately clear, even to humans. Then we evaluate the network's ability to cut through those random noise and uncover the underlying pattern.*
+> *Monkey Language: The idea is, we define input-output relationships and generate data while heavily masking them with a reasonable level of randomness, making the patterns not immediately clear, even to humans. Then we evaluate the network's ability to cut through those random noise and uncover the underlying pattern.*
 
 For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
 ```python
@@ -337,11 +340,11 @@ Feel free to mess around with the hyperparameters, or change things up entirely.
 ## What to Expect?
 This network has **insane level of scalibility** in terms of depth (number of layers) and width (neurons per layer), with the only real limit being your hardware, super impressive! Dense network architectures are suited the most for general-purpose tasks since they can approximate *any* mathematical function.
 
-*Monkey Language: We're saying that stacks of linear equations and activation functions can approximate even the most complicated mathematical relations to some extent, similar to how taylor series approximation works. As long as there's an underlying mathematical pattern between the input and output, this network can learn to model it!*
+> *Monkey Language: We're saying that stacks of linear equations and activation functions can approximate even the most complicated mathematical relations to some extent, similar to how taylor series approximation works. As long as there's an underlying mathematical pattern between the input and output, this network can learn to model it!*
 
 Meanwhile, due to the **Lack of Structure Awareness**, the input is just a big flat vector of numbers to this network. And therefore, it can NOT understand the spatial hierarchies like **Convolutional Neural Networks (CNN)** and sequential dependencies like **Recurrent Neural Networks (RNN)**.
 
-*Monkey Language: this means, you can't train this dense network to recognize images, or "understand" the meaning of texts and time-series data efficiently.*
+> *Monkey Language: this means, you can't train this dense network to recognize images, or "understand" the meaning of texts and time-series data efficiently.*
 
 That said, this does not mean it's impossible, just less efficient. **CNN**s and **RNN**s just happen to have "specialized brains" for those tasks. This network might feel like it's "brute-forcing" solutions instead of leveraging patterns more naturally.
 
@@ -376,10 +379,10 @@ Just like in life, being an extremist is never good. The same goes for neural ne
 
 - **Underfitting** happens when a network isn't able to learn well enough. This can happen due to various factors like a low neuron count, lack of non-linearity, or too low of a learning rate.
 
-*Monkey Language: The network can't learn because it does not have enough brain cells or its brain cells are too simple.*
+> *Monkey Language: The network can't learn because it does not have enough brain cells or its brain cells are too simple.*
 - **Overfitting** occurs when the network performs too perfectly on the training data, but fails to predict unseen data well. Essentially, the network "memorizes" the data instead of learning the underlying pattern. This usually happens due to overtraining, overwhelming number of parameters, overly strong gradients, or small datasets, etc.
 
-*Monkey Language: The network memorized the material taught in class without understanding it, only to fail the exam when unseen questions come up.*
+> *Monkey Language: The network memorized the material taught in class without understanding it, only to fail the exam when unseen questions come up.*
 
 Rather than trying to balance everything from the start, we begin with a highly capable neural network. Possibly, multiple layers and appropriate activation functions. Then, we introduce a bit of interference in the learning process to prevent the network from learning too perfectly. This is exactly what **L2 (Ridge) Regularization** does.
 
