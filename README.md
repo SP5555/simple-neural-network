@@ -75,7 +75,8 @@ source venv/bin/activate
 ```
 - Install the required dependencies
 ```
-pip install -r requirements.txt
+pip install numpy
+# numpy is enough, don't install -r requirements.txt
 ```
 
 ## Usage
