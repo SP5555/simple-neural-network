@@ -50,14 +50,31 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 
 ## Installation Instructions
 Run the following commands to install it locally. Require `pip`.
+- Clone the repository
 ```
 git clone --recurse-submodules https://github.com/SP5555/simple-neural-network.git
-
+```
+- Change to the project directory
+```
 cd simple-neural-network
-
-# OPTIONAL if submodules are not working
+```
+- OPTIONAL if submodules are not working
+```
 # git submodule update --init --recursive
-
+```
+- Create a virtual environment
+```
+python -m venv venv
+```
+- Activate the virtual environment
+```
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
+- Install the required dependencies
+```
 pip install -r requirements.txt
 ```
 

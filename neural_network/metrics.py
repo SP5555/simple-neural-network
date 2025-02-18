@@ -123,11 +123,12 @@ class Metrics:
         PrintUtils.print_info(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
 
     def compare_predictions(self, input: list, output: list) -> None:
-        format_width = len(output[0]) * 9
+        width_num = 6
+        format_width = len(output[0]) * width_num
         print(f"{'Expected':>{format_width}} | {'Predicted':>{format_width}} | Input Data")
 
         predicted = self.core.forward_batch(input)
         for i in range(len(output)):
-            print(''.join(f'{value:>9.4f}' for value in output[i]) + ' | ' +
-                  ''.join(f'{value:>9.4f}' for value in predicted[i]) + ' | ' +
-                  ''.join(f'{value:>7.3f}' for value in input[i]))
+            print(''.join(f'{value:>{width_num}.2f}' for value in output[i]) + ' | ' +
+                  ''.join(f'{value:>{width_num}.2f}' for value in predicted[i]) + ' | ' +
+                  ''.join(f'{value:>6.2f}' for value in input[i]))
