@@ -363,7 +363,7 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 - [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
 
 ## Future Improvements
-- **Auto Differentiation** on Softmax? (Absolute brain damage)
+- Planning to transform the network into one giant equation of flowing Tensors!
 
 # Abyssal Zone (Recommended to not proceed)
 You made it this far. A scrolling enthusiast. Let's see where this takes you.
