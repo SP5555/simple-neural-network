@@ -1,6 +1,7 @@
+from ..auto_diff.auto_diff_reverse import Tensor
+from ..activations.activation import Activation
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
-from ..activations.activation import Activation
 
 class Layer:
     """
@@ -45,13 +46,47 @@ class Layer:
     def build(self, is_first: bool, is_final: bool):
         raise NotImplementedError
 
-    def forward(self, is_training: bool = False):
+    def forward(self, input: Tensor, is_training: bool = False) -> Tensor:
         raise NotImplementedError
-    
-    def backward(self):
+
+    # After one forward pass sweep, this backward call is called
+    # only once on the last layer
+    def backward(self, seed: Tensor):
+        
+        # Math
+        # Z = W*A_in + B
+        # A = activation(Z, learn_b) # learnable parem is used only in some activations
+
+        # derivative of loss w.r.t. weights
+        # dL/dW
+        # = dL/dA * dA/dZ * dZ/dW
+        # = dL/dA * dA/dZ * A_in
+
+        # derivative of loss w.r.t. biases
+        # dL/db(n)
+        # = dL/dA * dA/dZ * dZ/dB
+        # = dL/dA * dA/dZ * 1
+
+        # derivative of loss w.r.t. learnable parameter (if exists)
+        # dL/dlearn_b
+        # = dL/dA * dA/dlearn_b
+
+        # "seed" or gradient of loss for previous layer
+        # NOTE: A_in affects all A, so backpropagation to A_in will be related to all A
+        # dL/dA_in
+        # = dL/dA * dA/dZ * dZ/dA_in
+        # = dL/dA * dA/dZ * W
+
+        # but auto-diff did all that with this single call. No headaches LOL
+        self.activation.backward(seed)
+
+    def regularize_grads(self):
         raise NotImplementedError
-    
-    def _get_params(self) -> list[dict]:
+
+    def _get_weights_and_grads(self) -> list[dict]:
+        raise NotImplementedError
+
+    def zero_grads(self):
         raise NotImplementedError
 
     def _get_param_count(self) -> int:

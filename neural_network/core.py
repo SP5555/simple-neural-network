@@ -1,4 +1,5 @@
 import numpy as np
+from .auto_diff.auto_diff_reverse import Tensor
 from .exceptions import InputValidationError
 from .losses.loss import Loss
 from .layers.layer import Layer
@@ -76,9 +77,9 @@ class NeuralNetwork:
         if len(input) != self._layers[0].input_size:
             raise InputValidationError("Input array size does not match the neural network.")
 
-        a: np.ndarray = self.forward_batch([input], raw_ndarray_output=True)
+        A: np.ndarray = self.forward_batch([input], raw_ndarray_output=True)
 
-        return a.flatten().tolist()
+        return A.flatten().tolist()
 
     # main feed forward function (multiple)
     def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray:
@@ -89,15 +90,15 @@ class NeuralNetwork:
         
         # activation
         # changes an array of inputs into n x batch_size numpy 2D array
-        a: np.ndarray = np.array(input).T
+        A: Tensor = Tensor(np.array(input).T)
 
         # forward pass
         for layer in self._layers:
-            a: np.ndarray = layer.forward(a)
+            A: Tensor = layer.forward(A)
 
         if raw_ndarray_output:
-            return a
-        return a.T.tolist() # vanilla list, not np.ndarray
+            return A.tensor
+        return A.tensor.T.tolist() # vanilla list, not np.ndarray
 
     def train(self,
               input_list: list,
@@ -126,31 +127,33 @@ class NeuralNetwork:
             i_batch = input_ndarray[indices]
             o_batch = output_ndarray[indices]
 
-            # activation (input_size, batch_size)
-            a: np.ndarray = i_batch.T
+            # input features
+            A: Tensor = Tensor(i_batch.T)
             
-            # desired output (output_size, batch_size)
-            y: np.ndarray = o_batch.T
+            # target output
+            Y: np.ndarray = o_batch.T
 
             # FORWARD PASS: compute activations
             for layer in self._layers:
-                a: np.ndarray = layer.forward(a, is_training=True)
-            # dims of a after forward pass: (output_size, batch_size)
+                A: Tensor = layer.forward(A, is_training=True)
 
             # derivative of loss function with respect to activations for LAST OUTPUT LAYER
-            act_grad: np.ndarray = self._loss_func.grad(a, y)
+            seed: np.ndarray = self._loss_func.grad(A.tensor, Y)
 
-            # BACKPROPAGATION: calculate gradients
-            for layer in reversed(self._layers):
-                act_grad = layer.backward(act_grad)
+            # BACKPROPAGATION: calculate gradients (MAGIC)
+            # auto diff reverse mode backward call
+            # situates all tensors with their gradients
+            self._layers[-1].backward(seed)
 
             # collect params to pass into optimizer
-            all_params = []
+            weights_and_grads = []
             for layer in self._layers:
-                all_params.extend(layer._get_params())
+                layer.regularize_grads()
+                weights_and_grads.extend(layer._get_weights_and_grads())
+                layer.zero_grads()
 
             # OPTIMIZATION: apply gradients
-            self.optimizer.step(all_params)
+            self.optimizer.step(weights_and_grads)
 
             p: float = (100.0 * (_+1) / epoch)
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')

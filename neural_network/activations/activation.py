@@ -28,12 +28,13 @@ class Activation:
 
         # alphas are learnable parameters
         # we're running out of Greek alphabets
-        self.alpha_tensor: Tensor = None
-
         self.alpha_initial: float = alpha_initial
         self.alpha_constraints: tuple = alpha_constraints
         self.alpha: np.ndarray = None
         self.alpha_grad: np.ndarray = None
+
+        # tensor/operation auto-diff objects
+        self.alpha_tensor: Tensor = None
         self.expression: Operation = None
 
     def build_parameters(self, output_size: int):

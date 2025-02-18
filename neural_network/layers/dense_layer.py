@@ -52,87 +52,47 @@ class DenseLayer(Layer):
         self._B_grad = None
 
         # tensor/operation auto-diff objects
-        self._A_in = None   # shape: (input_size, batch_size)
-        self._W    = None   # shape: (output_size, input_size)
-        self._B    = None   # shape: (output_size, 1) broadcast to (output_size, batch_size)
-        self._Z    = None   # shape: (output_size, batch_size)
+        self._W = None  # shape: (output_size, input_size)
+        self._B = None  # shape: (output_size, 1) broadcast to (output_size, batch_size)
+
+        # tmp vars
+        self.tmp_batch_size = None
 
     # compute a layer's output based on the input.
-    def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
+    def forward(self, input: Tensor, is_training: bool = False) -> Tensor:
 
-        self._A_in: Tensor = Tensor(input)
+        self.tmp_batch_size = input.tensor.shape[1]
         self._W: Tensor = Tensor(self.weights)
-        self._B: Tensor = Tensor(np.repeat(self.biases, input.shape[1], axis=1)) # broadcast
+        self._B: Tensor = Tensor(np.repeat(self.biases, input.tensor.shape[1], axis=1)) # broadcast
 
         # Z = W*A_in + B
-        self._Z = Matmul(self._W, self._A_in) + self._B
+        _Z = Matmul(self._W, input) + self._B
+        _Z.forward()
 
         # A_out = activation(Z)
-        self.activation.build_expression(self._Z)
+        self.activation.build_expression(_Z)
         self.activation.forward()
-        return self.activation.evaluate()
+        return self.activation.expression
 
-    # basically BACKPROPAGATION
-    # returns the input gradient which is required for the previous layer's backward pass.
-    def backward(self, seed: np.ndarray) -> np.ndarray:
+    # collects grad from Tensors
+    def regularize_grads(self) -> np.ndarray:
 
-        batch_size = seed.shape[1]
-
-        # auto diff reverse mode backward call
-        # situates all tensors with their gradients
-        self.activation.backward(seed)
-
-        # Math
-        # Z = W*A_in + B
-        # A = activation(Z, learn_b) # learnable parem is used only in some activations
-
-        # CALCULATE derivative of loss with respect to weights
-        # dL/dW
-        # = dL/dA * dA/dZ * dZ/dW
-        # = dL/dA * dA/dZ * A_in
-        self._W_grad = self._W.grad / batch_size
+        self._W_grad = self._W.grad / self.tmp_batch_size
         l2_term_for_W: np.ndarray = self.weights * self.L2_lambda # Compute regularization term
         self._W_grad += l2_term_for_W
 
-        # CALCULATE derivative of loss with respect to biases
-        # dL/db(n)
-        # = dL/dA * dA/dZ * dZ/dB
-        # = dL/dA * dA/dZ * 1
-        self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / batch_size
+
+        self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self.tmp_batch_size
         l2_term_for_B: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
         self._B_grad += l2_term_for_B
 
         if self.activation.is_learnable:
-            # CALCULATE derivative of loss with respect to learnable parameter
-            # dL/dlearn_b
-            # = dL/dA * dA/dlearn_b
-            self.activation.alpha_grad = np.sum(self.activation.alpha_tensor.grad, axis=1, keepdims=True) / batch_size
+
+            self.activation.alpha_grad = np.sum(self.activation.alpha_tensor.grad, axis=1, keepdims=True) / self.tmp_batch_size
             l2_term_for_alpha: np.ndarray = self.activation.alpha * self.L2_lambda # Compute regularization term
             self.activation.alpha_grad += l2_term_for_alpha
 
-            # not strictly required
-            self.activation.alpha_tensor.zero_grad()
-
-        # first layer does not have previous layer
-        # not need to return gradient of loss
-        if self._is_first: return
-
-        # "seed" or gradient of loss for previous layer
-        # NOTE: A_in affects all A, so backpropagation to A_in will be related to all A
-        # dL/dA_in
-        # = dL/dA * dA/dZ * dZ/dA_in
-        # = dL/dA * dA/dZ * W
-        seed = self._A_in.grad
-
-        # not strictly required
-        # but if something breaks, you know where to find me
-        self._A_in.zero_grad()
-        self._W.zero_grad()
-        self._B.zero_grad()
-
-        return seed
-
-    def _get_params(self) -> list[dict]:
+    def _get_weights_and_grads(self) -> list[dict]:
         params = [
             {'weight': self.weights, 'grad': self._W_grad},
             {'weight': self.biases, 'grad': self._B_grad}
@@ -145,7 +105,15 @@ class DenseLayer(Layer):
                 'constraints': self.activation.alpha_constraints
             })
         return params
-    
+
+    def zero_grads(self):
+        # not strictly required
+        # but if something breaks, you know where to find me
+        if self.activation.is_learnable:
+            self.activation.alpha_tensor.zero_grad()
+        self._W.zero_grad()
+        self._B.zero_grad()
+
     def _get_param_count(self) -> int:
         w = self.input_size * self.output_size
         s = self.output_size

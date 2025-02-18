@@ -63,31 +63,34 @@ class DropoutLayer(DenseLayer):
         super().build(is_first, is_final)
 
     # compute a layer's output based on the input.
-    def forward(self, input: np.ndarray, is_training: bool = False) -> np.ndarray:
+    def forward(self, input: Tensor, is_training: bool = False) -> np.ndarray:
 
-        # z = W*A_in + b
-        self._A_in: Tensor = Tensor(input)
+        self.tmp_batch_size = input.tensor.shape[1]
         self._W: Tensor = Tensor(self.weights)
-        self._B: Tensor = Tensor(self.biases)
-        self._Z: Tensor = Matmul(self._W, self._A_in) + self._B # auto-broadcasting
-        self._Z.forward()
+        self._B: Tensor = Tensor(np.repeat(self.biases, input.tensor.shape[1], axis=1)) # broadcast
 
-        # A_out = activation(z)
-        self.activation.build_expression(self._Z)
+        # Z = W*A_in + B
+        _Z = Matmul(self._W, input) + self._B
+        _Z.forward()
+
+        # A_out = activation(Z)
+        self.activation.build_expression(_Z)
         self.activation.forward()
-        _A_out: np.ndarray = self.activation.evaluate()
+        _A_out: Tensor = self.activation.expression
 
         if not is_training:
             return _A_out
 
         # standard dropout: randomly drops neurons individually within each sample
         # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
-        shape = _A_out.shape
+        shape = _A_out.tensor.shape
         if self.batch_wise:
-            shape = (_A_out.shape[0], 1)
+            shape = (_A_out.tensor.shape[0], 1)
         # create a mask where a neuron has a 1-dp chance to remain active
-        mask = np.random.binomial(n=1, p=1-self.dp, size=shape)
+        mask = Tensor(np.random.binomial(n=1, p=1-self.dp, size=shape))
         
         # Apply dropout
         # zero out dp fraction of activations and scale up the surviving activations
-        return _A_out * mask / (1-self.dp)
+        scaled_out = _A_out * mask / (Tensor(1.0-self.dp))
+        scaled_out.forward()
+        return scaled_out
