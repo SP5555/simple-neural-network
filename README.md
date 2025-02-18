@@ -42,6 +42,7 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 - Adam, AdaGrad, Momentum, RMSprop, Stochastic Gradient Descent (SGD)
 ### Advanced Features
 - **Automatic Differentiation** ([LAZY Differentiation](https://github.com/SP5555/lazy-differentiation/)): A custom-built auto-differentiation engine that abstracts away the heavy math load (with NumPy at its core) for efficient backpropagation.
+- **Tensor-based Computation Flow**: Similar to modern **PyTorch** and **TensorFlow** frameworks, this project uses custom-built tensors as core computation units, powered by auto-differentiation engine mentioned above.
 
 ## Dependencies
 - **Python 3.11** or **3.12**
@@ -363,7 +364,7 @@ However, using GPU acceleration may introduce significant overhead if the neuron
 - [Derivative of the Softmax Function and the Categorical Cross-Entropy Loss](https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1)
 
 ## Future Improvements
-- Planning to transform the network into one giant equation of flowing Tensors!
+- Chill out. Not today.
 
 # Abyssal Zone (Recommended to not proceed)
 You made it this far. A scrolling enthusiast. Let's see where this takes you.
