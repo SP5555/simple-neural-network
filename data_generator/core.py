@@ -64,7 +64,7 @@ class DataGenerator:
         return input_list.tolist(), output_list.tolist()
 
     def _generate_multiclass(self, n: int):
-        _input_features = 4
+        _input_features = 6
         _output_classes = 3
 
         # Make your own Data
@@ -76,9 +76,9 @@ class DataGenerator:
 
         # Define input data ranges for each class
         class_data = {
-            0: [(2, 5), (1, 5), (0, 4), (3, 5)],
-            1: [(1, 4), (0, 3), (3, 6), (1, 5)],
-            2: [(0, 3), (2, 6), (0, 5), (0, 2)],
+            0: [(-2, 3), (1, 5), (0, 4), (-3, 5), (-3, 3), (-2, 2)],
+            1: [(-1, 4), (-2, 3), (1, 6), (1, 5), (0, 6), (-5, 1)],
+            2: [(0, 3), (-2, 2), (-2, 5), (-4, 2), (-2, 4), (-3, 5)],
         }
 
         for c in range(_output_classes):

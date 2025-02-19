@@ -131,19 +131,19 @@ class NeuralNetwork:
             A: Tensor = Tensor(i_batch.T)
             
             # target output
-            Y: np.ndarray = o_batch.T
+            Y: Tensor = Tensor(o_batch.T)
 
             # FORWARD PASS: compute activations
             for layer in self._layers:
                 A: Tensor = layer.forward(A, is_training=True)
-
-            # derivative of loss function with respect to activations for LAST OUTPUT LAYER
-            seed: np.ndarray = self._loss_func.grad(A.tensor, Y)
+            self._loss_func.build_expression(A, Y)
+            self._loss_func.forward()
 
             # BACKPROPAGATION: calculate gradients (MAGIC)
             # auto diff reverse mode backward call
             # situates all tensors with their gradients
-            self._layers[-1].backward(seed)
+            seed: np.ndarray = np.ones_like(Y.tensor)
+            self._loss_func.backward(seed)
 
             # collect params to pass into optimizer
             weights_and_grads = []

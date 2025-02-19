@@ -33,7 +33,7 @@ def main():
     # MULTICLASS
     nn = NeuralNetwork(
         layers=[
-            DropoutLayer(4, 12, PReLU(),   dropout_rate=0.2,                  weight_decay=0.001),
+            DropoutLayer(6, 12, PReLU(),   dropout_rate=0.2,                  weight_decay=0.001),
             DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
             DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
             DenseLayer  (12, 3, Softmax(),                                    weight_decay=0.001)
