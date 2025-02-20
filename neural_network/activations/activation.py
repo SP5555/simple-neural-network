@@ -1,5 +1,5 @@
 import numpy as np
-from ..auto_diff.auto_diff_reverse import Tensor, Sigmoid as SigAD, Tanh as TanhAD, Log, Exp, Softmax as SoftmaxAD
+from ..auto_diff.auto_diff_reverse import Tensor, Sigmoid as SigAD, Tanh as TanhAD, Log, Exp, Softmax as SoftmaxAD, Maximum, Minimum
 from ..auto_diff.auto_diff_reverse.operations import Operation
 
 class Activation:
@@ -73,17 +73,16 @@ class ReLU(Activation):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        Z_p = Tensor(Z.tensor >= 0)
-        self.expression = Z * Z_p
+        self.expression = Maximum(Z, Tensor(0.0))
 
 class LeakyReLU(Activation):
     def __init__(self):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        Z_p = Tensor(Z.tensor >= 0)
-        Z_n = Tensor(Z.tensor < 0)
-        self.expression = (Z * Z_p) + (Tensor(0.01) * Z * Z_n)
+        Z_p = Maximum(Z, Tensor(0.0))
+        Z_n = Minimum(Z, Tensor(0.0))
+        self.expression = Z_p + (Tensor(0.01) * Z_n)  # Leaky ReLU formula
 
 class PReLU(Activation):
     def __init__(self):
@@ -93,9 +92,9 @@ class PReLU(Activation):
 
     def build_expression(self, Z: Tensor):
         self.alpha_tensor = Tensor(self.alpha)
-        Z_p = Tensor(Z.tensor > 0)
-        Z_n = Tensor(Z.tensor <= 0)
-        self.expression = (Z * Z_p) + (self.alpha_tensor * Z * Z_n)
+        Z_p = Maximum(Z, Tensor(0.0))
+        Z_n = Minimum(Z, Tensor(0.0))
+        self.expression = Z_p + (self.alpha_tensor * Z_n)
 
 class Softplus(Activation):
     def __init__(self):
