@@ -1,4 +1,11 @@
-from ..auto_diff.auto_diff_reverse import Tensor, Square, Log, Abs, Clip
+from ..auto_diff.auto_diff_reverse import (
+    Tensor,
+    Square,
+    Log,
+    Abs,
+    Clip,
+    Huber as HuberAD
+)
 from ..exceptions import InputValidationError
 import numpy as np
 
@@ -40,25 +47,16 @@ class Huber(Loss):
         self.d = delta
 
     def build_expression(self, A: Tensor, Y: Tensor):
-        diff = A - Y
-        diff.forward()
-        mid = Tensor(np.abs(diff.tensor) <= self.d)
-        pos = Tensor(diff.tensor > self.d)
-        neg = Tensor(diff.tensor < -self.d)
-
-        mid_expression = (Tensor(0.5) * Square(diff) * mid)
-        p_expression = (Tensor(self.d) * (diff - Tensor(self.d/2)) * pos)
-        n_expression = (Tensor(self.d) * (-diff - Tensor(self.d/2)) * neg)
-
-        self.expression = mid_expression + p_expression + n_expression
+        self.expression = HuberAD(A - Y, self.d)
 
 # ===== Binary Cross Entropy =====
 class BCE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
         bound = 1e-12
         A_c = Clip(A, bound, 1-bound)
+        one = Tensor(1.0, require_grad=False)
         
-        self.expression = -(Y * Log(A_c) + (Tensor(1.0) - Y) * Log(Tensor(1.0) - A_c))
+        self.expression = -(Y * Log(A_c) + (one - Y) * Log(one - A_c))
 
 # ===== Multiclass/Categorial Cross Entropy =====
 class CCE(Loss):
