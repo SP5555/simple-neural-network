@@ -1,4 +1,4 @@
-from ..auto_diff.auto_diff_reverse import Tensor, Square, Log
+from ..auto_diff.auto_diff_reverse import Tensor, Square, Log, Abs, Clip
 from ..exceptions import InputValidationError
 import numpy as np
 
@@ -25,12 +25,7 @@ class Loss:
 # ===== Mean Absolute Error =====
 class MAE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
-        diff = A - Y
-        diff.forward()
-        pos = Tensor(diff.tensor >= 0)
-        neg = Tensor(diff.tensor < 0)
-
-        self.expression = (diff * pos) + (-diff * neg)
+        self.expression = Abs(A - Y)
 
 # ===== Mean Squared Error =====
 class MSE(Loss):
@@ -61,14 +56,14 @@ class Huber(Loss):
 class BCE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
         bound = 1e-12
-        A.tensor = np.clip(A.tensor, bound, 1-bound)
+        A_c = Clip(A, bound, 1-bound)
         
-        self.expression = -(Y * Log(A) + (Tensor(1.0) - Y) * Log(Tensor(1.0) - A))
+        self.expression = -(Y * Log(A_c) + (Tensor(1.0) - Y) * Log(Tensor(1.0) - A_c))
 
 # ===== Multiclass/Categorial Cross Entropy =====
 class CCE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
         bound = 1e-12
-        A.tensor = np.clip(A.tensor, bound, 1-bound)
+        A_c = Clip(A, bound, 1-bound)
 
-        self.expression = -(Y * Log(A))
+        self.expression = -(Y * Log(A_c))

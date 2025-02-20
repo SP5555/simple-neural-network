@@ -67,7 +67,6 @@ class DenseLayer(Layer):
 
         # Z = W*A_in + B
         _Z = Matmul(self._W, input) + self._B
-        _Z.forward()
 
         # A_out = activation(Z)
         self.activation.build_expression(_Z)
