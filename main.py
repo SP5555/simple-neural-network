@@ -51,7 +51,7 @@ def main():
 
     nn.train(input_list=input_train_list,
              output_list=output_train_list,
-             epoch=2000,
+             epoch=500,
              batch_size=32)
     # nn.utils.inspect_weights_and_biases()
 

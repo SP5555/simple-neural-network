@@ -112,13 +112,17 @@ class NeuralNetwork:
         if len(input[0]) != self._layers[0].input_size:
             raise InputValidationError("Input array size does not match the neural network.")
         
+        current_batch_size = len(input)
+
         # activation
         # changes an array of inputs into n x batch_size numpy 2D array
         self.A.tensor = np.array(input).T
 
         # forward pass
         for layer in self._layers:
-            layer.forward()
+            layer.tmp_batch_size = current_batch_size
+            layer.setup_tensors()
+        self._layers[-1].forward()
 
         if raw_ndarray_output:
             return self._layers[-1]._out.evaluate()
@@ -151,6 +155,8 @@ class NeuralNetwork:
             i_batch = input_ndarray[indices]
             o_batch = output_ndarray[indices]
 
+            current_batch_size = len(i_batch)
+
             # input features
             self.A.tensor = i_batch.T
             
@@ -159,7 +165,8 @@ class NeuralNetwork:
 
             # FORWARD PASS: compute activations
             for layer in self._layers:
-                layer.forward(is_training=True)
+                layer.tmp_batch_size = current_batch_size
+                layer.setup_tensors(is_training=True)
             self._loss_func.forward()
 
             # BACKPROPAGATION: calculate gradients (MAGIC)

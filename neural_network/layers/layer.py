@@ -55,8 +55,11 @@ class Layer:
     def compile(self, A: Tensor) -> Tensor:
         raise NotImplementedError
 
-    def forward(self, is_training: bool = False):
+    def setup_tensors(self, is_training: bool = False):
         raise NotImplementedError
+
+    def forward(self):
+        self._out.forward()
 
     # After one forward pass sweep, this backward call is called
     # only once on the last layer

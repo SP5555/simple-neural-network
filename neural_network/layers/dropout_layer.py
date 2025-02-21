@@ -83,26 +83,21 @@ class DropoutLayer(DenseLayer):
         self._out = self.activation.expression * self.mask * self.rescaler
         return self._out
 
-    # compute a layer's output based on the input.
-    def forward(self, is_training: bool = False):
+    def setup_tensors(self, is_training: bool = False):
 
-        self.tmp_batch_size = self._A.tensor.shape[1]
+        # self.tmp_batch_size = self._A.tensor.shape[1]
         self._W.tensor = self.weights
         self._B.tensor = np.repeat(self.biases, self.tmp_batch_size, axis=1)
-
-        self.activation.forward()
 
         if is_training:
             # standard dropout: randomly drops neurons individually within each sample
             # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
-            shape = self.activation.expression.tensor.shape
+            shape = (self.output_size, self.tmp_batch_size)
             if self.batch_wise:
-                shape = (self.activation.expression.tensor.shape[0], 1)
+                shape = (self.output_size, 1)
             # create a mask where a neuron has a 1-dp chance to remain active
             self.mask.tensor = np.random.binomial(n=1, p=1-self.dp, size=shape)
             self.rescaler.tensor = 1.0 / (1.0 - self.dp)
         else:
             self.mask.tensor = 1.0
             self.rescaler.tensor = 1.0
-
-        self._out.forward()
