@@ -55,7 +55,7 @@ class Layer:
     def compile(self, A: Tensor) -> Tensor:
         raise NotImplementedError
 
-    def setup_tensors(self, is_training: bool = False):
+    def setup_tensors(self, batch_size: int, is_training: bool = False):
         raise NotImplementedError
 
     # forward pass call calculates all

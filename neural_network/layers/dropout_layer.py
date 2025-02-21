@@ -83,9 +83,10 @@ class DropoutLayer(DenseLayer):
         self._out = self.activation.expression * self.mask * self.rescaler
         return self._out
 
-    def setup_tensors(self, is_training: bool = False):
+    def setup_tensors(self, batch_size: int, is_training: bool = False):
 
-        # self.tmp_batch_size = self._A.tensor.shape[1]
+        self.tmp_batch_size = batch_size
+
         self._W.tensor = self.weights
         self._B.tensor = np.repeat(self.biases, self.tmp_batch_size, axis=1)
 

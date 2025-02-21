@@ -120,8 +120,7 @@ class NeuralNetwork:
 
         # forward pass
         for layer in self._layers:
-            layer.tmp_batch_size = current_batch_size
-            layer.setup_tensors()
+            layer.setup_tensors(current_batch_size)
         self._layers[-1].forward()
 
         if raw_ndarray_output:
@@ -165,8 +164,7 @@ class NeuralNetwork:
 
             # setup necessary tensors for the forward call
             for layer in self._layers:
-                layer.tmp_batch_size = current_batch_size
-                layer.setup_tensors(is_training=True)
+                layer.setup_tensors(current_batch_size, is_training=True)
 
             # FORWARD PASS: calculate forward values
             # auto diff forward call
