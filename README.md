@@ -110,10 +110,6 @@ nn = NeuralNetwork(
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
 ```
-Before training or making predictions, the network **must** be compiled to establish the computation graph. It is **strongly recommended** to compile immediately after creating the network.
-```python
-nn.compile_graph()
-```
 ### Training
 To train a network with input and output data:
 ```python

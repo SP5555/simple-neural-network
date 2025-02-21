@@ -66,6 +66,9 @@ class NeuralNetwork:
             self._layers[i].build()
         PrintUtils.print_info(f"[{self.__class__.__name__}] Layers built.")
 
+        self.compile_graph()
+        PrintUtils.print_info(f"[{self.__class__.__name__}] Computation Graph Compiled.")
+
         self.optimizer = optimizer
         PrintUtils.print_info(f"[{self.__class__.__name__}] {self.optimizer.__class__.__name__} Optimizer initialized.")
 
