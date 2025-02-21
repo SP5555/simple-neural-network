@@ -62,34 +62,47 @@ class DropoutLayer(DenseLayer):
         
         super().build(is_first, is_final)
 
-    # compute a layer's output based on the input.
-    def forward(self, input: Tensor, is_training: bool = False) -> np.ndarray:
+    def compile(self, A: Tensor) -> Tensor:
 
-        self.tmp_batch_size = input.tensor.shape[1]
+        self._A: Tensor = A
         self._W: Tensor = Tensor(self.weights)
-        self._B: Tensor = Tensor(np.repeat(self.biases, input.tensor.shape[1], axis=1)) # broadcast
+        # biases have some broadcast risk, hope numpy auto broadcast works
+        self._B: Tensor = Tensor(self.biases)
 
         # Z = W*A_in + B
-        _Z = Matmul(self._W, input) + self._B
+        _Z = Matmul(self._W, self._A) + self._B
 
         # A_out = activation(Z)
         self.activation.build_expression(_Z)
-        self.activation.forward()
-        _A_out: Tensor = self.activation.expression
 
-        if not is_training:
-            return _A_out
+        self.mask = Tensor(1.0, require_grad=False)
+        self.rescaler = Tensor(1.0, require_grad=False)
 
-        # standard dropout: randomly drops neurons individually within each sample
-        # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
-        shape = _A_out.tensor.shape
-        if self.batch_wise:
-            shape = (_A_out.tensor.shape[0], 1)
-        # create a mask where a neuron has a 1-dp chance to remain active
-        mask = Tensor(np.random.binomial(n=1, p=1-self.dp, size=shape))
-        
         # Apply dropout
         # zero out dp fraction of activations and scale up the surviving activations
-        scaled_out = _A_out * mask / (Tensor(1.0-self.dp))
-        scaled_out.forward()
-        return scaled_out
+        self._out = self.activation.expression * self.mask * self.rescaler
+        return self._out
+
+    # compute a layer's output based on the input.
+    def forward(self, is_training: bool = False):
+
+        self.tmp_batch_size = self._A.tensor.shape[1]
+        self._W.tensor = self.weights
+        self._B.tensor = np.repeat(self.biases, self.tmp_batch_size, axis=1)
+
+        self.activation.forward()
+
+        if is_training:
+            # standard dropout: randomly drops neurons individually within each sample
+            # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
+            shape = self.activation.expression.tensor.shape
+            if self.batch_wise:
+                shape = (self.activation.expression.tensor.shape[0], 1)
+            # create a mask where a neuron has a 1-dp chance to remain active
+            self.mask.tensor = np.random.binomial(n=1, p=1-self.dp, size=shape)
+            self.rescaler.tensor = 1.0 / (1.0 - self.dp)
+        else:
+            self.mask.tensor = 1.0
+            self.rescaler.tensor = 1.0
+
+        self._out.forward()

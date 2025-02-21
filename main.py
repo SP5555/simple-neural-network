@@ -42,6 +42,8 @@ def main():
         optimizer=Adam(learn_rate=0.02)
     )
 
+    nn.compile_graph()
+
     data_generator = DataGenerator()
     problem_type = "multiclass"
 

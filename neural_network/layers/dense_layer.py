@@ -58,20 +58,30 @@ class DenseLayer(Layer):
         # tmp vars
         self.tmp_batch_size = None
 
-    # compute a layer's output based on the input.
-    def forward(self, input: Tensor, is_training: bool = False) -> Tensor:
+    def compile(self, A: Tensor) -> Tensor:
 
-        self.tmp_batch_size = input.tensor.shape[1]
+        self._A: Tensor = A
         self._W: Tensor = Tensor(self.weights)
-        self._B: Tensor = Tensor(np.repeat(self.biases, input.tensor.shape[1], axis=1)) # broadcast
+        # biases have some broadcast risk, hope numpy auto broadcast works
+        self._B: Tensor = Tensor(self.biases)
 
         # Z = W*A_in + B
-        _Z = Matmul(self._W, input) + self._B
+        _Z = Matmul(self._W, self._A) + self._B
 
         # A_out = activation(Z)
         self.activation.build_expression(_Z)
-        self.activation.forward()
-        return self.activation.expression
+
+        self._out = self.activation.expression
+        return self._out
+
+    # compute a layer's output based on the input.
+    def forward(self, is_training: bool = False):
+
+        self.tmp_batch_size = self._A.tensor.shape[1]
+        self._W.tensor = self.weights
+        self._B.tensor = np.repeat(self.biases, self.tmp_batch_size, axis=1)
+
+        self._out.forward()
 
     # collects grad from Tensors
     def regularize_grads(self) -> np.ndarray:

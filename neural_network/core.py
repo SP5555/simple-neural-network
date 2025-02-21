@@ -71,6 +71,27 @@ class NeuralNetwork:
 
         PrintUtils.print_info(f"[{self.__class__.__name__}] Neural network initialized.")
         PrintUtils.print_info(f"[{self.__class__.__name__}] Parameter Count: {self.utils._get_param_count():,}")
+    
+    def compile_graph(self):
+        """
+        Compile the **computation graph** for the neural network.
+
+        This function ensures that all layers are connected properly and constructs 
+        the forward computation path only once, improving efficiency during training 
+        and inference by avoiding redundant graph re-construction.
+
+        Notes:
+        - This function **must** be called before training or inference.
+        - Any attempt to train or run the network without calling this first will result in errors.
+        """
+        self.A: Tensor = Tensor(np.zeros((self._layers[0].input_size, 1)), require_grad=False)
+        self.Y: Tensor = Tensor(np.zeros((self._layers[-1].output_size, 1)), require_grad=False)
+
+        A = self.A
+
+        for layer in self._layers:
+            A = layer.compile(A)
+        self._loss_func.build_expression(A, self.Y)
 
     # main feed forward function (single)
     def forward(self, input: list) -> list:
@@ -90,15 +111,15 @@ class NeuralNetwork:
         
         # activation
         # changes an array of inputs into n x batch_size numpy 2D array
-        A: Tensor = Tensor(np.array(input).T)
+        self.A.tensor = np.array(input).T
 
         # forward pass
         for layer in self._layers:
-            A: Tensor = layer.forward(A)
+            layer.forward()
 
         if raw_ndarray_output:
-            return A.tensor
-        return A.tensor.T.tolist() # vanilla list, not np.ndarray
+            return self._layers[-1]._out.evaluate()
+        return self._layers[-1]._out.evaluate().T.tolist() # vanilla list, not np.ndarray
 
     def train(self,
               input_list: list,
@@ -128,21 +149,20 @@ class NeuralNetwork:
             o_batch = output_ndarray[indices]
 
             # input features
-            A: Tensor = Tensor(i_batch.T)
+            self.A.tensor = i_batch.T
             
             # target output
-            Y: Tensor = Tensor(o_batch.T)
+            self.Y.tensor = o_batch.T
 
             # FORWARD PASS: compute activations
             for layer in self._layers:
-                A: Tensor = layer.forward(A, is_training=True)
-            self._loss_func.build_expression(A, Y)
+                layer.forward(is_training=True)
             self._loss_func.forward()
 
             # BACKPROPAGATION: calculate gradients (MAGIC)
             # auto diff reverse mode backward call
             # situates all tensors with their gradients
-            seed: np.ndarray = np.ones_like(Y.tensor)
+            seed: np.ndarray = np.ones_like(self.Y.tensor)
             self._loss_func.backward(seed)
 
             # collect params to pass into optimizer

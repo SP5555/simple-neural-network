@@ -43,10 +43,19 @@ class Layer:
 
         self.L2_lambda = weight_decay
 
+        self.tmp_batch_size: int = None
+
+        # tensor/operation auto-diff objects
+        self._A: Tensor = None
+        self._out: Tensor = None
+
     def build(self, is_first: bool, is_final: bool):
         raise NotImplementedError
 
-    def forward(self, input: Tensor, is_training: bool = False) -> Tensor:
+    def compile(self, A: Tensor) -> Tensor:
+        raise NotImplementedError
+
+    def forward(self, is_training: bool = False):
         raise NotImplementedError
 
     # After one forward pass sweep, this backward call is called

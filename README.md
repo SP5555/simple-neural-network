@@ -1,9 +1,9 @@
 # Simple Neural Network
 
 ## Overview
-This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's a fully functional, intermediate-level neural network built completely from scratch.
+This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's a fully functional neural network built completely from scratch.
 
-White it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of numbers can learn to predict (*better than humans*).
+While it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of numbers can learn to predict (*better than humans*).
 
 First off, a huge shoutout to the awesome **NumPy** library, because without it, this thing would be moving at the speed of a snail :snail:.
 
@@ -109,6 +109,10 @@ nn = NeuralNetwork(
     loss_function=Huber(delta=1.0), # for regression tasks
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
+```
+Before training or making predictions, the network **must** be compiled to establish the computation graph. It is **strongly recommended** to compile immediately after creating the network.
+```python
+nn.compile_graph()
 ```
 ### Training
 To train a network with input and output data:
@@ -261,6 +265,8 @@ Mean Squared Error per output:    10.49    8.62    6.45
  -17.1167   9.0309   9.3532 |  -15.1465   7.5856   8.9784 |   2.454 -1.220 -2.901  0.861
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
+
+> *Well, real-world data is insanely messy. It's full of noise, outliers, and all sorts of headaches. But here's the debate: who's responsible for dealing with it? Should the programmer clean up the data before feeding it to the network, or should the neural network learn to handle the chaos on its own?*
 
 ## Synthetic Data Generation
 With randomization, we can create diverse datasets that still follow a certain input-output relationship pattern to some extent (just like in the real world). This mimics the real world data and helps test the network's ability to generalize and perform well across different situations.
