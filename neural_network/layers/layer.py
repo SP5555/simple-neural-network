@@ -87,7 +87,7 @@ class Layer:
         # = dL/dA * dA/dZ * W
 
         # but auto-diff did all that with this single call. No headaches LOL
-        self.activation.backward(seed)
+        self._out.backward(seed)
 
     def regularize_grads(self):
         raise NotImplementedError
