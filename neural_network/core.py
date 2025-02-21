@@ -159,14 +159,18 @@ class NeuralNetwork:
 
             # input features
             self.A.tensor = i_batch.T
-            
+
             # target output
             self.Y.tensor = o_batch.T
 
-            # FORWARD PASS: compute activations
+            # setup necessary tensors for the forward call
             for layer in self._layers:
                 layer.tmp_batch_size = current_batch_size
                 layer.setup_tensors(is_training=True)
+
+            # FORWARD PASS: calculate forward values
+            # auto diff forward call
+            # situates all tensors/computation nodes with their values
             self._loss_func.forward()
 
             # BACKPROPAGATION: calculate gradients (MAGIC)

@@ -58,10 +58,14 @@ class Layer:
     def setup_tensors(self, is_training: bool = False):
         raise NotImplementedError
 
+    # forward pass call calculates all
+    # tensors in the computation graph
+    # only once on the last layer in inference
+    # or on the loss "layer" in training
     def forward(self):
         self._out.forward()
 
-    # After one forward pass sweep, this backward call is called
+    # after one forward pass sweep, this backward call is called
     # only once on the last layer
     def backward(self, seed: Tensor):
         
