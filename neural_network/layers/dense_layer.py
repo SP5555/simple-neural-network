@@ -78,8 +78,8 @@ class DenseLayer(Layer):
 
         self.tmp_batch_size = batch_size
 
-        self._W.tensor = self.weights
-        self._B.tensor = np.repeat(self.biases, self.tmp_batch_size, axis=1)
+        self._W.assign(self.weights)
+        self._B.assign(np.repeat(self.biases, self.tmp_batch_size, axis=1))
 
     # collects grad from Tensors
     def regularize_grads(self) -> np.ndarray:

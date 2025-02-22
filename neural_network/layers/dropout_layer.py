@@ -87,8 +87,8 @@ class DropoutLayer(DenseLayer):
 
         self.tmp_batch_size = batch_size
 
-        self._W.tensor = self.weights
-        self._B.tensor = np.repeat(self.biases, self.tmp_batch_size, axis=1)
+        self._W.assign(self.weights)
+        self._B.assign(np.repeat(self.biases, self.tmp_batch_size, axis=1))
 
         if is_training:
             # standard dropout: randomly drops neurons individually within each sample
@@ -97,8 +97,8 @@ class DropoutLayer(DenseLayer):
             if self.batch_wise:
                 shape = (self.output_size, 1)
             # create a mask where a neuron has a 1-dp chance to remain active
-            self.mask.tensor = np.random.binomial(n=1, p=1-self.dp, size=shape)
-            self.rescaler.tensor = 1.0 / (1.0 - self.dp)
+            self.mask.assign(np.random.binomial(n=1, p=1-self.dp, size=shape))
+            self.rescaler.assign(1.0 / (1.0 - self.dp))
         else:
-            self.mask.tensor = 1.0
-            self.rescaler.tensor = 1.0
+            self.mask.assign(1.0)
+            self.rescaler.assign(1.0)

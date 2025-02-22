@@ -116,7 +116,7 @@ class NeuralNetwork:
 
         # activation
         # changes an array of inputs into n x batch_size numpy 2D array
-        self.A.tensor = np.array(input).T
+        self.A.assign(np.array(input).T)
 
         # forward pass
         for layer in self._layers:
@@ -157,10 +157,10 @@ class NeuralNetwork:
             current_batch_size = len(i_batch)
 
             # input features
-            self.A.tensor = i_batch.T
+            self.A.assign(i_batch.T)
 
             # target output
-            self.Y.tensor = o_batch.T
+            self.Y.assign(o_batch.T)
 
             # setup necessary tensors for the forward call
             for layer in self._layers:
