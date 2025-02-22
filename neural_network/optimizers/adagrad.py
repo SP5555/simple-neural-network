@@ -1,4 +1,5 @@
 import numpy as np
+from ..common import ParamDict
 from .optimizer import Optimizer
 
 class AdaGrad(Optimizer):
@@ -25,21 +26,25 @@ class AdaGrad(Optimizer):
         # accumulated squared gradients
         self.accu_sq_grad = {}
     
-    def step(self, parameters: list[dict]) -> None:
+    def step(self, parameters: list[ParamDict]) -> None:
 
         for param in parameters:
 
+            weight: np.ndarray = param['weight'].tensor
+
             param_id = id(param['weight'])
             if param_id not in self.accu_sq_grad:
-                self.accu_sq_grad[param_id] = np.zeros_like(param['weight'])
+                self.accu_sq_grad[param_id] = np.zeros_like(weight)
 
             # accumulate squared gradients
             self.accu_sq_grad[param_id] += np.square(param['grad'])
 
             # calculate new learn rate
-            LR_scaled = np.full_like(param['weight'], self.LR) / np.sqrt(self.accu_sq_grad[param_id] + 1e-12)
+            LR_scaled = np.full_like(weight, self.LR) / np.sqrt(self.accu_sq_grad[param_id] + 1e-12)
 
             # update weights
-            param['weight'] += -1 * LR_scaled * param['grad']
+            weight += -1 * LR_scaled * param['grad']
+
+            param['weight'].assign(weight)
 
         self._clip_params(parameters)

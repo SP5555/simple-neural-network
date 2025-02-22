@@ -1,4 +1,5 @@
 import numpy as np
+from ..common import ParamDict
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 
@@ -21,14 +22,15 @@ class Optimizer:
 
         self.LR = learn_rate
 
-    def step(self, parameters: list[dict]) -> None:
+    def step(self, parameters: list[ParamDict]) -> None:
         # parameter is a list of dictionaries
         # Keys: 'weight', 'grad'
         raise NotImplementedError
 
-    def _clip_params(self, parameters: list[dict]) -> None:
+    def _clip_params(self, parameters: list[ParamDict]) -> None:
         """Clips learnable parameters."""
         for param in parameters:
             if 'learnable' in param:
                 low, high = param['constraints']
-                param['weight'][:] = np.clip(param['weight'], low, high)
+                weight = param['weight'].tensor
+                param['weight'].assign(np.clip(weight, low, high))

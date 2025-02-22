@@ -37,18 +37,17 @@ class Activation:
 
         # alphas are learnable parameters
         # we're running out of Greek alphabets
-        self.alpha_initial: float = alpha_initial
-        self.alpha_constraints: tuple = alpha_constraints
-        self.alpha: np.ndarray = None
-        self.alpha_grad: np.ndarray = None
+        self._alpha_initial: float = alpha_initial
+        self._alpha_constraints: tuple = alpha_constraints
+        self._alpha_grad: np.ndarray = None
 
         # tensor/operation auto-diff objects
-        self.alpha_tensor: Tensor = None
+        self._alpha: Tensor = None
         self.expression: Operation = None
 
-    def build_parameters(self, output_size: int):
+    def build_alpha_tensor(self, output_size: int):
         if self.is_learnable:
-            self.alpha = np.full((output_size, 1), self.alpha_initial)
+            self._alpha = Tensor(np.full((output_size, 1), self._alpha_initial))
     
     # builds expression using auto diff tensors
     def build_expression(self, Z: Tensor):
@@ -103,11 +102,10 @@ class PReLU(Activation):
                          alpha_constraints=(0.001, 0.1))
 
     def build_expression(self, Z: Tensor):
-        self.alpha_tensor = Tensor(self.alpha)
         zero = Tensor(0.0, require_grad=False)
         Z_p = Maximum(Z, zero)
         Z_n = Minimum(Z, zero)
-        self.expression = Z_p + (self.alpha_tensor * Z_n)
+        self.expression = Z_p + (self._alpha * Z_n)
 
 class Softplus(Activation):
     def __init__(self):
@@ -131,8 +129,7 @@ class Swish(Activation):
                          alpha_constraints=(0.5, 5.0))
 
     def build_expression(self, Z: Tensor):
-        self.alpha_tensor = Tensor(self.alpha)
-        self.expression = Z * SigAD(self.alpha_tensor * Z)
+        self.expression = Z * SigAD(self._alpha * Z)
     
 class Linear(Activation):
     def __init__(self):

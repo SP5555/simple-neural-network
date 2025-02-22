@@ -1,4 +1,5 @@
 import numpy as np
+from ..common import ParamDict
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 from .optimizer import Optimizer
@@ -43,20 +44,24 @@ class RMSprop(Optimizer):
         # moving averages
         self.mov_avg = {}
     
-    def step(self, parameters: list[dict]):
+    def step(self, parameters: list[ParamDict]):
 
         for param in parameters:
 
+            weight: np.ndarray = param['weight'].tensor
+
             param_id = id(param['weight'])
             if param_id not in self.mov_avg:
-                self.mov_avg[param_id] = np.zeros_like(param['weight'])
+                self.mov_avg[param_id] = np.zeros_like(weight)
 
             # update moving average
             self.mov_avg[param_id] = self.mom * self.mov_avg[param_id] + (1 - self.mom) * np.square(param['grad'])
 
-            LR_scaled = np.full_like(param['weight'], self.LR) / np.sqrt(self.mov_avg[param_id] + 1e-12)
+            LR_scaled = np.full_like(weight, self.LR) / np.sqrt(self.mov_avg[param_id] + 1e-12)
             
             # update weights
-            param['weight'] += -1 * LR_scaled * param['grad']
+            weight += -1 * LR_scaled * param['grad']
+            
+            param['weight'].assign(weight)
 
         self._clip_params(parameters)

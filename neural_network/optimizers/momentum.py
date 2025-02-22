@@ -1,4 +1,5 @@
 import numpy as np
+from ..common import ParamDict
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 from .optimizer import Optimizer
@@ -43,18 +44,22 @@ class Momentum(Optimizer):
         # velocities
         self.v = {}
 
-    def step(self, parameters: list[dict]) -> None:
+    def step(self, parameters: list[ParamDict]) -> None:
 
         for param in parameters:
 
+            weight: np.ndarray = param['weight'].tensor
+
             param_id = id(param['weight'])
             if param_id not in self.v:
-                self.v[param_id] = np.zeros_like(param['weight'])
+                self.v[param_id] = np.zeros_like(weight)
 
             # update velocity
             self.v[param_id] = self.mom * self.v[param_id] + (1 - self.mom) * param['grad']
-            
+
             # update weights
-            param['weight'] += -1 * self.LR * self.v[param_id]
+            weight += -1 * self.LR * self.v[param_id]
+
+            param['weight'].assign(weight)
 
         self._clip_params(parameters)

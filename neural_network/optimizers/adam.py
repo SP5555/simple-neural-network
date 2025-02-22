@@ -1,4 +1,5 @@
 import numpy as np
+from ..common import ParamDict
 from ..exceptions import InputValidationError
 from ..print_utils import PrintUtils
 from .optimizer import Optimizer
@@ -52,15 +53,17 @@ class Adam(Optimizer):
         # step counter
         self.t = 0
 
-    def step(self, parameters: list[dict]):
+    def step(self, parameters: list[ParamDict]):
         self.t += 1
 
         for param in parameters:
+            
+            weight: np.ndarray = param['weight'].tensor
 
             param_id = id(param['weight'])
             if param_id not in self.m:
-                self.m[param_id] = np.zeros_like(param['weight'])
-                self.v[param_id] = np.zeros_like(param['weight'])
+                self.m[param_id] = np.zeros_like(weight)
+                self.v[param_id] = np.zeros_like(weight)
             
             # update 1st and 2nd moments
             self.m[param_id] = self.beta1 * self.m[param_id] + (1 - self.beta1) * param['grad']
@@ -71,6 +74,8 @@ class Adam(Optimizer):
             v_hat = self.v[param_id] / (1 - self.beta2 ** self.t)
 
             # update weights
-            param['weight'] += -1 * self.LR * m_hat / np.sqrt(v_hat + 1e-12)
+            weight += -1 * self.LR * m_hat / np.sqrt(v_hat + 1e-12)
+
+            param['weight'].assign(weight)
 
         self._clip_params(parameters)

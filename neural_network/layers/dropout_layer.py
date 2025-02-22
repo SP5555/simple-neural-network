@@ -64,13 +64,8 @@ class DropoutLayer(DenseLayer):
 
     def compile(self, A: Tensor) -> Tensor:
 
-        self._A: Tensor = A
-        self._W: Tensor = Tensor(self.weights)
-        # biases have some broadcast risk, hope numpy auto broadcast works
-        self._B: Tensor = Tensor(self.biases)
-
         # Z = W*A_in + B
-        _Z = Matmul(self._W, self._A) + self._B
+        _Z = Matmul(self._W, A) + self._B
 
         # A_out = activation(Z)
         self.activation.build_expression(_Z)
@@ -86,9 +81,6 @@ class DropoutLayer(DenseLayer):
     def setup_tensors(self, batch_size: int, is_training: bool = False):
 
         self.tmp_batch_size = batch_size
-
-        self._W.assign(self.weights)
-        self._B.assign(np.repeat(self.biases, self.tmp_batch_size, axis=1))
 
         if is_training:
             # standard dropout: randomly drops neurons individually within each sample

@@ -1,3 +1,5 @@
+import numpy as np
+from ..common import ParamDict
 from .optimizer import Optimizer
 
 class SGD(Optimizer):
@@ -16,10 +18,15 @@ class SGD(Optimizer):
     def __init__(self, learn_rate: float):
         super().__init__(learn_rate)
 
-    def step(self, parameters: list[dict]) -> None:
+    def step(self, parameters: list[ParamDict]) -> None:
 
         for param in parameters:
+
+            weight: np.ndarray = param['weight'].tensor
+
             # update weights
-            param['weight'] += -1 * self.LR * param['grad'] 
+            weight += -1 * self.LR * param['grad'] 
+
+            param['weight'].assign(weight)
 
         self._clip_params(parameters)

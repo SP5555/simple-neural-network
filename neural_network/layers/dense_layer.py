@@ -3,6 +3,7 @@ from ..activations.activation import Activation
 from ..auto_diff.auto_diff_reverse import Tensor, Matmul
 from ..exceptions import InputValidationError
 from .layer import Layer
+from ..common import ParamDict
 
 class DenseLayer(Layer):
     """
@@ -43,30 +44,21 @@ class DenseLayer(Layer):
         if not is_final and self.activation.is_LL_exclusive:
             raise InputValidationError(f"{self.activation.__class__.__name__} activation can't be used in hidden layers.")
 
-        self.weights: np.ndarray = np.random.randn(self.output_size, self.input_size) * np.sqrt(2/self.input_size)
-        self.biases: np.ndarray = np.random.randn(self.output_size, 1)
+        # auto-diff tensor objects
+        self._W: Tensor = Tensor(np.random.randn(self.output_size, self.input_size) * np.sqrt(2/self.input_size))
+        self._B: Tensor = Tensor(np.random.randn(self.output_size, 1))
  
-        # initialized with None for efficiency
         # gradient container numpy array objects
         self._W_grad = None
         self._B_grad = None
-
-        # tensor/operation auto-diff objects
-        self._W = None  # shape: (output_size, input_size)
-        self._B = None  # shape: (output_size, 1) broadcast to (output_size, batch_size)
 
         # tmp vars
         self.tmp_batch_size = None
 
     def compile(self, A: Tensor) -> Tensor:
 
-        self._A: Tensor = A
-        self._W: Tensor = Tensor(self.weights)
-        # biases have some broadcast risk, hope numpy auto broadcast works
-        self._B: Tensor = Tensor(self.biases)
-
         # Z = W*A_in + B
-        _Z = Matmul(self._W, self._A) + self._B
+        _Z = Matmul(self._W, A) + self._B
 
         # A_out = activation(Z)
         self.activation.build_expression(_Z)
@@ -78,48 +70,42 @@ class DenseLayer(Layer):
 
         self.tmp_batch_size = batch_size
 
-        self._W.assign(self.weights)
-        self._B.assign(np.repeat(self.biases, self.tmp_batch_size, axis=1))
-
     # collects grad from Tensors
     def regularize_grads(self) -> np.ndarray:
 
         self._W_grad = self._W.grad / self.tmp_batch_size
-        l2_term_for_W: np.ndarray = self.weights * self.L2_lambda # Compute regularization term
-        self._W_grad += l2_term_for_W
-
+        _W_grad_l2: np.ndarray = self._W.tensor * self.L2_lambda # Compute regularization term
+        self._W_grad += _W_grad_l2
 
         self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self.tmp_batch_size
-        l2_term_for_B: np.ndarray = self.biases * self.L2_lambda # Compute regularization term
-        self._B_grad += l2_term_for_B
+        _B_grad_l2: np.ndarray = self._B.tensor * self.L2_lambda # Compute regularization term
+        self._B_grad += _B_grad_l2
 
         if self.activation.is_learnable:
 
-            self.activation.alpha_grad = np.sum(self.activation.alpha_tensor.grad, axis=1, keepdims=True) / self.tmp_batch_size
-            l2_term_for_alpha: np.ndarray = self.activation.alpha * self.L2_lambda # Compute regularization term
-            self.activation.alpha_grad += l2_term_for_alpha
+            self.activation._alpha_grad = np.sum(self.activation._alpha.grad, axis=1, keepdims=True) / self.tmp_batch_size
+            _alpha_grad_l2: np.ndarray = self.activation._alpha.tensor * self.L2_lambda # Compute regularization term
+            self.activation._alpha_grad += _alpha_grad_l2
 
-    def _get_weights_and_grads(self) -> list[dict]:
+    def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [
-            {'weight': self.weights, 'grad': self._W_grad},
-            {'weight': self.biases, 'grad': self._B_grad}
+            {'weight': self._W, 'grad': self._W_grad},
+            {'weight': self._B, 'grad': self._B_grad}
         ]
         if self.activation.is_learnable:
             params.append({
-                'weight': self.activation.alpha,
-                'grad': self.activation.alpha_grad,
+                'weight': self.activation._alpha,
+                'grad': self.activation._alpha_grad,
                 'learnable': True,
-                'constraints': self.activation.alpha_constraints
+                'constraints': self.activation._alpha_constraints
             })
         return params
 
     def zero_grads(self):
-        # not strictly required
-        # but if something breaks, you know where to find me
-        if self.activation.is_learnable:
-            self.activation.alpha_tensor.zero_grad()
         self._W.zero_grad()
         self._B.zero_grad()
+        if self.activation.is_learnable:
+            self.activation._alpha.zero_grad()
 
     def _get_param_count(self) -> int:
         w = self.input_size * self.output_size

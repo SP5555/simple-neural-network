@@ -13,11 +13,12 @@ class Utils:
         np.set_printoptions(precision=4)
         for i, layer in enumerate(self.core._layers):
             PrintUtils.print_info(f'weights L{i+1} -> L{i+2}:')
-            print(layer.weights)
+            print(layer._W.tensor)
             PrintUtils.print_info(f'biases L{i+1} -> L{i+2}:')
-            print(layer.biases)
-            PrintUtils.print_info(f'learnable param L{i+1} -> L{i+2}:')
-            print(layer.activation.alpha)
+            print(layer._B.tensor)
+            if layer.activation.is_learnable:
+                PrintUtils.print_info(f'learnable param L{i+1} -> L{i+2}:')
+                print(layer.activation._alpha.tensor)
     
     def _get_param_count(self) -> int:
         c: int = 0
