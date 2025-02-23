@@ -46,11 +46,15 @@ class Dropout(Layer):
         # tmp vars
         self.tmp_batch_size = None
 
+        # auto-diff tensor objects
         self.mask = Tensor(1.0, require_grad=False)
         self.rescaler = Tensor(1.0, require_grad=False)
 
+        # ===== expression construction =====
+
         # Apply dropout
-        # zero out dp fraction of activations and scale up the surviving activations
+        # mask    : zero out dp fraction of activations
+        # rescaler: scale up the surviving activations
         self._out = A * self.mask * self.rescaler
         return self._out, self.neuron_count
 
@@ -59,7 +63,7 @@ class Dropout(Layer):
         self.tmp_batch_size = batch_size
 
         if is_training:
-            # standard dropout: randomly drops neurons individually within each sample
+            # standard dropout  : randomly drops neurons individually within each sample
             # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
             shape = (self.neuron_count, self.tmp_batch_size)
             if self.batch_wise:
@@ -71,7 +75,7 @@ class Dropout(Layer):
             self.mask.assign(1.0)
             self.rescaler.assign(1.0)
 
-    # dropout layer has no learnabla parameters
+    # dropout layer has no learnable parameters
     def regularize_grads(self):
         pass
     

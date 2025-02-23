@@ -52,14 +52,17 @@ class Dense(Layer):
 
     def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
 
+        if not is_final and self.activation.is_LL_exclusive:
+            raise InputValidationError(f"{self.activation.__class__.__name__} activation can't be used in hidden layers.")
+
         self.input_size = input_size
 
         # helpers, they save a lot of power
         self._is_first = is_first
         self._is_final = is_final
 
-        if not self._is_final and self.activation.is_LL_exclusive:
-            raise InputValidationError(f"{self.activation.__class__.__name__} activation can't be used in hidden layers.")
+        # tmp vars
+        self.tmp_batch_size = None
 
         # auto-diff tensor objects
         self._W: Tensor = Tensor(np.random.randn(self.neuron_count, self.input_size) * np.sqrt(2/self.input_size))
@@ -70,12 +73,10 @@ class Dense(Layer):
         self._W_grad = None
         self._B_grad = None
 
-        # tmp vars
-        self.tmp_batch_size = None
+        # ===== expression construction =====
 
         # Z = W*A_in + B
         _Z = Matmul(self._W, A) + self._B
-
         # A_out = activation(Z)
         self.activation.build_expression(_Z)
 
