@@ -9,38 +9,46 @@ def main():
     # REGRESSION
     # nn = NeuralNetwork(
     #     layers=[
-    #         DenseLayer  (4, 12, PReLU(),                                      weight_decay=0.001),
-    #         DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-    #         DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
-    #         DenseLayer  (12, 3, Linear(),                                     weight_decay=0.001)
+    #         Dense(12, PReLU(), weight_decay=0.001),
+    #         Dense(16, Tanh(),  weight_decay=0.001),
+    #         Dropout(dropout_rate=0.4),
+    #         Dense(12, Swish(), weight_decay=0.001),
+    #         Dropout(dropout_rate=0.4),
+    #         Dense(3, Linear(), weight_decay=0.001)
     #     ],
     #     optimizer=Adam(learn_rate=0.01),
     #     loss_function=Huber(delta=1.0)
     # )
+    # nn.build(input_size=4)
 
     # MULTILABEL
     # nn = NeuralNetwork(
     #     layers=[
-    #         DenseLayer  (4, 10, Tanh(),                      weight_decay=0.001),
-    #         DropoutLayer(10, 16, Tanh(),   dropout_rate=0.1, weight_decay=0.001),
-    #         DenseLayer  (16, 12, Tanh(),                     weight_decay=0.001),
-    #         DenseLayer  (12, 3, Sigmoid(),                   weight_decay=0.001)
+    #         Dense(10, Tanh(),   weight_decay=0.001),
+    #         Dense(16, Tanh(),   weight_decay=0.001),
+    #         Dropout(dropout_rate=0.4),
+    #         Dense(12, Tanh(),   weight_decay=0.001),
+    #         Dense(3, Sigmoid(), weight_decay=0.001)
     #     ],
     #     loss_function=BCE(),
     #     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
     # )
+    # nn.build(input_size=4)
 
-    # MULTICLASS
+    # # MULTICLASS
     nn = NeuralNetwork(
         layers=[
-            DropoutLayer(6, 12, PReLU(),   dropout_rate=0.2,                  weight_decay=0.001),
-            DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-            DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
-            DenseLayer  (12, 3, Softmax(),                                    weight_decay=0.001)
+            Dense(12, PReLU(),  weight_decay=0.001),
+            Dense(16, Tanh(),   weight_decay=0.001),
+            Dropout(dropout_rate=0.4),
+            Dense(12, Swish(),  weight_decay=0.001),
+            Dropout(dropout_rate=0.4),
+            Dense(3, Softmax(), weight_decay=0.001)
         ],
         loss_function=CCE(),
         optimizer=Adam(learn_rate=0.02)
     )
+    nn.build(input_size=6)
 
     data_generator = DataGenerator()
     problem_type = "multiclass"

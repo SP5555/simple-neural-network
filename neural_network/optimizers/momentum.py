@@ -1,7 +1,5 @@
 import numpy as np
-from ..common import ParamDict
-from ..exceptions import InputValidationError
-from ..print_utils import PrintUtils
+from ..common import PrintUtils, ParamDict, InputValidationError
 from .optimizer import Optimizer
 
 class Momentum(Optimizer):

@@ -2,8 +2,6 @@ import numpy as np
 from ..auto_diff.auto_diff_reverse import Tensor
 from ..activations.activation import Activation
 from ..common import ParamDict
-from ..exceptions import InputValidationError
-from ..print_utils import PrintUtils
 
 class Layer:
     """
@@ -13,45 +11,19 @@ class Layer:
     Methods in this class raise `NotImplementedError` to enforce implementation 
     in derived child classes.
     """
-    def __init__(self,
-                 input_size: int,
-                 output_size: int,
-                 activation: Activation,
-                 weight_decay: float) -> None:
-
-        if input_size == 0:
-            raise InputValidationError("A layer can't have 0 input.")
-        if output_size == 0:
-            raise InputValidationError("A layer can't have 0 output (0 neurons).")
+    def __init__(self) -> None:
         
-        # L2 Regularization Strength
-        # low reg strength -> cook in class, and fail in exam; overfit
-        # high reg strength -> I am dumb dumb, can't learn; underfit
-        # Large weights and biases will are penalized more aggressively than small ones
-        # Don't set it too large, at most 0.01 (unless you know what you're doing)
-        #     regularized_loss     = parameter_los      + 1/2 * L2_lambda * parameter^2
-        #     regularized_gradient = parameter_gradient +       L2_lambda * parameter
-        if weight_decay < 0.0:
-            raise InputValidationError("Regularization Strength can't be negative.")
-        if weight_decay > 0.01:
-            PrintUtils.print_warning(f"Warning: Regularization Strength {weight_decay:.3f} is strong. Consider keeping it less than 0.01")
-
-        self.input_size = input_size
-        self.output_size = output_size
-
-        self.activation = activation
-        self.activation.build_alpha_tensor(output_size)
-
-        self.L2_lambda = weight_decay
+        self.input_size = None
+        self.neuron_count = None
 
         self.tmp_batch_size: int = None
 
         # tensor/operation auto-diff objects
         self._out: Tensor = None
 
-    def build(self, is_first: bool, is_final: bool):
+    def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
         """
-        Initializes the internal tensors (weights and biases) for the layer.
+        Constructs the computation graph using the internal tensors.
 
         Parameters
         ----------
@@ -60,24 +32,6 @@ class Layer:
         
         is_final : bool
             Indicates if this is the final layer in the model. Default is `False`.
-        """
-        raise NotImplementedError
-
-    def compile(self, A: Tensor) -> Tensor:
-        """
-        Constructs the computation graph using the initialized internal tensors.
-
-        This method defines the mathematical operations of the layer.
-
-        Parameters
-        ----------
-        A : Tensor
-            The input tensor into this layer.
-
-        Returns
-        -------
-        Tensor
-            The output tensor after applying the layer's transformation and activation.
         """
         raise NotImplementedError
 
@@ -163,7 +117,6 @@ class Layer:
         Applies L2 regularization to all computed gradients.
         """
         raise NotImplementedError
-
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         raise NotImplementedError

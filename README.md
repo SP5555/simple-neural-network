@@ -92,24 +92,29 @@ To create a neural network with customizable layer configurations:
 # A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
 # Leaky Relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
 nn = NeuralNetwork(layers=[
-        DenseLayer(4, 6, LeakyReLU()),
-        DenseLayer(6, 2, Sigmoid()),
+        Dense(6, LeakyReLU()),
+        Dense(2, Sigmoid()),
     ],
     loss_function=BCE(),
     optimizer=SGD(learn_rate=0.02)
 )
+nn.build(input_size=4)
 
 # Example 2: with decaying rates
 nn = NeuralNetwork(
     layers=[
-        DenseLayer(4, 12, PReLU(), weight_decay=0.002),
-        DenseLayer(12, 12, Swish(), weight_decay=0.002),
-        DenseLayer(12, 3, Linear(), weight_decay=0.002)
+        Dense(12, PReLU(), weight_decay=0.002),
+        Dense(12, Swish(), weight_decay=0.002),
+        Dense(3, Linear(), weight_decay=0.002)
     ],
     loss_function=Huber(delta=1.0), # for regression tasks
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
+nn.build(input_size=4)
 ```
+Note: Before training or inference, `build(input_size)` must be called to initialize layers and compile the computation graph.
+
+
 ### Training
 To train a network with input and output data:
 ```python
@@ -117,7 +122,7 @@ nn.train(
 	input_list=input_train_list,
 	output_list=output_train_list,
 	epoch=1000,
-	batch_size=64 # number of samples in each mini-batch for training
+	batch_size=16 # number of samples in each mini-batch for training
 )
 ```
 ### Utilities
@@ -150,36 +155,38 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer  (4, 10, Tanh(),                      weight_decay=0.001),
-        DropoutLayer(10, 16, Tanh(),   dropout_rate=0.1, weight_decay=0.001),
-        DenseLayer  (16, 12, Tanh(),                     weight_decay=0.001),
-        DenseLayer  (12, 3, Sigmoid(),                   weight_decay=0.001)
+        Dense(10, Tanh(),   weight_decay=0.001),
+        Dense(16, Tanh(),   weight_decay=0.001),
+        Dropout(dropout_rate=0.4),
+        Dense(12, Tanh(),   weight_decay=0.001),
+        Dense(3, Sigmoid(), weight_decay=0.001)
     ],
     loss_function=BCE(),
     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
 )
+nn.build(input_size=4)
 ```
 ```
 Detected Sigmoid in the last layer. Running accuracy check for multilabel.
 Accuracy on 20,000 samples
-Accuracy per output:    94.77%   90.57%   94.07%
-                   Expected |                   Predicted | Input Data
-   1.0000   1.0000   0.0000 |    0.9335   0.9909   0.0357 |  -4.835 -4.507 -4.715  3.635
-   1.0000   0.0000   1.0000 |    0.9740   0.5168   0.9875 |   1.751  4.403  0.534  3.549
-   1.0000   0.0000   0.0000 |    0.9946   0.2209   0.0125 |  -2.063  5.013 -3.300 -4.269
-   0.0000   0.0000   1.0000 |    0.0019   0.0323   0.9758 |  -1.672 -5.604  2.177 -2.122
-   0.0000   0.0000   0.0000 |    0.2262   0.4263   0.0165 |   2.239 -0.714 -0.690 -1.505
-   1.0000   0.0000   1.0000 |    0.8852   0.0586   0.9939 |   2.209  0.099  4.055  5.609
-   1.0000   0.0000   0.0000 |    0.9932   0.1647   0.0207 |   2.427  4.934 -2.039 -5.523
-   0.0000   0.0000   1.0000 |    0.0020   0.0424   0.9730 |  -1.274 -3.315  2.458 -4.877
-   1.0000   1.0000   0.0000 |    0.7447   0.9878   0.0155 |  -3.122 -4.311 -5.302 -1.944
-   0.0000   0.0000   0.0000 |    0.0487   0.0358   0.3287 |   4.503 -1.770 -0.547  5.408
-   1.0000   1.0000   0.0000 |    0.9840   0.9702   0.3160 |  -2.019  1.663 -5.119  2.274
-   0.0000   0.0000   0.0000 |    0.3265   0.0161   0.0459 |   1.728  4.521 -4.578  4.024
-   0.0000   1.0000   0.0000 |    0.0173   0.9692   0.0094 |  -0.369 -3.473 -0.763 -3.852
-   1.0000   1.0000   1.0000 |    0.3761   0.8373   0.9270 |  -0.331  0.228 -5.740  3.879
-   0.0000   1.0000   0.0000 |    0.0850   0.9794   0.0090 |  -2.292 -3.927 -3.937 -2.371
-   0.0000   1.0000   0.0000 |    0.1021   0.9454   0.0516 |   0.332 -0.431 -2.518 -0.596
+Accuracy per output:    91.20%   91.09%   93.57%
+          Expected |          Predicted | Input Data
+  0.00  0.00  1.00 |   0.01  0.28  0.81 |   2.38 -0.00 -2.95  0.73
+  0.00  1.00  1.00 |   0.70  0.94  0.98 |  -3.00  3.82  3.97 -5.05
+  1.00  1.00  1.00 |   0.87  0.98  0.41 |  -2.82 -0.08 -4.99 -0.71
+  0.00  0.00  1.00 |   0.01  0.13  0.97 |  -1.97 -4.38  1.59  5.41
+  0.00  1.00  1.00 |   0.35  0.98  0.97 |  -5.20  4.98  4.66  0.55
+  0.00  1.00  1.00 |   0.72  0.95  0.97 |  -2.91  5.77  4.59 -3.67
+  0.00  0.00  1.00 |   0.01  0.12  0.95 |  -3.01 -2.03  3.16 -2.76
+  0.00  0.00  1.00 |   0.02  0.08  0.98 |  -4.50 -5.34  4.79  4.15
+  1.00  0.00  0.00 |   0.96  0.09  0.00 |   2.64  6.10 -2.39  4.32
+  0.00  1.00  1.00 |   0.34  0.98  0.97 |  -4.54  4.06  4.56 -1.43
+  0.00  1.00  1.00 |   0.32  0.98  0.92 |  -4.74 -0.50  0.68  0.95
+  1.00  1.00  1.00 |   0.98  0.88  0.23 |  -2.00  5.34 -0.03  3.54
+  1.00  0.00  0.00 |   0.98  0.14  0.00 |  -3.27  5.76 -4.50 -1.82
+  1.00  0.00  0.00 |   0.95  0.18  0.71 |   2.53  2.36  4.29 -5.28
+  1.00  1.00  0.00 |   0.97  0.96  0.23 |  -3.91  1.68 -1.79  4.45
+  0.00  0.00  1.00 |   0.13  0.03  0.99 |   2.87 -5.87  4.61  3.88
 ```
 
 ### Multiclass Classification Performance
@@ -188,37 +195,40 @@ Accuracy per output:    94.77%   90.57%   94.07%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DropoutLayer(4, 12, PReLU(),   dropout_rate=0.2,                  weight_decay=0.001),
-        DropoutLayer(12, 16, Tanh(),   dropout_rate=0.2, batch_wise=True, weight_decay=0.001),
-        DropoutLayer(16, 12, Swish(),  dropout_rate=0.2,                  weight_decay=0.001),
-        DenseLayer  (12, 3, Softmax(),                                    weight_decay=0.001)
+        Dense(12, PReLU(),  weight_decay=0.001),
+        Dense(16, Tanh(),   weight_decay=0.001),
+        Dropout(dropout_rate=0.4),
+        Dense(12, Swish(),  weight_decay=0.001),
+        Dropout(dropout_rate=0.4),
+        Dense(3, Softmax(), weight_decay=0.001)
     ],
     loss_function=CCE(),
-    optimizer=Momentum(learn_rate=0.02, momentum=0.75)
+    optimizer=Adam(learn_rate=0.02)
 )
+nn.build(input_size=6)
 ```
 ```
 Detected Softmax in the last layer. Running accuracy check for multiclass.
 Accuracy on 20,000 samples
-Accuracy per output:    95.40%   91.58%   96.43%
-Overall categorization accuracy:    93.60%
-                   Expected |                   Predicted | Input Data
-   1.0000   0.0000   0.0000 |    0.9801   0.0145   0.0053 |   4.382  3.212  0.448  3.892
-   0.0000   1.0000   0.0000 |    0.0140   0.9798   0.0062 |   1.039  0.098  5.527  2.458
-   0.0000   0.0000   1.0000 |    0.0164   0.0028   0.9809 |   0.505  4.559  3.416  0.832
-   0.0000   0.0000   1.0000 |    0.0124   0.0164   0.9712 |   1.724  3.400  4.717  0.230
-   1.0000   0.0000   0.0000 |    0.6348   0.3513   0.0139 |   3.543  2.329  3.479  3.229
-   0.0000   0.0000   1.0000 |    0.0409   0.0059   0.9532 |   1.162  2.467  1.510  1.547
-   1.0000   0.0000   0.0000 |    0.0443   0.9513   0.0044 |   2.589  1.146  4.011  3.792
-   0.0000   1.0000   0.0000 |    0.0145   0.9794   0.0061 |   3.661  1.245  5.298  1.416
-   1.0000   0.0000   0.0000 |    0.9606   0.0372   0.0021 |   4.279  1.430  0.482  3.278
-   1.0000   0.0000   0.0000 |    0.9636   0.0259   0.0105 |   2.797  3.261  2.216  3.402
-   1.0000   0.0000   0.0000 |    0.9771   0.0143   0.0086 |   2.254  4.153  1.179  3.902
-   1.0000   0.0000   0.0000 |    0.4998   0.4945   0.0058 |   2.378  1.985  3.166  4.179
-   0.0000   0.0000   1.0000 |    0.0167   0.0033   0.9800 |   1.296  3.852  0.821  0.993
-   0.0000   1.0000   0.0000 |    0.0762   0.9119   0.0119 |   2.179  1.617  3.127  2.739
-   1.0000   0.0000   0.0000 |    0.9464   0.0506   0.0030 |   4.725  2.371  3.078  3.714
-   1.0000   0.0000   0.0000 |    0.9575   0.0403   0.0021 |   4.396  1.340  1.510  3.959
+Accuracy per output:    95.06%   91.16%   92.04%
+Overall categorization accuracy:    92.03%
+          Expected |          Predicted | Input Data
+  0.00  0.00  1.00 |   0.70  0.02  0.28 |   3.04  1.43  0.34  0.08 -0.90 -0.42
+  0.00  1.00  0.00 |   0.00  0.99  0.01 |   0.52 -0.46  5.91  3.83  0.82 -3.21
+  0.00  0.00  1.00 |   0.01  0.01  0.98 |   1.41  0.54  4.12 -0.17  2.32 -2.57
+  0.00  0.00  1.00 |   0.01  0.00  0.99 |   2.25  0.70  1.20 -1.19  0.68 -2.62
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.21  0.85  0.20 -3.40  1.36 -1.72
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.43 -0.90  2.41  0.97 -0.59  2.71
+  0.00  1.00  0.00 |   0.01  0.82  0.17 |  -0.15 -1.36  2.31  1.87  1.43 -2.10
+  0.00  1.00  0.00 |   0.01  0.40  0.59 |   1.53 -2.08  4.02  1.56  0.66 -0.22
+  0.00  1.00  0.00 |   0.30  0.64  0.06 |   3.50  1.01  1.33  2.18  1.96  0.68
+  1.00  0.00  0.00 |   0.99  0.00  0.01 |   0.19  3.21  0.91  0.86 -1.84  1.68
+  1.00  0.00  0.00 |   0.19  0.01  0.80 |   0.71  1.21  3.87 -1.40  0.90  1.30
+  1.00  0.00  0.00 |   1.00  0.00  0.00 |  -1.02  3.94  2.98  1.77 -1.66 -1.67
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.89  1.67 -1.47 -1.08  1.21 -2.23
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   1.88 -0.40 -1.96  1.03 -1.31 -0.79
+  1.00  0.00  0.00 |   0.99  0.01  0.00 |   0.74  4.68  2.27  3.44  1.10 -1.03
+  0.00  1.00  0.00 |   0.01  0.98  0.00 |   3.05  2.24  1.36  3.60  3.04 -4.69
 ```
 
 ### Regression Performance
@@ -229,36 +239,39 @@ Overall categorization accuracy:    93.60%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        DenseLayer  (4, 12, PReLU(),                                     weight_decay=0.001),
-        DropoutLayer(12, 16, Tanh(),  dropout_rate=0.1, batch_wise=True, weight_decay=0.001),
-        DropoutLayer(16, 12, Swish(), dropout_rate=0.1,                  weight_decay=0.001),
-        DenseLayer  (12, 3, Linear(),                                    weight_decay=0.001)
+        Dense(12, PReLU(), weight_decay=0.001),
+        Dense(16, Tanh(),  weight_decay=0.001),
+        Dropout(dropout_rate=0.4),
+        Dense(12, Swish(), weight_decay=0.001),
+        Dropout(dropout_rate=0.4),
+        Dense(3, Linear(), weight_decay=0.001)
     ],
-    loss_function=Huber(delta=1.0),
-    optimizer=Adam(learn_rate=0.01)
+    optimizer=Adam(learn_rate=0.01),
+    loss_function=Huber(delta=1.0)
 )
+nn.build(input_size=4)
 ```
 ```
 Detected Linear in the last layer. Running accuracy check for regression.
 Mean Squared Error on 20,000 samples
-Mean Squared Error per output:    10.49    8.62    6.45
-                   Expected |                   Predicted | Input Data
-   3.3575   8.6284   2.0535 |    4.3044   7.0457   3.2634 |  -0.477  1.323  1.722 -1.149
-   2.7508  12.1666  10.5097 |    2.9617   9.1734   9.1678 |  -1.294  1.482  2.548  2.170
-   6.6238  -6.0965   0.6740 |    5.4853  -4.6592   1.2948 |  -0.567  0.732 -1.052  1.659
-  -3.4430  -2.5150   3.8812 |   -1.1821  -3.3759   2.5114 |  -0.526 -0.603 -0.282  1.821
- -13.8840   5.9988  -6.5019 |  -14.2842   6.2277  -3.9771 |   1.020 -2.153  0.174 -2.594
- -17.6580  -4.4838  -2.7950 |  -12.7972  -6.4664  -5.0047 |  -2.922 -0.688  2.721  0.720
-  10.7379  10.2664   4.8267 |    7.7191   4.6950   3.5262 |  -0.108  1.782  0.897 -0.521
-   8.4002  -4.2949   2.0537 |    6.5684  -4.1226   0.9138 |  -0.616  1.107 -0.611  1.614
- -17.9570  11.0277   4.5498 |  -16.9253   8.7957   3.9602 |   1.865 -3.061 -0.416 -0.702
-   6.6330   6.4195  -2.6285 |    5.2088   8.2387   2.6677 |   2.963 -2.033  1.470  2.273
-  -4.6607   1.4500  -2.7037 |   -3.5027   2.3028  -4.0241 |  -2.310  0.734  2.595 -2.845
-  -5.2267   2.6799  -1.7481 |  -10.8543   4.6627  -1.7596 |   1.865  0.004 -1.047 -1.951
-  -9.9641  -9.2251  -1.0424 |   -8.9206  -6.6737  -1.5643 |  -1.671 -1.222  0.538  1.052
-  -6.8193  -2.7790  -1.0872 |   -6.8343  -4.9253  -1.0165 |  -2.280  0.075  1.504 -0.221
-  -2.8018  10.5346   1.8449 |    0.8403   9.9028   1.7210 |   2.909  0.152 -0.170 -0.496
- -17.1167   9.0309   9.3532 |  -15.1465   7.5856   8.9784 |   2.454 -1.220 -2.901  0.861
+Mean Squared Error per output:    19.04   13.44   11.15
+          Expected |          Predicted | Input Data
+  4.25 -7.45  1.60 |   3.76 -6.07 -0.61 |  -0.41  0.51 -1.59  1.50
+-12.06 -2.77 -2.61 |  -8.52 -0.64 -4.84 |   0.14 -2.69  0.87 -0.00
+ 15.87-15.17 -7.63 |   9.25 -9.91 -3.47 |  -1.14  2.17 -0.89 -0.22
+ 18.22  4.46  5.15 |  11.65  3.30  2.53 |   1.20  3.26 -0.61  2.35
+ 14.30-18.07 -5.33 |  11.98-15.76 -5.73 |  -2.15  1.91 -2.22  0.94
+  5.68 -0.11 -0.52 |   5.23 -1.24 -0.21 |   0.55  1.64 -0.52  0.00
+ -1.62 -5.27  4.10 |  -2.07 -2.02  1.21 |  -0.69 -0.94 -2.09  0.20
+  9.10-16.90  1.01 |   5.79-10.57 -1.79 |  -2.42  0.26 -2.21  2.93
+  3.13 -0.77  2.80 |   1.70  0.31  2.13 |   0.44  0.24 -0.53  1.75
+-10.35  4.14 10.78 |  -8.42  4.41  6.48 |   0.85 -1.91 -2.07  1.77
+ 17.24-20.91-12.06 |  10.50-16.79 -7.19 |  -1.39  2.44 -2.03 -1.21
+ -8.25 -1.68 14.72 |  -8.15  2.05  6.79 |  -1.00 -2.90 -1.80  2.77
+  8.87 11.83  3.79 |   9.57 10.02  4.66 |   1.90 -0.22  1.72  1.41
+ -5.83  0.29 -0.77 |  -3.12  0.24 -0.25 |   0.72 -0.09 -1.52 -0.71
+-12.48  3.05  4.13 |  -9.91  4.27  3.99 |  -0.65 -3.05 -1.95 -1.19
+-14.17-10.39 -3.07 | -10.46 -5.07 -4.39 |  -1.82 -2.70  0.47  0.68
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 

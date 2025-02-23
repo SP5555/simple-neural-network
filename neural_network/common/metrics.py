@@ -4,7 +4,7 @@ from .print_utils import PrintUtils
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from .core import NeuralNetwork
+    from ..core import NeuralNetwork
 
 class Metrics:
     def __init__(self, core_instance: "NeuralNetwork"):

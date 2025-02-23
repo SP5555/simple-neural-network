@@ -1,4 +1,4 @@
-from .dense_layer import DenseLayer
-from .dropout_layer import DropoutLayer
+from .dense import Dense
+from .dropout import Dropout
 
-__all__ = ["DenseLayer", "DropoutLayer"]
+__all__ = ["Dense", "Dropout"]

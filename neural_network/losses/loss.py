@@ -6,7 +6,7 @@ from ..auto_diff.auto_diff_reverse import (
     Clip,
     Huber as HuberAD
 )
-from ..exceptions import InputValidationError
+from ..common import InputValidationError
 import numpy as np
 
 class Loss:

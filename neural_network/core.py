@@ -1,12 +1,9 @@
 import numpy as np
 from .auto_diff.auto_diff_reverse import Tensor
-from .exceptions import InputValidationError
+from .common import Metrics, Utils, PrintUtils, requires_build, InputValidationError
 from .losses.loss import Loss
 from .layers.layer import Layer
-from .metrics import Metrics
 from .optimizers.optimizer import Optimizer
-from .print_utils import PrintUtils
-from .utils import Utils
 
 class NeuralNetwork:
     """
@@ -38,11 +35,6 @@ class NeuralNetwork:
         # ===== ===== INPUT VALIDATION START ===== =====
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
-
-        # Neuron connection check
-        for i in range(len(layers) - 1):
-            if layers[i].output_size != layers[i + 1].input_size:
-                raise InputValidationError(f"Layer {i+1} and {i+2} can't connect.")
         
         if not optimizer:
             raise InputValidationError("Neural Network is missing an optimizer.")
@@ -55,29 +47,16 @@ class NeuralNetwork:
         self._layer_count: int = len(layers)
         self._loss_func = loss_function
 
-        # Activate/Build/Initialize/whatever the layers
-        for i in range(self._layer_count):
-            if i == 0:
-                self._layers[i].build(is_first=True)
-                continue
-            if i == self._layer_count - 1: # final layer
-                self._layers[i].build(is_final=True)
-                continue
-            self._layers[i].build()
-        PrintUtils.print_info(f"[{self.__class__.__name__}] Layers built.")
-
-        self.compile_graph()
-        PrintUtils.print_info(f"[{self.__class__.__name__}] Computation Graph Compiled.")
-
         self.optimizer = optimizer
         PrintUtils.print_info(f"[{self.__class__.__name__}] {self.optimizer.__class__.__name__} Optimizer initialized.")
 
         PrintUtils.print_info(f"[{self.__class__.__name__}] Neural network initialized.")
-        PrintUtils.print_info(f"[{self.__class__.__name__}] Parameter Count: {self.utils._get_param_count():,}")
+
+        self._is_built = False
     
-    def compile_graph(self):
+    def build(self, input_size: int):
         """
-        Compile the **computation graph** for the neural network.
+        Builds necessary internal tensors and compiles the **computation graph** for the neural network.
 
         This function ensures that all layers are connected properly and constructs 
         the forward computation path only once, improving efficiency during training 
@@ -87,15 +66,30 @@ class NeuralNetwork:
         - This function **must** be called before training or inference.
         - Any attempt to train or run the network without calling this first will result in errors.
         """
-        self.A: Tensor = Tensor(np.zeros((self._layers[0].input_size, 1)), require_grad=False)
-        self.Y: Tensor = Tensor(np.zeros((self._layers[-1].output_size, 1)), require_grad=False)
+        self.input_size = input_size
+        self.A: Tensor = Tensor(np.zeros((self.input_size, 1)), require_grad=False)
 
         A = self.A
+        n = self.input_size
 
-        for layer in self._layers:
-            A = layer.compile(A)
+        for i, layer in enumerate(self._layers):
+            if i == 0:
+                A, n = layer.build(A, n, is_first=True)
+                continue
+            if i == self._layer_count - 1: # final layer
+                A, n = layer.build(A, n, is_final=True)
+                continue
+            A, n = layer.build(A, n)
+
+        self.output_size = n
+        self.Y: Tensor = Tensor(np.zeros((self.output_size, 1)), require_grad=False)
         self._loss_func.build_expression(A, self.Y)
 
+        self._is_built = True
+        PrintUtils.print_info(f"[{self.__class__.__name__}] Computation Graph Compiled.")
+        PrintUtils.print_info(f"[{self.__class__.__name__}] Parameter Count: {self.utils._get_param_count():,}")
+
+    @requires_build
     # main feed forward function (single)
     def forward(self, input: list) -> list:
         if len(input) != self._layers[0].input_size:
@@ -105,6 +99,7 @@ class NeuralNetwork:
 
         return A.flatten().tolist()
 
+    @requires_build
     # main feed forward function (multiple)
     def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray:
         if len(input) == 0:
@@ -119,8 +114,7 @@ class NeuralNetwork:
         self.A.assign(np.array(input).T)
 
         # setup internal tensors
-        for layer in self._layers:
-            layer.setup_tensors(current_batch_size)
+        self.setup_tensors(current_batch_size, is_training=False)
 
         # forward pass
         self._layers[-1].forward()
@@ -129,6 +123,7 @@ class NeuralNetwork:
             return self._layers[-1].evaluate()
         return self._layers[-1].evaluate().T.tolist() # vanilla list, not np.ndarray
 
+    @requires_build
     def train(self,
               input_list: list,
               output_list: list,
@@ -138,9 +133,9 @@ class NeuralNetwork:
             raise InputValidationError("Datasets can't be empty.")
         if len(input_list) != len(output_list):
             raise InputValidationError("Input and Output data set sizes must be equal.")
-        if len(input_list[0]) != self._layers[0].input_size:
+        if len(input_list[0]) != self.input_size:
             raise InputValidationError("Input array size does not match the neural network.")
-        if len(output_list[0]) != self._layers[-1].output_size:
+        if len(output_list[0]) != self.output_size:
             raise InputValidationError("Output array size does not match the neural network.")
         if epoch <= 0:
             raise InputValidationError("Epoch must be positive.")
@@ -165,8 +160,7 @@ class NeuralNetwork:
             self.Y.assign(o_batch.T)
 
             # setup internal tensors
-            for layer in self._layers:
-                layer.setup_tensors(current_batch_size, is_training=True)
+            self.setup_tensors(current_batch_size, is_training=True)
 
             # FORWARD PASS: calculate forward values (LITTLE MAGIC)
             # auto diff forward call
@@ -193,3 +187,9 @@ class NeuralNetwork:
             print(f"Progress: [{'='*int(30*p/100):<30}] {_+1:>5} / {epoch} [{p:>6.2f}%]  ", end='\r')
 
         PrintUtils.print_success("\n===== ===== ===== Training Completed ===== ===== =====")
+    
+    @requires_build
+    def setup_tensors(self, batch_size: int, is_training=False):
+        for layer in self._layers:
+            layer.setup_tensors(batch_size, is_training=is_training)
+
