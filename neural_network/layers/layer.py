@@ -20,7 +20,7 @@ class Layer:
         # tensor/operation auto-diff objects
         self._out: Tensor = None
 
-    def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
+    def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
         """
         Constructs the computation graph for this layer.
 

@@ -61,13 +61,9 @@ class Dense(Layer):
 
         self.L2_lambda = weight_decay
 
-    def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
+    def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
 
         self.input_size = input_size
-
-        # helpers, they save a lot of power
-        self._is_first = is_first
-        self._is_final = is_final
 
         # tmp vars
         self.tmp_batch_size = None

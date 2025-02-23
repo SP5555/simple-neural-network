@@ -72,13 +72,7 @@ class NeuralNetwork:
         A = self.A
         n = self.input_size
 
-        for i, layer in enumerate(self._layers):
-            if i == 0:
-                A, n = layer.build(A, n, is_first=True)
-                continue
-            if i == self._layer_count - 1: # final layer
-                A, n = layer.build(A, n, is_final=True)
-                continue
+        for layer in self._layers:
             A, n = layer.build(A, n)
 
         self.output_size = n
@@ -92,7 +86,7 @@ class NeuralNetwork:
     @requires_build
     # main feed forward function (single)
     def forward(self, input: list) -> list:
-        if len(input) != self._layers[0].input_size:
+        if len(input) != self.input_size:
             raise InputValidationError("Input array size does not match the neural network.")
 
         A: np.ndarray = self.forward_batch([input], raw_ndarray_output=True)
@@ -104,7 +98,7 @@ class NeuralNetwork:
     def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray | list:
         if len(input) == 0:
             raise InputValidationError("Input batch does not have data.")
-        if len(input[0]) != self._layers[0].input_size:
+        if len(input[0]) != self.input_size:
             raise InputValidationError("Input array size does not match the neural network.")
         
         current_batch_size = len(input)
