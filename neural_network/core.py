@@ -101,7 +101,7 @@ class NeuralNetwork:
 
     @requires_build
     # main feed forward function (multiple)
-    def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray:
+    def forward_batch(self, input: list, raw_ndarray_output = False) -> np.ndarray | list:
         if len(input) == 0:
             raise InputValidationError("Input batch does not have data.")
         if len(input[0]) != self._layers[0].input_size:
@@ -192,4 +192,3 @@ class NeuralNetwork:
     def setup_tensors(self, batch_size: int, is_training=False):
         for layer in self._layers:
             layer.setup_tensors(batch_size, is_training=is_training)
-

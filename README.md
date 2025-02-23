@@ -83,36 +83,39 @@ pip install numpy
 
 ### Creating a Neural Network
 To create a neural network with customizable layer configurations:
-#### Parameters
+
+**Parameters**
 * `layers`: List of supported layer classes.
 * `loss_function`: Loss function for training (E.g., `MSE`, `BCE`)
 * `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
+
+**Example 1**: A network with 4 input neurons, 6 hidden neurons, and 2 output neurons.
+Leaky Relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
 ```python
-# Example 1:
-# A network with 4 input neurons, 6 hidden neurons, and 2 output neurons
-# Leaky Relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
 nn = NeuralNetwork(layers=[
-        Dense(6, LeakyReLU()),
-        Dense(2, Sigmoid()),
+        Dense(6, activation=LeakyReLU()),
+        Dense(2, activation=Sigmoid()),
     ],
     loss_function=BCE(),
     optimizer=SGD(learn_rate=0.02)
 )
 nn.build(input_size=4)
-
-# Example 2: with decaying rates
+```
+**Example 2**: added decaying rates and dropout layer
+```python
 nn = NeuralNetwork(
     layers=[
-        Dense(12, PReLU(), weight_decay=0.002),
-        Dense(12, Swish(), weight_decay=0.002),
-        Dense(3, Linear(), weight_decay=0.002)
+        Dense(12, activation=PReLU(),  weight_decay=0.002),
+        Dense(12, activation=Swish(),  weight_decay=0.002),
+        Dropout(dropout_rate=0.2),
+        Dense(3,  activation=Linear(), weight_decay=0.002)
     ],
     loss_function=Huber(delta=1.0), # for regression tasks
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
 nn.build(input_size=4)
 ```
-*Note: Before training or inference, `build(input_size)` must be called to initialize layers and compile the computation graph.*
+*Note: `build(input_size)` must be called **before** training or inference to initialize layers and compile the computation graph.*
 
 
 ### Training
@@ -126,20 +129,28 @@ nn.train(
 )
 ```
 ### Utilities
-View the current weights and biases of the network:
+
+~~View the current weights and biases of the network:~~
+
+**This function needs some rework. It might run into errors.**
+
 ```python
 nn.utils.inspect_weights_and_biases()
 ```
+
 Evaluate the accuracy of the network:
+
 ```python
 nn.metrics.check_accuracy(
 	test_input=input_test_list,
 	test_output=output_test_list
 )
 ```
+
 *Note: only regression, multilabel and multiclass accuracy calculations are supported as of now.*
 
 Compare and print out the predicted results with the desired results:
+
 ```python
 nn.metrics.compare_predictions(input=data_i, output=data_o)
 ```
@@ -155,11 +166,11 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        Dense(10, Tanh(),   weight_decay=0.001),
-        Dense(16, Tanh(),   weight_decay=0.001),
+        Dense(10, activation=Tanh(),    weight_decay=0.001),
+        Dense(16, activation=Tanh(),    weight_decay=0.001),
         Dropout(dropout_rate=0.4),
-        Dense(12, Tanh(),   weight_decay=0.001),
-        Dense(3, Sigmoid(), weight_decay=0.001)
+        Dense(12, activation=Tanh(),    weight_decay=0.001),
+        Dense(3,  activation=Sigmoid(), weight_decay=0.001)
     ],
     loss_function=BCE(),
     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
@@ -195,12 +206,12 @@ Accuracy per output:    91.20%   91.09%   93.57%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        Dense(12, PReLU(),  weight_decay=0.001),
-        Dense(16, Tanh(),   weight_decay=0.001),
+        Dense(12, activation=PReLU(),   weight_decay=0.001),
+        Dense(16, activation=Tanh(),    weight_decay=0.001),
+        Dropout(dropout_rate=0.4, batch_wise=True),
+        Dense(12, activation=Swish(),   weight_decay=0.001),
         Dropout(dropout_rate=0.4),
-        Dense(12, Swish(),  weight_decay=0.001),
-        Dropout(dropout_rate=0.4),
-        Dense(3, Softmax(), weight_decay=0.001)
+        Dense(3,  activation=Softmax(), weight_decay=0.001)
     ],
     loss_function=CCE(),
     optimizer=Adam(learn_rate=0.02)
@@ -239,15 +250,15 @@ Overall categorization accuracy:    92.03%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        Dense(12, PReLU(), weight_decay=0.001),
-        Dense(16, Tanh(),  weight_decay=0.001),
+        Dense(12, activation=PReLU(),  weight_decay=0.001),
+        Dense(16, activation=Tanh(),   weight_decay=0.001),
         Dropout(dropout_rate=0.4),
-        Dense(12, Swish(), weight_decay=0.001),
+        Dense(12, activation=Swish(),  weight_decay=0.001),
         Dropout(dropout_rate=0.4),
-        Dense(3, Linear(), weight_decay=0.001)
+        Dense(3,  activation=Linear(), weight_decay=0.001)
     ],
-    optimizer=Adam(learn_rate=0.01),
-    loss_function=Huber(delta=1.0)
+    loss_function=Huber(delta=1.0),
+    optimizer=Adam(learn_rate=0.01)
 )
 nn.build(input_size=4)
 ```

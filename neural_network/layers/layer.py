@@ -22,15 +22,31 @@ class Layer:
 
     def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
         """
-        Constructs the computation graph using the internal tensors.
+        Constructs the computation graph for this layer.
+
+        This method defines how the layer connects to the preceding tensor(s) and
+        determines the output shape. It must be implemented by subclasses.
 
         Parameters
         ----------
-        is_first : bool
-            Indicates if this is the first layer in the model. Default is `False`.
-        
-        is_final : bool
-            Indicates if this is the final layer in the model. Default is `False`.
+        A : Tensor
+            The input tensor that this layer depends on when constructing the computation graph.
+
+        input_size : int
+            The number of input features expected by this layer.
+
+        is_first : bool, optional
+            Whether this is the first layer in the network. Certain layers (e.g., input layers) 
+            may require special handling. Default is `False`.
+
+        is_final : bool, optional
+            Whether this is the last layer in the network. Some layers (e.g., output layers) 
+            may require special handling. Default is `False`.
+
+        Returns
+        -------
+        tuple[Tensor, int]
+            A tuple containing the output tensor and its size.
         """
         raise NotImplementedError
 
@@ -40,8 +56,7 @@ class Layer:
 
         Some layers, such as Dropout, require dynamically adjusting internal
         tensors (e.g., masks) before forward and backward passes. This method
-        ensures such tensors are properly configured based on the given batch size
-        and whether the model is in training mode.
+        ensures such tensors are properly configured based on the given batch size.
 
         Parameters
         ----------
@@ -81,7 +96,7 @@ class Layer:
         Auto-diff handles the gradient computations efficiently,
         eliminating the need for manual differentiation.
         """
-        # Math
+        # Math (for dense layer)
         # Z = W*A_in + B
         # A = activation(Z, learn_b) # learnable parem is used only in some activations
 
@@ -111,6 +126,7 @@ class Layer:
     def evaluate(self) -> np.ndarray:
         return self._out.evaluate()
 
+    # ===== gradient-related utility functions =====
     def regularize_grads(self):
         """
         Applies L2 regularization to all computed gradients.

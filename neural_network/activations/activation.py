@@ -20,20 +20,16 @@ class Activation:
     in derived child classes.
     """
     def __init__(self,
-                 is_LL_exclusive = False,
                  is_LL_regression_act = False,
                  is_LL_multilabel_act = False,
                  is_LL_multiclass_act = False,
                  is_learnable = False,
-                 is_dropout_incompatible = False,
                  alpha_initial: float = None,
                  alpha_constraints: tuple = None):
-        self.is_LL_exclusive         = is_LL_exclusive
         self.is_LL_regression_act    = is_LL_regression_act
         self.is_LL_multilabel_act    = is_LL_multilabel_act
         self.is_LL_multiclass_act    = is_LL_multiclass_act
         self.is_learnable            = is_learnable
-        self.is_dropout_incompatible = is_dropout_incompatible
 
         # alphas are learnable parameters
         # we're running out of Greek alphabets
@@ -133,17 +129,14 @@ class Swish(Activation):
     
 class Linear(Activation):
     def __init__(self):
-        super().__init__(is_LL_exclusive=True,
-                         is_LL_regression_act=True)
+        super().__init__(is_LL_regression_act=True)
 
     def build_expression(self, Z: Tensor):
         self.expression = Z
 
 class Softmax(Activation):
     def __init__(self):
-        super().__init__(is_LL_exclusive=True,
-                         is_LL_multiclass_act=True,
-                         is_dropout_incompatible=True)
+        super().__init__(is_LL_multiclass_act=True)
 
     def build_expression(self, Z: Tensor):
         self.expression = SoftmaxAD(Z)

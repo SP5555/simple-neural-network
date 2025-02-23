@@ -13,24 +13,32 @@ class Dense(Layer):
     ----------
     neuron_count : int
         Number of neurons in this layer.
-    
-    activation : Activation
-        Activation function of the neurons.
-    
+
+    use_bias : bool, optional
+        Whether to include a bias term (`B`) in the layer.  
+        Default is `True`. If set to `False`, the layer performs `Z = W*A` without a bias shift.
+
+    activation : Activation, optional
+        Activation function applied after the linear transformation `Z = W*A + B`.\\
+        Default is `None`. Without activation, the layer behaves
+        as a pure linear transformation.
+
     weight_decay : float, optional
-        Strength of L2 regularization.
+        L2 regularization strength for the weights.
         Default is `0.0`, meaning no regularization.
     """
     def __init__(self,
                  neuron_count: int,
-                 activation: Activation,
-                 weight_decay: float = 0.0) -> None:
+                 use_bias: bool         = True,
+                 activation: Activation = None,
+                 weight_decay: float    = 0.0
+                 ) -> None:
         
         super().__init__()
 
         if neuron_count == 0:
             raise InputValidationError("A layer can't have 0 output (0 neurons).")
-        
+
         # L2 Regularization Strength
         # low reg strength -> cook in class, and fail in exam; overfit
         # high reg strength -> I am dumb dumb, can't learn; underfit
@@ -46,14 +54,14 @@ class Dense(Layer):
         self.input_size = None
         self.neuron_count = neuron_count
 
+        self.use_bias = use_bias
+
+        self.is_linear = True if activation is None else False
         self.activation = activation
 
         self.L2_lambda = weight_decay
 
     def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
-
-        if not is_final and self.activation.is_LL_exclusive:
-            raise InputValidationError(f"{self.activation.__class__.__name__} activation can't be used in hidden layers.")
 
         self.input_size = input_size
 
@@ -64,23 +72,28 @@ class Dense(Layer):
         # tmp vars
         self.tmp_batch_size = None
 
-        # auto-diff tensor objects
         self._W: Tensor = Tensor(np.random.randn(self.neuron_count, self.input_size) * np.sqrt(2/self.input_size))
-        self._B: Tensor = Tensor(np.random.randn(self.neuron_count, 1))
-        self.activation.build_alpha_tensor(self.neuron_count)
- 
-        # gradient container numpy array objects
-        self._W_grad = None
-        self._B_grad = None
+        self._W_grad: np.ndarray = None
+
+        if self.use_bias:
+            self._B: Tensor = Tensor(np.random.randn(self.neuron_count, 1))
+            self._B_grad: np.ndarray = None
+
+        if not self.is_linear:
+            self.activation.build_alpha_tensor(self.neuron_count)
 
         # ===== expression construction =====
 
-        # Z = W*A_in + B
-        _Z = Matmul(self._W, A) + self._B
-        # A_out = activation(Z)
-        self.activation.build_expression(_Z)
+        if self.use_bias:
+            _Z = Matmul(self._W, A) + self._B
+        else:
+            _Z = Matmul(self._W, A)
 
-        self._out = self.activation.expression
+        if not self.is_linear:
+            self.activation.build_expression(_Z)
+            self._out = self.activation.expression
+        else:
+            self._out = _Z
         return self._out, self.neuron_count
 
     def setup_tensors(self, batch_size: int, is_training: bool = False):
@@ -90,22 +103,27 @@ class Dense(Layer):
     def regularize_grads(self):
 
         self._W_grad = self._W.grad / self.tmp_batch_size
-        self._W_grad += self._W.tensor * self.L2_lambda # Compute regularization term
+        self._W_grad += self._W.tensor * self.L2_lambda
 
-        self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self.tmp_batch_size
-        self._B_grad += self._B.tensor * self.L2_lambda # Compute regularization term
+        if self.use_bias:
 
-        if self.activation.is_learnable:
+            self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self.tmp_batch_size
+            self._B_grad += self._B.tensor * self.L2_lambda
+
+        if not self.is_linear and self.activation.is_learnable:
 
             self.activation._alpha_grad = np.sum(self.activation._alpha.grad, axis=1, keepdims=True) / self.tmp_batch_size
-            self.activation._alpha_grad += self.activation._alpha.tensor * self.L2_lambda # Compute regularization term
+            self.activation._alpha_grad += self.activation._alpha.tensor * self.L2_lambda
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [
-            {'weight': self._W, 'grad': self._W_grad},
-            {'weight': self._B, 'grad': self._B_grad}
+            {'weight': self._W, 'grad': self._W_grad}
         ]
-        if self.activation.is_learnable:
+        if self.use_bias:
+            params.append({
+                'weight': self._B, 'grad': self._B_grad
+            })
+        if not self.is_linear and self.activation.is_learnable:
             params.append({
                 'weight': self.activation._alpha,
                 'grad': self.activation._alpha_grad,
@@ -116,14 +134,15 @@ class Dense(Layer):
 
     def zero_grads(self):
         self._W.zero_grad()
-        self._B.zero_grad()
-        if self.activation.is_learnable:
+        if self.use_bias:
+            self._B.zero_grad()
+        if not self.is_linear and self.activation.is_learnable:
             self.activation._alpha.zero_grad()
 
     def _get_param_count(self) -> int:
         if self.input_size is None:
             raise InputValidationError("Layer has not been built yet.")
         w = self.input_size * self.neuron_count
-        s = self.neuron_count
-        lp = self.neuron_count if self.activation.is_learnable else 0
-        return w + s + lp
+        b = self.neuron_count if self.use_bias else 0
+        lp = self.neuron_count if not self.is_linear and self.activation.is_learnable else 0
+        return w + b + lp

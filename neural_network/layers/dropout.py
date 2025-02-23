@@ -21,7 +21,8 @@ class Dropout(Layer):
     """
     def __init__(self,
                  dropout_rate: float,
-                 batch_wise: bool = False) -> None:
+                 batch_wise: bool = False
+                 ) -> None:
 
         if dropout_rate < 0.0 or dropout_rate > 1.0:
             raise InputValidationError("Dropout probability must be between 0.0 and 1.0")
@@ -35,10 +36,9 @@ class Dropout(Layer):
         self.batch_wise = batch_wise
     
     def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
+
         if is_final:
             PrintUtils.print_warning("Using a dropout layer as the final layer is not recommended.")
-        # if self.activation.is_dropout_incompatible:
-        #     raise InputValidationError(f"{self.activation.__class__.__name__} is not compatible in the dropout layer.")
 
         self.input_size = input_size
         self.neuron_count = input_size

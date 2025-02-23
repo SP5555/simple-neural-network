@@ -9,41 +9,41 @@ def main():
     # REGRESSION
     # nn = NeuralNetwork(
     #     layers=[
-    #         Dense(12, PReLU(), weight_decay=0.001),
-    #         Dense(16, Tanh(),  weight_decay=0.001),
+    #         Dense(12, activation=PReLU(),  weight_decay=0.001),
+    #         Dense(16, activation=Tanh(),   weight_decay=0.001),
     #         Dropout(dropout_rate=0.4),
-    #         Dense(12, Swish(), weight_decay=0.001),
+    #         Dense(12, activation=Swish(),  weight_decay=0.001),
     #         Dropout(dropout_rate=0.4),
-    #         Dense(3, Linear(), weight_decay=0.001)
+    #         Dense(3,  activation=Linear(), weight_decay=0.001)
     #     ],
-    #     optimizer=Adam(learn_rate=0.01),
-    #     loss_function=Huber(delta=1.0)
+    #     loss_function=Huber(delta=1.0),
+    #     optimizer=Adam(learn_rate=0.01)
     # )
     # nn.build(input_size=4)
 
     # MULTILABEL
     # nn = NeuralNetwork(
     #     layers=[
-    #         Dense(10, Tanh(),   weight_decay=0.001),
-    #         Dense(16, Tanh(),   weight_decay=0.001),
+    #         Dense(10, activation=Tanh(),    weight_decay=0.001),
+    #         Dense(16, activation=Tanh(),    weight_decay=0.001),
     #         Dropout(dropout_rate=0.4),
-    #         Dense(12, Tanh(),   weight_decay=0.001),
-    #         Dense(3, Sigmoid(), weight_decay=0.001)
+    #         Dense(12, activation=Tanh(),    weight_decay=0.001),
+    #         Dense(3,  activation=Sigmoid(), weight_decay=0.001)
     #     ],
     #     loss_function=BCE(),
     #     optimizer=Momentum(learn_rate=0.04, momentum=0.75)
     # )
     # nn.build(input_size=4)
 
-    # # MULTICLASS
+    # MULTICLASS
     nn = NeuralNetwork(
         layers=[
-            Dense(12, PReLU(),  weight_decay=0.001),
-            Dense(16, Tanh(),   weight_decay=0.001),
+            Dense(12, activation=PReLU(),   weight_decay=0.001),
+            Dense(16, activation=Tanh(),    weight_decay=0.001),
             Dropout(dropout_rate=0.4, batch_wise=True),
-            Dense(12, Swish(),  weight_decay=0.001),
+            Dense(12, activation=Swish(),   weight_decay=0.001),
             Dropout(dropout_rate=0.4),
-            Dense(3, Softmax(), weight_decay=0.001)
+            Dense(3,  activation=Softmax(), weight_decay=0.001)
         ],
         loss_function=CCE(),
         optimizer=Adam(learn_rate=0.02)
