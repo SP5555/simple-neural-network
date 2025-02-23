@@ -40,7 +40,7 @@ def main():
         layers=[
             Dense(12, PReLU(),  weight_decay=0.001),
             Dense(16, Tanh(),   weight_decay=0.001),
-            Dropout(dropout_rate=0.4),
+            Dropout(dropout_rate=0.4, batch_wise=True),
             Dense(12, Swish(),  weight_decay=0.001),
             Dropout(dropout_rate=0.4),
             Dense(3, Softmax(), weight_decay=0.001)

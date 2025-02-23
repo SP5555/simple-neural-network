@@ -11,20 +11,15 @@ class Dense(Layer):
 
     Parameters
     ----------
-    input_size : int
-        Number of input neurons. Must match the output size of the previous layer 
-        or the input dimension if this is the first layer.
-    
-    output_size : int
-        Number of output neurons. Must match the input size of the next layer 
-        or the final output dimension if this is the last layer.
+    neuron_count : int
+        Number of neurons in this layer.
     
     activation : Activation
-        Activation function to apply to the output neurons.
+        Activation function of the neurons.
     
     weight_decay : float, optional
         Strength of L2 regularization.
-        Default is 0.0, meaning no regularization.
+        Default is `0.0`, meaning no regularization.
     """
     def __init__(self,
                  neuron_count: int,

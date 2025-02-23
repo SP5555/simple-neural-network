@@ -10,13 +10,13 @@ class Dropout(Layer):
     Parameters
     ----------
     dropout_rate : float
-        Fraction of neurons to drop during training. Should be between 0.0
-        (no dropout) and 1.0 (drop everything, never do this).
-        Typical values are between 0.2 and 0.5.
+        Fraction of neurons to drop during training. Should be between `0.0`
+        (no dropout) and `1.0` (drop everything, never do this).
+        Typical values are between `0.2` and `0.5`.
 
     batch_wise : bool, optional
-        If True, the same dropout mask is applied across the entire batch.
-        If False, dropout is applied independently to each sample.
+        If `True`, the same dropout mask is applied across the entire batch.
+        If `False`, dropout is applied independently to each sample.
         Default is `False`.
     """    
     def __init__(self,
