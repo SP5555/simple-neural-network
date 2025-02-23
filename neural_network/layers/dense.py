@@ -44,7 +44,7 @@ class Dense(Layer):
         # high reg strength -> I am dumb dumb, can't learn; underfit
         # Large weights and biases will are penalized more aggressively than small ones
         # Don't set it too large, at most 0.01 (unless you know what you're doing)
-        #     regularized_loss     = parameter_los      + 1/2 * L2_lambda * parameter^2
+        #     regularized_loss     = parameter_loss     + 1/2 * L2_lambda * parameter^2
         #     regularized_gradient = parameter_gradient +       L2_lambda * parameter
         if weight_decay < 0.0:
             raise InputValidationError("Regularization Strength can't be negative.")
