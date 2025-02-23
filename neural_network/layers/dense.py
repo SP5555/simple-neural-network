@@ -90,18 +90,15 @@ class Dense(Layer):
     def regularize_grads(self):
 
         self._W_grad = self._W.grad / self.tmp_batch_size
-        _W_grad_l2: np.ndarray = self._W.tensor * self.L2_lambda # Compute regularization term
-        self._W_grad += _W_grad_l2
+        self._W_grad += self._W.tensor * self.L2_lambda # Compute regularization term
 
         self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self.tmp_batch_size
-        _B_grad_l2: np.ndarray = self._B.tensor * self.L2_lambda # Compute regularization term
-        self._B_grad += _B_grad_l2
+        self._B_grad += self._B.tensor * self.L2_lambda # Compute regularization term
 
         if self.activation.is_learnable:
 
             self.activation._alpha_grad = np.sum(self.activation._alpha.grad, axis=1, keepdims=True) / self.tmp_batch_size
-            _alpha_grad_l2: np.ndarray = self.activation._alpha.tensor * self.L2_lambda # Compute regularization term
-            self.activation._alpha_grad += _alpha_grad_l2
+            self.activation._alpha_grad += self.activation._alpha.tensor * self.L2_lambda # Compute regularization term
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [

@@ -1,6 +1,5 @@
 import numpy as np
 from ..auto_diff.auto_diff_reverse import Tensor
-from ..activations.activation import Activation
 from ..common import ParamDict
 
 class Layer:

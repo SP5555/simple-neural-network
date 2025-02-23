@@ -1,7 +1,7 @@
 # Simple Neural Network
 
 ## Overview
-This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's a fully functional neural network built completely from scratch.
+This project started out as a simple Python experiment to explore neural networks. But, well, things escalated. Now, it's a fully functional and **modular** neural network built completely from scratch.
 
 While it is not exactly "simple" anymore, it is still a fun and *powerful* example of how a pile of numbers can learn to predict (*better than humans*).
 
@@ -27,8 +27,8 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 ### Architecture
 - Feedforward Neural Network
 ### Layers
-- **Dense Layer**: Fully-connected layer
-- **Dropout Layer**: Dense layer with dropout technique that drops a fraction of neurons during training, with an adjustable dropout rate
+- **Dense**: Fully-connected layer
+- **Dropout**: Layer that randomly drops neurons during training to prevent overfitting.
 ### Activation functions
 - **Bounded**: Sigmoid, Softmax, Tanh
 - **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Softplus, Swish (Fixed/Learnable)
@@ -366,6 +366,8 @@ def _add_noise(self, data: np.ndarray, noise=0.5):
 
 ## Experiment!
 Alright, there are *tons* of ways to mess this thing up. A neural network is not something that is strictly tailored to do one specific task, nor it is a random jumble of math that do awesome possum magic and surprisingly spits out excellent results. It all comes down to how *you* configure it. 
+
+This neural network is designed with **modularity and extensibility** in mind, which means only one thing. YOU, whoever you are, can add custom layers, activations, or whatever components in here easily as you see fit.
 
 Feel free to mess around with the hyperparameters, or change things up entirely. You might discover some cool insights or get the network to do things it wasn't originally designed for. *What is it originally designed for anyway?*
 

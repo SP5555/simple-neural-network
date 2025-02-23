@@ -5,7 +5,7 @@ from .layer import Layer
 
 class Dropout(Layer):
     """
-    A dropout layer.
+    A dropout layer that randomly drops neurons during training to prevent overfitting.
 
     Parameters
     ----------
@@ -18,13 +18,13 @@ class Dropout(Layer):
         If `True`, the same dropout mask is applied across the entire batch.
         If `False`, dropout is applied independently to each sample.
         Default is `False`.
-    """    
+    """
     def __init__(self,
                  dropout_rate: float,
                  batch_wise: bool = False) -> None:
 
         if dropout_rate < 0.0 or dropout_rate > 1.0:
-            raise InputValidationError("Dropout Probability can't be less than must be within 0.0 and 1.0")
+            raise InputValidationError("Dropout probability must be between 0.0 and 1.0")
         if dropout_rate > 0.5:
             PrintUtils.print_warning(f"Dropout Probability of {dropout_rate} is too high. Consider less than 0.5")
 
