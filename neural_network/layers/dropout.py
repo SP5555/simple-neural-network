@@ -34,7 +34,7 @@ class Dropout(Layer):
         self.dp = dropout_rate
         self.batch_wise = batch_wise
     
-    def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> None:
+    def build(self, A: Tensor, input_size: int, is_first: bool = False, is_final: bool = False) -> tuple[Tensor, int]:
         if is_final:
             PrintUtils.print_warning("Using a dropout layer as the final layer is not recommended.")
         # if self.activation.is_dropout_incompatible:
@@ -72,7 +72,7 @@ class Dropout(Layer):
             self.rescaler.assign(1.0)
 
     # dropout layer has no learnabla parameters
-    def regularize_grads(self) -> np.ndarray:
+    def regularize_grads(self):
         pass
     
     def _get_weights_and_grads(self) -> list[ParamDict]:
