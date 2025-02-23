@@ -112,7 +112,7 @@ nn = NeuralNetwork(
 )
 nn.build(input_size=4)
 ```
-Note: Before training or inference, `build(input_size)` must be called to initialize layers and compile the computation graph.
+*Note: Before training or inference, `build(input_size)` must be called to initialize layers and compile the computation graph.*
 
 
 ### Training
