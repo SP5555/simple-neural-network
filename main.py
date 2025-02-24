@@ -10,8 +10,8 @@ def main():
     nn = NeuralNetwork(
         layers=[
             Dense(12, activation=PReLU(),  weight_decay=0.001),
-            Dense(18, activation=Tanh(),   weight_decay=0.001),
-            Dropout(dropout_rate=0.5),
+            Dense(20, activation=Tanh(),   weight_decay=0.001),
+            Dropout(dropout_rate=0.2),
             Dense(12, activation=Swish(),  weight_decay=0.001),
             Dense(3,  activation=Linear(), weight_decay=0.001)
         ]
@@ -56,7 +56,7 @@ def main():
     trainer.train(input_list=input_train_list,
              output_list=output_train_list,
              epoch=2000,
-             batch_size=32)
+             batch_size=2)
     # nn.utils.inspect_weights_and_biases()
 
     nn.metrics.check_accuracy(test_input=input_test_list, test_output=output_test_list)

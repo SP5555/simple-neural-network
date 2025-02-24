@@ -31,8 +31,7 @@ class Dense(Layer):
                  neuron_count: int,
                  use_bias: bool         = True,
                  activation: Activation = None,
-                 weight_decay: float    = 0.0
-                 ) -> None:
+                 weight_decay: float    = 0.0):
         
         super().__init__()
 
@@ -96,7 +95,7 @@ class Dense(Layer):
 
         self.tmp_batch_size = batch_size
 
-    def regularize_grads(self):
+    def prepare_grads(self):
 
         self._W_grad = self._W.grad / self.tmp_batch_size
         self._W_grad += self._W.tensor * self.L2_lambda

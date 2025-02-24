@@ -115,7 +115,7 @@ class Trainer:
             # collect params to pass into optimizer
             weights_and_grads = []
             for layer in self.model._layers:
-                layer.regularize_grads()
+                layer.prepare_grads()
                 weights_and_grads.extend(layer._get_weights_and_grads())
                 layer.zero_grads()
 

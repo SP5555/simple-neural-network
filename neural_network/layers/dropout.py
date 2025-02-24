@@ -21,8 +21,7 @@ class Dropout(Layer):
     """
     def __init__(self,
                  dropout_rate: float,
-                 batch_wise: bool = False
-                 ) -> None:
+                 batch_wise: bool = False):
 
         if dropout_rate < 0.0 or dropout_rate > 1.0:
             raise InputValidationError("Dropout probability must be between 0.0 and 1.0")
@@ -73,7 +72,7 @@ class Dropout(Layer):
             self.rescaler.assign(1.0)
 
     # dropout layer has no learnable parameters
-    def regularize_grads(self):
+    def prepare_grads(self):
         pass
     
     def _get_weights_and_grads(self) -> list[ParamDict]:

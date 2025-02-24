@@ -127,7 +127,7 @@ class Layer:
         return self._out.evaluate()
 
     # ===== gradient-related utility functions =====
-    def regularize_grads(self):
+    def prepare_grads(self):
         """
         Applies L2 regularization to all computed gradients.
         """
