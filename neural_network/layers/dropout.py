@@ -71,6 +71,9 @@ class Dropout(Layer):
             self.mask.assign(1.0)
             self.rescaler.assign(1.0)
 
+    def sync_after_backward(self, is_training: bool = False):
+        pass
+
     # dropout layer has no learnable parameters
     def prepare_grads(self):
         pass

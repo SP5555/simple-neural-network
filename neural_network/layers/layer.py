@@ -70,6 +70,9 @@ class Layer:
         """
         raise NotImplementedError
 
+    def sync_after_backward(self, is_training: bool = False):
+        raise NotImplementedError
+
     def forward(self):
         """
         Computes all tensors in the computation graph up to the point

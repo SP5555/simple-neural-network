@@ -95,6 +95,9 @@ class Dense(Layer):
 
         self.tmp_batch_size = batch_size
 
+    def sync_after_backward(self, is_training: bool = False):
+        pass
+
     def prepare_grads(self):
 
         self._W_grad = self._W.grad / self.tmp_batch_size

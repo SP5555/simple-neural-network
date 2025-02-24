@@ -78,11 +78,11 @@ class BatchNorm(Layer):
             self.train_flag.assign(0.0)
             self.infer_flag.assign(1.0)
 
-    def forward(self):
-        super().forward()
+    def sync_after_backward(self, is_training: bool = False):
 
-        self.running_mean.assign(self.momentum * self.running_mean.tensor + (1 - self.momentum) * self.batch_mean.tensor)
-        self.running_vari.assign(self.momentum * self.running_vari.tensor + (1 - self.momentum) * self.batch_vari.tensor)
+        if is_training:
+            self.running_mean.assign(self.momentum * self.running_mean.tensor + (1 - self.momentum) * self.batch_mean.tensor)
+            self.running_vari.assign(self.momentum * self.running_vari.tensor + (1 - self.momentum) * self.batch_vari.tensor)
 
     def prepare_grads(self):
         self._gamma_grad = np.sum(self._gamma.grad, axis=1, keepdims=True) / self.tmp_batch_size
