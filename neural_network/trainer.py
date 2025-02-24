@@ -112,6 +112,9 @@ class Trainer:
             seed: np.ndarray = np.ones_like(self.output_target.tensor)
             self.loss_func.backward(seed)
 
+            # post updates
+            self.sync_after_backward(is_training=True)
+
             # collect params to pass into optimizer
             weights_and_grads = []
             for layer in self.model._layers:
@@ -125,3 +128,7 @@ class Trainer:
     def setup_tensors(self, batch_size: int, is_training=False):
         for layer in self.model._layers:
             layer.setup_tensors(batch_size, is_training=is_training)
+
+    def sync_after_backward(self, is_training = False):
+        for layer in self.model._layers:
+            layer.sync_after_backward(is_training=is_training)

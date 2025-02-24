@@ -50,8 +50,8 @@ class BatchNorm(Layer):
         self.running_vari = Tensor(np.ones((self.neuron_count, 1)), require_grad=False)
 
         # mean and variance for training
-        self.batch_mean = Mean(A)
-        self.batch_vari = Variance(A)
+        self.batch_mean = Mean(A, require_grad=False)
+        self.batch_vari = Variance(A, require_grad=False)
 
         # flags
         self.train_flag = Tensor(0.0, require_grad=False)

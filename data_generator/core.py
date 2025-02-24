@@ -24,7 +24,7 @@ class DataGenerator:
         i4 = self.rng.uniform(-3, 3, size=n)
 
         # Shape: (1, n)
-        o1 = (i1*i4 + 5*i2 + 2*i1*i3 + i4)
+        o1 = (i1*i4 + 5*i2 - 2*i1*i3 + i4)
         o2 = (4*i1 + 2*i2*i3 + 0.4*i4*i2 + 3*i3)
         o3 = (i1 + 0.3*i2 + 2*i3*i2 + 2*i4)
 

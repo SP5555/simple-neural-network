@@ -10,14 +10,15 @@ def main():
     nn = NeuralNetwork(
         layers=[
             Dense(12, activation=PReLU(),  weight_decay=0.001),
-            Dense(20, activation=Tanh(),   weight_decay=0.001),
-            Dropout(dropout_rate=0.2),
+            Dense(16, activation=PReLU(),   weight_decay=0.001),
+            BatchNorm(),
+            Dropout(dropout_rate=0.4),
             Dense(12, activation=Swish(),  weight_decay=0.001),
             Dense(3,  activation=Linear(), weight_decay=0.001)
         ]
     )
     nn.build(input_size=4)
-    trainer = Trainer(nn, loss_function=Huber(delta=1.0), optimizer=Adam(learn_rate=0.02))
+    trainer = Trainer(nn, loss_function=Huber(delta=2.5), optimizer=Adam(learn_rate=0.02))
 
     # MULTILABEL
     # nn = NeuralNetwork(
