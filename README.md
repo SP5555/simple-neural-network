@@ -28,7 +28,8 @@ First off, a huge shoutout to the awesome **NumPy** library, because without it,
 - Feedforward Neural Network
 ### Layers
 - **Dense**: Fully-connected layer
-- **Dropout**: Layer that randomly drops neurons during training to prevent overfitting.
+- **Dropout**: Randomly drops neurons during training to reduce overfitting.
+- **BatchNorm**: Normalizes activations within a batch to stabilize and accelerate training.
 ### Activation functions
 - **Bounded**: Sigmoid, Softmax, Tanh
 - **Unbounded**: Linear, ReLU, Leaky ReLU, PReLU (Learnable), Softplus, Swish (Fixed/Learnable)

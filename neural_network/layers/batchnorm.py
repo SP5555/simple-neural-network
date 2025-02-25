@@ -70,6 +70,8 @@ class BatchNorm(Layer):
         self._train_flag = Tensor(0.0, require_grad=False)
         self._infer_flag = Tensor(0.0, require_grad=False)
 
+        # ===== expression construction =====
+
         # just some random boolean trickery, or "switches"?
         _mean_term = self._batch_mean * self._train_flag + self._running_mean * self._infer_flag
         _vari_term = self._batch_vari * self._train_flag + self._running_vari * self._infer_flag
