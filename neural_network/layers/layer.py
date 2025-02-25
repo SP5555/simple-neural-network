@@ -15,7 +15,7 @@ class Layer:
         self.input_size = None
         self.neuron_count = None
 
-        self.tmp_batch_size: int = None
+        self._tmp_batch_size: int = None
 
         # tensor/operation auto-diff objects
         self._out: Tensor = None
@@ -50,13 +50,13 @@ class Layer:
         """
         raise NotImplementedError
 
-    def setup_tensors(self, batch_size: int, is_training: bool = False):
+    def pre_setup_tensors(self, batch_size: int, is_training: bool = False):
         """
-        Updates internal tensors that depend on batch size and training mode.
+        Prepares necessary internal tensors **before** each forward pass.
 
-        Some layers, such as Dropout, require dynamically adjusting internal
-        tensors (e.g., masks) before forward and backward passes. This method
-        ensures such tensors are properly configured based on the given batch size.
+        Some layers, such as Dropout, require updating internal state (e.g., sampling dropout masks)
+        before computing activations. This function ensures such adjustments are made
+        before executing forward and backward passes.
 
         Parameters
         ----------
@@ -64,13 +64,25 @@ class Layer:
             Number of samples in a single forward pass.
 
         is_training : bool, optional
-            Whether the model is in training mode. Affects certain layers
-            (e.g., Dropout) that behave differently during training and inference.
-            Default is `False`.
+            Whether the model is in training mode. Certain layers (e.g., Dropout) 
+            behave differently during training vs. inference. Default is `False`.
         """
         raise NotImplementedError
 
-    def sync_after_backward(self, is_training: bool = False):
+    def post_setup_tensors(self, is_training: bool = False):
+        """
+        Updates internal tensors **after** a forward-backward pass.
+
+        Some layers, such as BatchNorm, update running averages (e.g., running mean and variance)
+        after each backward pass. This function ensures such statistics are updated
+        before the next iteration.
+
+        Parameters
+        ----------
+        is_training : bool, optional
+            Whether the model is in training mode. Some layers update statistics 
+            (e.g., BatchNorm's running averages) only during training. Default is `False`.
+        """
         raise NotImplementedError
 
     def forward(self):

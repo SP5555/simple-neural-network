@@ -5,7 +5,15 @@ from .layer import Layer
 
 class BatchNorm(Layer):
     """
-    Batch Normalization Layer.
+    Batch Normalization Layer
+    =====
+    This layer normalizes the input across the batch to stabilize training,
+    improve convergence speed, and allow for deeper networks.
+
+    During training, it computes the mean and variance of the batch, normalizes
+    the input using these statistics, and applies learnable scale (`gamma`) and
+    shift (`beta`) parameters. It also maintains a moving average of the mean
+    and variance for use during inference.
 
     Parameters
     ----------
@@ -29,12 +37,15 @@ class BatchNorm(Layer):
         if momentum >= 0.95:
             PrintUtils.print_warning(f"Warning: momentum = {momentum:.3f} may cause strong \"gliding\" behavior. " +
                                      "Consider keeping it less than 0.95")
+            
+        if epsilon <= 1e-14 or epsilon >= 1e-3:
+            raise InputValidationError("Keep epsilon between 1e-14 and 1e-3.")
 
         self.input_size = None
         self.neuron_count = None
 
-        self.momentum = momentum
-        self.epsilon = Tensor(epsilon, require_grad=False)
+        self._momentum = momentum
+        self._epsilon = Tensor(epsilon, require_grad=False)
 
     def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
 
@@ -46,47 +57,49 @@ class BatchNorm(Layer):
         self._beta = Tensor(np.zeros((self.neuron_count, 1))) # Shift
 
         # running averages for inference
-        self.running_mean = Tensor(np.zeros((self.neuron_count, 1)), require_grad=False)
-        self.running_vari = Tensor(np.ones((self.neuron_count, 1)), require_grad=False)
+        self._running_mean = Tensor(np.zeros((self.neuron_count, 1)), require_grad=False)
+        self._running_vari = Tensor(np.ones((self.neuron_count, 1)), require_grad=False)
 
         # mean and variance for training
-        self.batch_mean = Mean(A, require_grad=False)
-        self.batch_vari = Variance(A, require_grad=False)
+        # considered as constants within a given forward pass
+        # therefore, don't require gradients
+        self._batch_mean = Mean(A, require_grad=False)
+        self._batch_vari = Variance(A, require_grad=False)
 
         # flags
-        self.train_flag = Tensor(0.0, require_grad=False)
-        self.infer_flag = Tensor(0.0, require_grad=False)
+        self._train_flag = Tensor(0.0, require_grad=False)
+        self._infer_flag = Tensor(0.0, require_grad=False)
 
         # just some random boolean trickery, or "switches"?
-        mean_term = self.batch_mean * self.train_flag + self.running_mean * self.infer_flag
-        vari_term = self.batch_vari * self.train_flag + self.running_vari * self.infer_flag
+        _mean_term = self._batch_mean * self._train_flag + self._running_mean * self._infer_flag
+        _vari_term = self._batch_vari * self._train_flag + self._running_vari * self._infer_flag
 
-        normalized = (A - mean_term) / Sqrt(vari_term + self.epsilon)
+        _normalized = (A - _mean_term) / Sqrt(_vari_term + self._epsilon)
 
-        self._out = self._gamma * normalized + self._beta
+        self._out = self._gamma * _normalized + self._beta
 
         return self._out, self.neuron_count
     
-    def setup_tensors(self, batch_size: int, is_training = False):
-        
-        self.tmp_batch_size = batch_size
+    def pre_setup_tensors(self, batch_size: int, is_training = False):
+
+        self._tmp_batch_size = batch_size
 
         if is_training:
-            self.train_flag.assign(1.0)
-            self.infer_flag.assign(0.0)
+            self._train_flag.assign(1.0)
+            self._infer_flag.assign(0.0)
         else:
-            self.train_flag.assign(0.0)
-            self.infer_flag.assign(1.0)
+            self._train_flag.assign(0.0)
+            self._infer_flag.assign(1.0)
 
-    def sync_after_backward(self, is_training: bool = False):
+    def post_setup_tensors(self, is_training: bool = False):
 
         if is_training:
-            self.running_mean.assign(self.momentum * self.running_mean.tensor + (1 - self.momentum) * self.batch_mean.tensor)
-            self.running_vari.assign(self.momentum * self.running_vari.tensor + (1 - self.momentum) * self.batch_vari.tensor)
+            self._running_mean.assign(self._momentum * self._running_mean.tensor + (1 - self._momentum) * self._batch_mean.tensor)
+            self._running_vari.assign(self._momentum * self._running_vari.tensor + (1 - self._momentum) * self._batch_vari.tensor)
 
     def prepare_grads(self):
-        self._gamma_grad = np.sum(self._gamma.grad, axis=1, keepdims=True) / self.tmp_batch_size
-        self._beta_grad = np.sum(self._beta.grad, axis=1, keepdims=True) / self.tmp_batch_size
+        self._gamma_grad = np.sum(self._gamma.grad, axis=1, keepdims=True) / self._tmp_batch_size
+        self._beta_grad = np.sum(self._beta.grad, axis=1, keepdims=True) / self._tmp_batch_size
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [

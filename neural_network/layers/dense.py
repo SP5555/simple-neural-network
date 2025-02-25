@@ -6,6 +6,8 @@ from .layer import Layer
 
 class Dense(Layer):
     """
+    Dense Layer
+    =====
     A fully connected (dense) layer where every input neuron 
     is connected to every output neuron.
 
@@ -53,94 +55,94 @@ class Dense(Layer):
         self.input_size = None
         self.neuron_count = neuron_count
 
-        self.use_bias = use_bias
+        self._use_bias = use_bias
 
-        self.is_linear = True if activation is None else False
-        self.activation = activation
+        self._is_linear = True if activation is None else False
+        self._activation = activation
 
-        self.L2_lambda = weight_decay
+        self._L2_lambda = weight_decay
 
     def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
 
         self.input_size = input_size
 
         # tmp vars
-        self.tmp_batch_size = None
+        self._tmp_batch_size = None
 
         self._W: Tensor = Tensor(np.random.randn(self.neuron_count, self.input_size) * np.sqrt(2/self.input_size))
         self._W_grad: np.ndarray = None
 
-        if self.use_bias:
+        if self._use_bias:
             self._B: Tensor = Tensor(np.random.randn(self.neuron_count, 1))
             self._B_grad: np.ndarray = None
 
-        if not self.is_linear:
-            self.activation.build_alpha_tensor(self.neuron_count)
+        if not self._is_linear:
+            self._activation.build_alpha_tensor(self.neuron_count)
 
         # ===== expression construction =====
 
-        if self.use_bias:
+        if self._use_bias:
             _Z = Matmul(self._W, A) + self._B
         else:
             _Z = Matmul(self._W, A)
 
-        if not self.is_linear:
-            self.activation.build_expression(_Z)
-            self._out = self.activation.expression
+        if not self._is_linear:
+            self._activation.build_expression(_Z)
+            self._out = self._activation.expression
         else:
             self._out = _Z
         return self._out, self.neuron_count
 
-    def setup_tensors(self, batch_size: int, is_training: bool = False):
+    def pre_setup_tensors(self, batch_size: int, is_training: bool = False):
 
-        self.tmp_batch_size = batch_size
+        self._tmp_batch_size = batch_size
 
-    def sync_after_backward(self, is_training: bool = False):
+    def post_setup_tensors(self, is_training: bool = False):
         pass
 
     def prepare_grads(self):
 
-        self._W_grad = self._W.grad / self.tmp_batch_size
-        self._W_grad += self._W.tensor * self.L2_lambda
+        self._W_grad = self._W.grad / self._tmp_batch_size
+        self._W_grad += self._W.tensor * self._L2_lambda
 
-        if self.use_bias:
+        if self._use_bias:
 
-            self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self.tmp_batch_size
-            self._B_grad += self._B.tensor * self.L2_lambda
+            self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self._tmp_batch_size
+            self._B_grad += self._B.tensor * self._L2_lambda
 
-        if not self.is_linear and self.activation.is_learnable:
+        if not self._is_linear and self._activation.is_learnable:
 
-            self.activation._alpha_grad = np.sum(self.activation._alpha.grad, axis=1, keepdims=True) / self.tmp_batch_size
-            self.activation._alpha_grad += self.activation._alpha.tensor * self.L2_lambda
+            self._activation._alpha_grad = np.sum(self._activation._alpha.grad, axis=1, keepdims=True) / self._tmp_batch_size
+            self._activation._alpha_grad += self._activation._alpha.tensor * self._L2_lambda
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [
             {'weight': self._W, 'grad': self._W_grad}
         ]
-        if self.use_bias:
+        if self._use_bias:
             params.append({
                 'weight': self._B, 'grad': self._B_grad
             })
-        if not self.is_linear and self.activation.is_learnable:
+        if not self._is_linear and self._activation.is_learnable:
             params.append({
-                'weight': self.activation._alpha,
-                'grad': self.activation._alpha_grad,
+                'weight': self._activation._alpha,
+                'grad': self._activation._alpha_grad,
                 'learnable': True,
-                'constraints': self.activation._alpha_constraints
+                'constraints': self._activation._alpha_constraints
             })
         return params
 
     def zero_grads(self):
         self._W.zero_grad()
-        if self.use_bias:
+        if self._use_bias:
             self._B.zero_grad()
-        if not self.is_linear and self.activation.is_learnable:
-            self.activation._alpha.zero_grad()
+        if not self._is_linear and self._activation.is_learnable:
+            self._activation._alpha.zero_grad()
 
     def _get_param_count(self) -> int:
         if self.input_size is None:
             raise InputValidationError("Layer has not been built yet.")
         w = self.input_size * self.neuron_count
-        b = self.neuron_count if self.use_bias else 0
-        lp = self.neuron_count if not self.is_linear and self.activation.is_learnable else 0
+        b = self.neuron_count if self._use_bias else 0
+        lp = self.neuron_count if not self._is_linear and self._activation.is_learnable else 0
         return w + b + lp

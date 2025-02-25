@@ -5,7 +5,9 @@ from .layer import Layer
 
 class Dropout(Layer):
     """
-    A dropout layer that randomly drops neurons during training to prevent overfitting.
+    Dropout Layer
+    =====
+    This layer randomly drops neurons during training to prevent overfitting.
 
     Parameters
     ----------
@@ -31,8 +33,8 @@ class Dropout(Layer):
         self.input_size = None
         self.neuron_count = None
 
-        self.dp = dropout_rate
-        self.batch_wise = batch_wise
+        self._dp = dropout_rate
+        self._batch_wise = batch_wise
     
     def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
 
@@ -40,38 +42,38 @@ class Dropout(Layer):
         self.neuron_count = input_size
 
         # tmp vars
-        self.tmp_batch_size = None
+        self._tmp_batch_size = None
 
         # auto-diff tensor objects
-        self.mask = Tensor(1.0, require_grad=False)
-        self.rescaler = Tensor(1.0, require_grad=False)
+        self._mask = Tensor(1.0, require_grad=False)
+        self._rescaler = Tensor(1.0, require_grad=False)
 
         # ===== expression construction =====
 
         # Apply dropout
         # mask    : zero out dp fraction of activations
         # rescaler: scale up the surviving activations
-        self._out = A * self.mask * self.rescaler
+        self._out = A * self._mask * self._rescaler
         return self._out, self.neuron_count
 
-    def setup_tensors(self, batch_size: int, is_training: bool = False):
+    def pre_setup_tensors(self, batch_size: int, is_training: bool = False):
 
-        self.tmp_batch_size = batch_size
+        self._tmp_batch_size = batch_size
 
         if is_training:
             # standard dropout  : randomly drops neurons individually within each sample
             # batch-wise dropout: same dropout pattern to all neurons within a mini-batch
-            shape = (self.neuron_count, self.tmp_batch_size)
-            if self.batch_wise:
+            shape = (self.neuron_count, self._tmp_batch_size)
+            if self._batch_wise:
                 shape = (self.neuron_count, 1)
             # create a mask where a neuron has a 1-dp chance to remain active
-            self.mask.assign(np.random.binomial(n=1, p=1-self.dp, size=shape))
-            self.rescaler.assign(1.0 / (1.0 - self.dp))
+            self._mask.assign(np.random.binomial(n=1, p=1-self._dp, size=shape))
+            self._rescaler.assign(1.0 / (1.0 - self._dp))
         else:
-            self.mask.assign(1.0)
-            self.rescaler.assign(1.0)
+            self._mask.assign(1.0)
+            self._rescaler.assign(1.0)
 
-    def sync_after_backward(self, is_training: bool = False):
+    def post_setup_tensors(self, is_training: bool = False):
         pass
 
     # dropout layer has no learnable parameters

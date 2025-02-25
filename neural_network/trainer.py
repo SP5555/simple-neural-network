@@ -9,7 +9,10 @@ class Trainer:
     """
     Trainer
     =====
-    ???
+    Handles the training process of a neural network.
+
+    This class connects the model, loss function, and optimizer, ensuring smooth
+    computation graph construction and efficient training.
 
     Parameters
     ----------
@@ -17,10 +20,13 @@ class Trainer:
         Neural Network to be trained.
 
     optimizer : Optimizer
-        An instance of a class derived from the Optimizer base class.
+        An optimizer instance used to update model parameters.
 
     loss_function : Loss
-        An instance of a class derived from the Loss base class for training.
+        The loss function to minimize during training.
+
+    verbose : bool, optional
+        Whether to display training progress. Default is `True`.
     """
     def __init__(self,
                  model: NeuralNetwork,
@@ -127,8 +133,8 @@ class Trainer:
 
     def setup_tensors(self, batch_size: int, is_training=False):
         for layer in self.model._layers:
-            layer.setup_tensors(batch_size, is_training=is_training)
+            layer.pre_setup_tensors(batch_size, is_training=is_training)
 
     def sync_after_backward(self, is_training = False):
         for layer in self.model._layers:
-            layer.sync_after_backward(is_training=is_training)
+            layer.post_setup_tensors(is_training=is_training)

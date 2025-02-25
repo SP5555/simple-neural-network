@@ -86,22 +86,22 @@ class NeuralNetwork:
         self.A.assign(np.array(input).T)
 
         # setup internal tensors
-        self.setup_tensors(current_batch_size, is_training=False)
+        self.pre_setup_internal_tensors(current_batch_size, is_training=False)
 
         # forward pass
         self.output.forward()
 
         # post updates
-        self.sync_after_backward(is_training=True)
+        self.post_setup_internal_tensors(is_training=True)
 
         if raw_ndarray_output:
             return self.output.evaluate()
         return self.output.evaluate().T.tolist() # vanilla list, not np.ndarray
 
-    def setup_tensors(self, batch_size: int, is_training = False):
+    def pre_setup_internal_tensors(self, batch_size: int, is_training = False):
         for layer in self._layers:
-            layer.setup_tensors(batch_size, is_training=is_training)
+            layer.pre_setup_tensors(batch_size, is_training=is_training)
 
-    def sync_after_backward(self, is_training = False):
+    def post_setup_internal_tensors(self, is_training = False):
         for layer in self._layers:
-            layer.sync_after_backward(is_training=is_training)
+            layer.post_setup_tensors(is_training=is_training)
