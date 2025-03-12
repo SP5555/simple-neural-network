@@ -91,18 +91,24 @@ To create a neural network with customizable layer configurations:
 * `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
 
 **Example 1**: A network with 4 input neurons, 6 hidden neurons, and 2 output neurons.
-Leaky Relu activation in hidden layer and sigmoid activation in final layer, SGD optimizer and BCE Loss function
+
+Uses **Leaky ReLU** activation in the hidden layer and **Sigmoid** activation in the final layer.
 ```python
 nn = NeuralNetwork(layers=[
         Dense(6, activation=LeakyReLU()),
         Dense(2, activation=Sigmoid()),
-    ],
-    loss_function=BCE(),
-    optimizer=SGD(learn_rate=0.02)
+    ]
 )
 nn.build(input_size=4)
 ```
-**Example 2**: added decaying rates and dropout layer
+Then a trainer is built for the `nn` using **SGD** optimizer and **BCE** Loss function:
+```python
+trainer = Trainer(nn,
+                  loss_function=BCE(),
+                  optimizer=SGD(learn_rate=0.02)
+)
+```
+**Example 2**: added decaying rates and a **Dropout** layer
 ```python
 nn = NeuralNetwork(
     layers=[
@@ -115,14 +121,20 @@ nn = NeuralNetwork(
     optimizer=Momentum(learn_rate=0.05, momentum=0.75)
 )
 nn.build(input_size=4)
+trainer = Trainer(nn,
+                  loss_function=Huber(delta=1.0), # for regression tasks
+                  optimizer=Momentum(learn_rate=0.05, momentum=0.75)
+)
 ```
-*Note: `build(input_size)` must be called **before** training or inference to initialize layers and compile the computation graph.*
+*Note: `build(input_size)` must be called before training or inference to initialize layers and compile the computation graph.*
+
+*The `Trainer` will automatically connect the loss function to the model's output and handle gradient propagation during training.*
 
 
 ### Training
 To train a network with input and output data:
 ```python
-nn.train(
+trainer.train(
 	input_list=input_train_list,
 	output_list=output_train_list,
 	epoch=1000,
@@ -172,11 +184,13 @@ nn = NeuralNetwork(
         Dropout(dropout_rate=0.4),
         Dense(12, activation=Tanh(),    weight_decay=0.001),
         Dense(3,  activation=Sigmoid(), weight_decay=0.001)
-    ],
-    loss_function=BCE(),
-    optimizer=Momentum(learn_rate=0.04, momentum=0.75)
+    ]
 )
 nn.build(input_size=4)
+trainer = Trainer(nn,
+                  loss_function=BCE(),
+                  optimizer=Momentum(learn_rate=0.04, momentum=0.75)
+)
 ```
 ```
 Detected Sigmoid in the last layer. Running accuracy check for multilabel.
@@ -213,11 +227,13 @@ nn = NeuralNetwork(
         Dense(12, activation=Swish(),   weight_decay=0.001),
         Dropout(dropout_rate=0.4),
         Dense(3,  activation=Softmax(), weight_decay=0.001)
-    ],
-    loss_function=CCE(),
-    optimizer=Adam(learn_rate=0.02)
+    ]
 )
 nn.build(input_size=6)
+trainer = Trainer(nn,
+                  loss_function=CCE(),
+                  optimizer=Adam(learn_rate=0.02)
+)
 ```
 ```
 Detected Softmax in the last layer. Running accuracy check for multiclass.
@@ -258,10 +274,12 @@ nn = NeuralNetwork(
         Dropout(dropout_rate=0.4),
         Dense(3,  activation=Linear(), weight_decay=0.001)
     ],
-    loss_function=Huber(delta=1.0),
-    optimizer=Adam(learn_rate=0.01)
 )
 nn.build(input_size=4)
+trainer = Trainer(nn,
+                  loss_function=Huber(delta=1.0),
+                  optimizer=Adam(learn_rate=0.01)
+)
 ```
 ```
 Detected Linear in the last layer. Running accuracy check for regression.

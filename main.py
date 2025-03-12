@@ -55,9 +55,9 @@ def main():
     showcase_i,       showcase_o        = data_generator.generate(16, problem_type)
 
     trainer.train(input_list=input_train_list,
-             output_list=output_train_list,
-             epoch=2000,
-             batch_size=2)
+                  output_list=output_train_list,
+                  epoch=2000,
+                  batch_size=2)
     # nn.utils.inspect_weights_and_biases()
 
     nn.metrics.check_accuracy(test_input=input_test_list, test_output=output_test_list)
