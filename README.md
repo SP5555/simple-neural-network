@@ -116,9 +116,7 @@ nn = NeuralNetwork(
         Dense(12, activation=Swish(),  weight_decay=0.002),
         Dropout(dropout_rate=0.2),
         Dense(3,  activation=Linear(), weight_decay=0.002)
-    ],
-    loss_function=Huber(delta=1.0), # for regression tasks
-    optimizer=Momentum(learn_rate=0.05, momentum=0.75)
+    ]
 )
 nn.build(input_size=4)
 trainer = Trainer(nn,
