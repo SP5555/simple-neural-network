@@ -47,7 +47,7 @@ class NeuralNetwork:
         - Any attempt to train or run the network without calling this first will result in errors.
         """
         self.input_size = input_size
-        self.A: Tensor = Tensor(np.zeros((self.input_size, 1)), require_grad=False)
+        self.A: Tensor = Tensor(np.zeros((self.input_size, 1)), requires_grad=False)
 
         A = self.A
         n = self.input_size

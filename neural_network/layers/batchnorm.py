@@ -45,7 +45,7 @@ class BatchNorm(Layer):
         self.neuron_count = None
 
         self._momentum = momentum
-        self._epsilon = Tensor(epsilon, require_grad=False)
+        self._epsilon = Tensor(epsilon, requires_grad=False)
 
     def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
 
@@ -57,18 +57,18 @@ class BatchNorm(Layer):
         self._beta = Tensor(np.zeros((self.neuron_count, 1))) # Shift
 
         # running averages for inference
-        self._running_mean = Tensor(np.zeros((self.neuron_count, 1)), require_grad=False)
-        self._running_vari = Tensor(np.ones((self.neuron_count, 1)), require_grad=False)
+        self._running_mean = Tensor(np.zeros((self.neuron_count, 1)), requires_grad=False)
+        self._running_vari = Tensor(np.ones((self.neuron_count, 1)), requires_grad=False)
 
         # mean and variance for training
         # considered as constants within a given forward pass
         # therefore, don't require gradients
-        self._batch_mean = Mean(A, require_grad=False)
-        self._batch_vari = Variance(A, require_grad=False)
+        self._batch_mean = Mean(A, requires_grad=False)
+        self._batch_vari = Variance(A, requires_grad=False)
 
         # flags
-        self._train_flag = Tensor(0.0, require_grad=False)
-        self._infer_flag = Tensor(0.0, require_grad=False)
+        self._train_flag = Tensor(0.0, requires_grad=False)
+        self._infer_flag = Tensor(0.0, requires_grad=False)
 
         # ===== expression construction =====
 

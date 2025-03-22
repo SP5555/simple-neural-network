@@ -45,8 +45,8 @@ class Dropout(Layer):
         self._tmp_batch_size = None
 
         # auto-diff tensor objects
-        self._mask = Tensor(1.0, require_grad=False)
-        self._rescaler = Tensor(1.0, require_grad=False)
+        self._mask = Tensor(1.0, requires_grad=False)
+        self._rescaler = Tensor(1.0, requires_grad=False)
 
         # ===== expression construction =====
 

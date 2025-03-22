@@ -55,7 +55,7 @@ class Trainer:
         self.verbose = verbose
 
         # ===== Connect Loss at the end of Computation Graph =====
-        self.output_target: Tensor = Tensor(np.zeros((self.model.output_size, 1)), require_grad=False)
+        self.output_target: Tensor = Tensor(np.zeros((self.model.output_size, 1)), requires_grad=False)
         self.loss_func.build_expression(self.model.output, self.output_target)
         PrintUtils.print_info(f"[{self.__class__.__name__}] Computation Graph Compiled.")
 

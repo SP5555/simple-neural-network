@@ -77,7 +77,7 @@ class ReLU(Activation):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        zero = Tensor(0.0, require_grad=False)
+        zero = Tensor(0.0, requires_grad=False)
         self.expression = Maximum(Z, zero)
 
 class LeakyReLU(Activation):
@@ -85,8 +85,8 @@ class LeakyReLU(Activation):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        zero = Tensor(0.0, require_grad=False)
-        neg_slope = Tensor(0.01, require_grad=False)
+        zero = Tensor(0.0, requires_grad=False)
+        neg_slope = Tensor(0.01, requires_grad=False)
         Z_p = Maximum(Z, zero)
         Z_n = Minimum(Z, zero)
         self.expression = Z_p + (neg_slope * Z_n)  # Leaky ReLU formula
@@ -98,7 +98,7 @@ class PReLU(Activation):
                          alpha_constraints=(0.001, 0.1))
 
     def build_expression(self, Z: Tensor):
-        zero = Tensor(0.0, require_grad=False)
+        zero = Tensor(0.0, requires_grad=False)
         Z_p = Maximum(Z, zero)
         Z_n = Minimum(Z, zero)
         self.expression = Z_p + (self._alpha * Z_n)
@@ -108,7 +108,7 @@ class Softplus(Activation):
         super().__init__()
 
     def build_expression(self, Z: Tensor):
-        one = Tensor(1.0, require_grad=False)
+        one = Tensor(1.0, requires_grad=False)
         self.expression = Log(one + Exp(Z))
 
 class Swish_Fixed(Activation):
