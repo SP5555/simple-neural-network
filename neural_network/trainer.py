@@ -56,7 +56,7 @@ class Trainer:
 
         # ===== Connect Loss at the end of Computation Graph =====
         self.output_target: Tensor = Tensor(np.zeros((self.model.output_size, 1)), requires_grad=False)
-        self.loss_func.build_expression(self.model.output, self.output_target)
+        self.loss_func.build_expression(self.output_target, self.model.output)
         PrintUtils.print_info(f"[{self.__class__.__name__}] Computation Graph Compiled.")
 
         PrintUtils.print_info(f"[{self.__class__.__name__}] Trainer initialized.")
@@ -82,15 +82,21 @@ class Trainer:
         input_ndarray = np.array(input_list)
         output_ndarray = np.array(output_list)
 
-        for _ in range(epoch):
-            # pick random candidates as train data in each epoch
-            indices = np.random.choice(len(input_list), size=batch_size, replace=False)
-            i_batch = input_ndarray[indices]
-            o_batch = output_ndarray[indices]
+        data_size = len(input_ndarray)
 
-            self.train_step(i_batch, o_batch)
+        for ep in range(epoch):
+            indices = np.random.permutation(data_size)
+            shuffled_inputs = input_ndarray[indices]
+            shuffled_outputs = output_ndarray[indices]
 
-            self.print_progress(_+1, epoch)
+            for start in range(0, data_size, batch_size):
+                end = start + batch_size
+                i_batch = shuffled_inputs[start:end]
+                o_batch = shuffled_outputs[start:end]
+
+                self.train_step(i_batch, o_batch)
+
+            self.print_progress(ep+1, epoch)
 
         PrintUtils.print_success("\n===== ===== ===== Training Completed ===== ===== =====")
 

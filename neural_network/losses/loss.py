@@ -21,6 +21,17 @@ class Loss:
         self.expression: Tensor = None
 
     def build_expression(self, A: Tensor, Y: Tensor):
+        """
+        Connects the predicted output tensor to the true target tensor and compiles the computation graph.
+
+        Parameters
+        ----------
+        A : Tensor
+            True targets.
+
+        Y : Tensor
+            Predicted targets.
+        """
         raise NotImplementedError
     
     def forward(self):
@@ -54,7 +65,7 @@ class BCE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
         bound = 1e-12
         A_c = Clip(A, bound, 1-bound)
-        one = Tensor(1.0, require_grad=False)
+        one = Tensor(1.0, requires_grad=False)
         
         self.expression = -(Y * Log(A_c) + (one - Y) * Log(one - A_c))
 

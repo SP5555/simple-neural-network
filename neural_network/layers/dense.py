@@ -1,10 +1,10 @@
 import numpy as np
 from ..activations.activation import Activation
 from ..auto_diff.auto_diff_reverse import Tensor, Matmul
-from ..common import PrintUtils, ParamDict, InputValidationError
-from .layer import Layer
+from ..common import ParamDict, InputValidationError
+from .regularizablelayer import RegularizableLayer
 
-class Dense(Layer):
+class Dense(RegularizableLayer):
     """
     Dense Layer
     =====
@@ -17,7 +17,7 @@ class Dense(Layer):
         Number of neurons in this layer.
 
     use_bias : bool, optional
-        Whether to include a bias term (`B`) in the layer.  
+        Whether to include a bias term (`B`) in the layer.
         Default is `True`. If set to `False`, the layer performs `Z = W*A` without a bias shift.
 
     activation : Activation, optional
@@ -27,30 +27,20 @@ class Dense(Layer):
 
     weight_decay : float, optional
         L2 regularization strength for the weights.
-        Default is `0.0`, meaning no regularization.
+        If not defined, it will use the global `weight_decay` value 
+        defined in the `NeuralNetwork` class level.
     """
     def __init__(self,
                  neuron_count: int,
-                 use_bias: bool         = True,
-                 activation: Activation = None,
-                 weight_decay: float    = 0.0):
+                 use_bias: bool             = True,
+                 activation: Activation     = None,
+                 weight_decay: float | None = None
+                 ):
         
-        super().__init__()
-
         if neuron_count == 0:
             raise InputValidationError("A layer can't have 0 output (0 neurons).")
 
-        # L2 Regularization Strength
-        # low reg strength -> cook in class, and fail in exam; overfit
-        # high reg strength -> I am dumb dumb, can't learn; underfit
-        # Large weights and biases will are penalized more aggressively than small ones
-        # Don't set it too large, at most 0.01 (unless you know what you're doing)
-        #     regularized_loss     = parameter_loss     + 1/2 * L2_lambda * parameter^2
-        #     regularized_gradient = parameter_gradient +       L2_lambda * parameter
-        if weight_decay < 0.0:
-            raise InputValidationError("Regularization Strength can't be negative.")
-        if weight_decay > 0.01:
-            PrintUtils.print_warning(f"Warning: Regularization Strength {weight_decay:.3f} is strong. Consider keeping it less than 0.01")
+        super().__init__(weight_decay=weight_decay)
 
         self.input_size = None
         self.neuron_count = neuron_count
@@ -60,11 +50,12 @@ class Dense(Layer):
         self._is_linear = True if activation is None else False
         self._activation = activation
 
-        self._L2_lambda = weight_decay
-
-    def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
+    def build(self, A: Tensor, input_size: int, weight_decay: float | None = None) -> tuple[Tensor, int]:
 
         self.input_size = input_size
+
+        # L2 lambda override
+        self._L2_lambda = weight_decay if self.weight_decay is None else self.weight_decay
 
         # tmp vars
         self._tmp_batch_size = None

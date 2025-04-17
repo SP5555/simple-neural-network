@@ -2,6 +2,7 @@ import numpy as np
 from .auto_diff.auto_diff_reverse import Tensor
 from .common import Metrics, Utils, PrintUtils, requires_build, InputValidationError
 from .layers.layer import Layer
+from .layers.regularizablelayer import RegularizableLayer
 
 class NeuralNetwork:
     """
@@ -15,9 +16,13 @@ class NeuralNetwork:
     ----------
     layers : list[Layer]
         List of supported layer classes. Minimum of one layer required.
+
+    weight_decay : float
+        Global weight decay parameter used as default for all compatible layers unless overridden
     """
     def __init__(self,
-                 layers: list[Layer]) -> None:
+                 layers: list[Layer],
+                 weight_decay: float | None = None) -> None:
         
         self.utils = Utils(self)
         self.metrics = Metrics(self)
@@ -25,10 +30,20 @@ class NeuralNetwork:
         # ===== ===== INPUT VALIDATION START ===== =====
         if not layers: # if list is empty
             raise InputValidationError("Empty layer configuration not possible.")
+        
+        if weight_decay is not None:
+            if weight_decay < 0.0:
+                raise InputValidationError("Regularization Strength can't be negative.")
+            if weight_decay > 0.01:
+                PrintUtils.print_warning(f"[{self.__class__.__name__}] Warning: " + 
+                                        f"Regularization Strength {weight_decay:.3f} is strong. " +
+                                        "Consider keeping it less than 0.01")
         # ===== ===== INPUT VALIDATION END ===== =====
         
         self._layers: list[Layer] = layers
         self._layer_count: int = len(layers)
+
+        self._weight_decay: float = weight_decay
 
         PrintUtils.print_info(f"[{self.__class__.__name__}] Neural network initialized.")
 
@@ -53,7 +68,10 @@ class NeuralNetwork:
         n = self.input_size
 
         for layer in self._layers:
-            A, n = layer.build(A, n)
+            if isinstance(layer, RegularizableLayer):
+                A, n = layer.build(A, n, self._weight_decay)
+            else:
+                A, n = layer.build(A, n)
 
         self.output = A
         self.output_size = n

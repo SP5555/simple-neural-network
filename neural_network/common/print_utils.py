@@ -21,7 +21,7 @@ class PrintUtils:
     @staticmethod
     def print_progress_bar(current, total):
         p: float = current / total
-        print(f"Progress: [{'='*int(30*p):<30}] {current:>5} / {total} [{p:>6.2f}%]  ", end='\r')
+        print(f"Progress: [{'='*int(30*p):<30}] {current:>5} / {total} [{p*100:>6.2f}%]  ", end='\r')
 
     @staticmethod
     def print_noop(*args, **kwargs):

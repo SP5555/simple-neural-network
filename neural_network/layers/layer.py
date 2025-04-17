@@ -35,14 +35,6 @@ class Layer:
         input_size : int
             The number of input features expected by this layer.
 
-        is_first : bool, optional
-            Whether this is the first layer in the network. Certain layers (e.g., input layers) 
-            may require special handling. Default is `False`.
-
-        is_final : bool, optional
-            Whether this is the last layer in the network. Some layers (e.g., output layers) 
-            may require special handling. Default is `False`.
-
         Returns
         -------
         tuple[Tensor, int]

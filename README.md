@@ -87,49 +87,64 @@ To create a neural network with customizable layer configurations:
 
 **Parameters**
 * `layers`: List of supported layer classes.
-* `loss_function`: Loss function for training (E.g., `MSE`, `BCE`)
-* `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
 
-**Example 1**: A network with 4 input neurons, 6 hidden neurons, and 2 output neurons.
-
-Uses **Leaky ReLU** activation in the hidden layer and **Sigmoid** activation in the final layer.
+**Example 1**: A network with 4 input neurons, 6 hidden neurons, and 2 output neurons. Uses **Leaky ReLU** activation in the hidden layer and **Sigmoid** activation in the final layer.
 ```python
-nn = NeuralNetwork(layers=[
+nn = NeuralNetwork(
+    layers=[
         Dense(6, activation=LeakyReLU()),
         Dense(2, activation=Sigmoid()),
     ]
 )
 nn.build(input_size=4)
 ```
-Then a trainer is built for the `nn` using **SGD** optimizer and **BCE** Loss function:
-```python
-trainer = Trainer(nn,
-                  loss_function=BCE(),
-                  optimizer=SGD(learn_rate=0.02)
-)
-```
-**Example 2**: added decaying rates and a **Dropout** layer
+
+**Example 2**: added decaying rates and a **Dropout** layer.
 ```python
 nn = NeuralNetwork(
     layers=[
-        Dense(12, activation=PReLU(),  weight_decay=0.002),
-        Dense(12, activation=Swish(),  weight_decay=0.002),
+        Dense(12, activation=PReLU()),
+        Dense(12, activation=Swish()),
         Dropout(dropout_rate=0.2),
-        Dense(3,  activation=Linear(), weight_decay=0.002)
-    ]
+        # declaring weight for individual layers
+        # overrides the global weight decay
+        Dense(3,  activation=Linear(), weight_decay=0.001)
+    ],
+    weight_decay=0.002 # global weight decay
 )
 nn.build(input_size=4)
-trainer = Trainer(nn,
-                  loss_function=Huber(delta=1.0), # for regression tasks
-                  optimizer=Momentum(learn_rate=0.05, momentum=0.75)
-)
 ```
 *Note: `build(input_size)` must be called before training or inference to initialize layers and compile the computation graph.*
 
-*The `Trainer` will automatically connect the loss function to the model's output and handle gradient propagation during training.*
 
 
 ### Training
+Create a trainer instance:
+
+**parameters**
+* `model`: an instance of `NeuralNetwork`
+* `loss_function`: Loss function for training (E.g., `MSE`, `BCE`)
+* `optimizer`: an instance of a derived optimizer class (E.g., `SGD`, `Momentum`)
+
+**Example 1**: trainer with **SGD** optimizer and **BCE** Loss function.
+```python
+trainer = Trainer(
+    nn,
+    loss_function=BCE(),
+    optimizer=SGD(learn_rate=0.02)
+)
+```
+**Example 2**: for regression tasks with **Momentum** optimizer and **Huber** Loss function.
+```python
+trainer = Trainer(
+    nn,
+    loss_function=Huber(delta=1.0), # for regression tasks
+    optimizer=Momentum(learn_rate=0.05, momentum=0.75)
+)
+```
+*The `Trainer` will automatically connect the loss function to the model's output and handle gradient propagation during training.*
+
+
 To train a network with input and output data:
 ```python
 trainer.train(
@@ -169,7 +184,7 @@ nn.metrics.compare_predictions(input=data_i, output=data_o)
 ## Performance & Testing
 This simple network delivers excellent results on basic regression and classification problems. Below is an example demonstrating its effectiveness.
 
-The **synthetic** data (artificial data created using algorithms) is used to test the model's ability to predict outcomes based on the input features. All tests were conducted with **40,000 training datasets**. The performance is then evaluated on **20,000 unseen test datasets** generated using the same method (*the predictions for 16 unseen test datasets are compared with the expected outputs below*). [How is synthetic data generated?](#synthetic-data-generation)
+The **synthetic** data (artificial data created using algorithms) is used to test the model's ability to predict outcomes based on the input features. All tests were conducted with **4,000 training datasets**. The performance is then evaluated on **2,000 unseen test datasets** generated using the same method (*the predictions for 16 unseen test datasets are compared with the expected outputs below*). [How is synthetic data generated?](#synthetic-data-generation)
 
 ### Multilabel Classification Performance
 **Multilabel classification** is where each input can belong to multiple classes simultaneously. This model uses **Sigmoid** activation in the output layer and **binary cross-entropy (BCE)** loss for training.
@@ -177,22 +192,24 @@ The **synthetic** data (artificial data created using algorithms) is used to tes
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        Dense(10, activation=Tanh(),    weight_decay=0.001),
-        Dense(16, activation=Tanh(),    weight_decay=0.001),
+        Dense(10, activation=Tanh()),
+        Dense(16, activation=Tanh()),
         Dropout(dropout_rate=0.4),
-        Dense(12, activation=Tanh(),    weight_decay=0.001),
-        Dense(3,  activation=Sigmoid(), weight_decay=0.001)
-    ]
+        Dense(12, activation=Tanh()),
+        Dense(3,  activation=Sigmoid())
+    ],
+    weight_decay=0.001
 )
 nn.build(input_size=4)
-trainer = Trainer(nn,
-                  loss_function=BCE(),
-                  optimizer=Momentum(learn_rate=0.04, momentum=0.75)
+trainer = Trainer(
+    nn,
+    loss_function=BCE(),
+    optimizer=Momentum(learn_rate=0.04, momentum=0.75)
 )
 ```
 ```
 Detected Sigmoid in the last layer. Running accuracy check for multilabel.
-Accuracy on 20,000 samples
+Accuracy on 2,000 samples
 Accuracy per output:    91.20%   91.09%   93.57%
           Expected |          Predicted | Input Data
   0.00  0.00  1.00 |   0.01  0.28  0.81 |   2.38 -0.00 -2.95  0.73
@@ -219,23 +236,25 @@ Accuracy per output:    91.20%   91.09%   93.57%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        Dense(12, activation=PReLU(),   weight_decay=0.001),
-        Dense(16, activation=Tanh(),    weight_decay=0.001),
+        Dense(12, activation=PReLU()),
+        Dense(16, activation=Tanh()),
         Dropout(dropout_rate=0.4, batch_wise=True),
-        Dense(12, activation=Swish(),   weight_decay=0.001),
+        Dense(12, activation=Swish()),
         Dropout(dropout_rate=0.4),
-        Dense(3,  activation=Softmax(), weight_decay=0.001)
-    ]
+        Dense(3,  activation=Softmax())
+    ],
+    weight_decay=0.001
 )
 nn.build(input_size=6)
-trainer = Trainer(nn,
-                  loss_function=CCE(),
-                  optimizer=Adam(learn_rate=0.02)
+trainer = Trainer(
+    nn,
+    loss_function=CCE(),
+    optimizer=Adam(learn_rate=0.02)
 )
 ```
 ```
 Detected Softmax in the last layer. Running accuracy check for multiclass.
-Accuracy on 20,000 samples
+Accuracy on 2,000 samples
 Accuracy per output:    95.06%   91.16%   92.04%
 Overall categorization accuracy:    92.03%
           Expected |          Predicted | Input Data
@@ -265,41 +284,42 @@ Overall categorization accuracy:    92.03%
 # Model configuration
 nn = NeuralNetwork(
     layers=[
-        Dense(12, activation=PReLU(),  weight_decay=0.001),
-        Dense(16, activation=Tanh(),   weight_decay=0.001),
+        Dense(12, activation=PReLU()),
+        Dense(16, activation=Tanh()),
+        BatchNorm(),
         Dropout(dropout_rate=0.4),
-        Dense(12, activation=Swish(),  weight_decay=0.001),
-        Dropout(dropout_rate=0.4),
-        Dense(3,  activation=Linear(), weight_decay=0.001)
+        Dense(12, activation=Swish()),
+        Dense(3,  activation=Linear())
     ],
 )
 nn.build(input_size=4)
-trainer = Trainer(nn,
-                  loss_function=Huber(delta=1.0),
-                  optimizer=Adam(learn_rate=0.01)
+trainer = Trainer(
+    nn,
+    loss_function=Huber(delta=2.5),
+    optimizer=Adam(learn_rate=0.01)
 )
 ```
 ```
 Detected Linear in the last layer. Running accuracy check for regression.
-Mean Squared Error on 20,000 samples
-Mean Squared Error per output:    19.04   13.44   11.15
+Mean Squared Error on 2,000 samples
+Mean Squared Error per output:    11.08    8.42    4.48
           Expected |          Predicted | Input Data
-  4.25 -7.45  1.60 |   3.76 -6.07 -0.61 |  -0.41  0.51 -1.59  1.50
--12.06 -2.77 -2.61 |  -8.52 -0.64 -4.84 |   0.14 -2.69  0.87 -0.00
- 15.87-15.17 -7.63 |   9.25 -9.91 -3.47 |  -1.14  2.17 -0.89 -0.22
- 18.22  4.46  5.15 |  11.65  3.30  2.53 |   1.20  3.26 -0.61  2.35
- 14.30-18.07 -5.33 |  11.98-15.76 -5.73 |  -2.15  1.91 -2.22  0.94
-  5.68 -0.11 -0.52 |   5.23 -1.24 -0.21 |   0.55  1.64 -0.52  0.00
- -1.62 -5.27  4.10 |  -2.07 -2.02  1.21 |  -0.69 -0.94 -2.09  0.20
-  9.10-16.90  1.01 |   5.79-10.57 -1.79 |  -2.42  0.26 -2.21  2.93
-  3.13 -0.77  2.80 |   1.70  0.31  2.13 |   0.44  0.24 -0.53  1.75
--10.35  4.14 10.78 |  -8.42  4.41  6.48 |   0.85 -1.91 -2.07  1.77
- 17.24-20.91-12.06 |  10.50-16.79 -7.19 |  -1.39  2.44 -2.03 -1.21
- -8.25 -1.68 14.72 |  -8.15  2.05  6.79 |  -1.00 -2.90 -1.80  2.77
-  8.87 11.83  3.79 |   9.57 10.02  4.66 |   1.90 -0.22  1.72  1.41
- -5.83  0.29 -0.77 |  -3.12  0.24 -0.25 |   0.72 -0.09 -1.52 -0.71
--12.48  3.05  4.13 |  -9.91  4.27  3.99 |  -0.65 -3.05 -1.95 -1.19
--14.17-10.39 -3.07 | -10.46 -5.07 -4.39 |  -1.82 -2.70  0.47  0.68
+-11.72-16.34  2.09 | -15.57-10.59  2.61 |  -3.38  0.01 -1.44  2.86
+ -7.68  2.02  0.32 |  -8.75  5.31 -0.55 |   0.72 -1.09 -2.19 -3.32
+ -9.34 15.14  2.49 |  -5.75 12.49  1.81 |   2.35  0.06  1.92  0.71
+  3.32-13.02 -9.56 |   2.96-11.97 -9.18 |  -1.35  0.89 -1.61 -3.08
+ 10.08  5.93  4.09 |  12.10  8.26  6.45 |   0.14  2.12  0.85  0.28
+ -5.01 -8.27 -6.09 |  -4.64 -7.49 -6.66 |  -2.10 -1.15 -0.79 -2.10
+  5.47 -1.34  0.42 |   9.19 -4.40 -2.19 |   1.20  0.36 -2.47 -0.80
+  8.95-11.25 -0.28 |  14.35 -7.06  0.93 |  -1.39  3.19 -0.77  2.70
+-12.50  6.88 -7.94 | -10.31  4.32 -7.32 |   0.46 -0.70  2.33 -1.54
+ 10.29 -2.65 -5.19 |  11.87 -2.09 -3.83 |   2.22  1.64 -1.53 -1.47
+  5.59-10.56 -2.58 |   8.12-10.48 -3.64 |  -1.28  1.51 -0.83  0.61
+ -6.47 -5.90 -6.22 |  -3.36 -7.41 -5.43 |  -1.19 -1.63  1.56  0.77
+  6.83 -8.93 -3.85 |  10.41 -6.32 -3.68 |   0.65  1.01 -2.04 -0.44
+  5.73-11.66 -1.83 |  12.42-10.80 -4.17 |   0.63  0.84 -3.36  0.71
+-17.51  2.04  5.06 | -17.70  4.08  2.89 |  -0.97 -3.47 -1.69 -1.39
+-12.46 -9.34 -2.38 | -16.82 -8.20  2.31 |  -3.21 -2.15 -1.78 -2.03
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 

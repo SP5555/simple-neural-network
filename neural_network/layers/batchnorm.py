@@ -1,9 +1,9 @@
 import numpy as np
 from ..auto_diff.auto_diff_reverse import Tensor, Mean, Variance, Sqrt
 from ..common import PrintUtils, ParamDict, InputValidationError
-from .layer import Layer
+from .regularizablelayer import RegularizableLayer
 
-class BatchNorm(Layer):
+class BatchNorm(RegularizableLayer):
     """
     Batch Normalization Layer
     =====
@@ -24,10 +24,16 @@ class BatchNorm(Layer):
     epsilon : float, optional
         Small constant to prevent division by zero.
         Default is `1e-5`.
+
+    weight_decay : float, optional
+        L2 regularization strength for the weights.
+        If not defined, it will use the global `weight_decay` value 
+        defined in the `NeuralNetwork` class level.
     """
     def __init__(self,
-                 momentum: float = 0.9,
-                 epsilon: float = 1e-5
+                 momentum: float            = 0.9,
+                 epsilon: float             = 1e-5,
+                 weight_decay: float | None = None
                  ):
 
         if momentum < 0.0:
@@ -37,9 +43,11 @@ class BatchNorm(Layer):
         if momentum >= 0.95:
             PrintUtils.print_warning(f"Warning: momentum = {momentum:.3f} may cause strong \"gliding\" behavior. " +
                                      "Consider keeping it less than 0.95")
-            
+
         if epsilon <= 1e-14 or epsilon >= 1e-3:
             raise InputValidationError("Keep epsilon between 1e-14 and 1e-3.")
+
+        super().__init__(weight_decay=weight_decay)
 
         self.input_size = None
         self.neuron_count = None
@@ -47,10 +55,13 @@ class BatchNorm(Layer):
         self._momentum = momentum
         self._epsilon = Tensor(epsilon, requires_grad=False)
 
-    def build(self, A: Tensor, input_size: int) -> tuple[Tensor, int]:
+    def build(self, A: Tensor, input_size: int, weight_decay: float | None = None) -> tuple[Tensor, int]:
 
         self.input_size = input_size
         self.neuron_count = input_size
+        
+        # L2 lambda override
+        self._L2_lambda = weight_decay if self.weight_decay is None else self.weight_decay
 
         # learnable parameters
         self._gamma = Tensor(np.ones((self.neuron_count, 1))) # Scale
@@ -101,7 +112,9 @@ class BatchNorm(Layer):
 
     def prepare_grads(self):
         self._gamma_grad = np.sum(self._gamma.grad, axis=1, keepdims=True) / self._tmp_batch_size
+        self._gamma_grad += self._gamma.tensor * self._L2_lambda
         self._beta_grad = np.sum(self._beta.grad, axis=1, keepdims=True) / self._tmp_batch_size
+        self._beta_grad += self._beta.tensor * self._L2_lambda
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [
