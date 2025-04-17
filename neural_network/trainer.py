@@ -111,7 +111,7 @@ class Trainer:
             self.output_target.assign(o_batch.T)
 
             # setup internal tensors
-            self.setup_tensors(current_batch_size, is_training=True)
+            self.pre_setup_tensors(current_batch_size, is_training=True)
 
             # FORWARD PASS: calculate forward values (LITTLE MAGIC)
             # auto diff forward call
@@ -125,7 +125,7 @@ class Trainer:
             self.loss_func.backward(seed)
 
             # post updates
-            self.sync_after_backward(is_training=True)
+            self.post_setup_tensors(is_training=True)
 
             # collect params to pass into optimizer
             weights_and_grads = []
@@ -137,10 +137,10 @@ class Trainer:
             # OPTIMIZATION: apply gradients
             self.optimizer.step(weights_and_grads)
 
-    def setup_tensors(self, batch_size: int, is_training=False):
+    def pre_setup_tensors(self, batch_size: int, is_training=False):
         for layer in self.model._layers:
             layer.pre_setup_tensors(batch_size, is_training=is_training)
 
-    def sync_after_backward(self, is_training = False):
+    def post_setup_tensors(self, is_training = False):
         for layer in self.model._layers:
             layer.post_setup_tensors(is_training=is_training)

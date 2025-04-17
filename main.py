@@ -53,13 +53,13 @@ def main():
     data_generator = DataGenerator()
     problem_type = "regression"
 
-    input_train_list, output_train_list = data_generator.generate(4000, problem_type)
-    input_test_list,  output_test_list  = data_generator.generate(2000, problem_type)
+    input_train_list, output_train_list = data_generator.generate(2000, problem_type)
+    input_test_list,  output_test_list  = data_generator.generate(1000, problem_type)
     showcase_i,       showcase_o        = data_generator.generate(16, problem_type)
 
     trainer.train(input_list=input_train_list,
                   output_list=output_train_list,
-                  epoch=40,
+                  epoch=30,
                   batch_size=64)
     # nn.utils.inspect_weights_and_biases()
 

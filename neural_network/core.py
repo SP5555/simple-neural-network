@@ -17,8 +17,9 @@ class NeuralNetwork:
     layers : list[Layer]
         List of supported layer classes. Minimum of one layer required.
 
-    weight_decay : float
-        Global weight decay parameter used as default for all compatible layers unless overridden
+    weight_decay : float, optional
+        Global weight decay parameter used as default for all compatible layers unless overridden. \\
+        Default is `0.0`.
     """
     def __init__(self,
                  layers: list[Layer],
@@ -56,10 +57,17 @@ class NeuralNetwork:
         This function ensures that all layers are connected properly and constructs 
         the forward computation path only once, improving efficiency during training 
         and inference by avoiding redundant graph re-construction.
+        
+        Parameters
+        ----------
+        input_size : int
+            The number of input features (i.e., the size of the input vector to the first layer). \\
+            For example, use 4 if your dataset samples are shaped like (4,).
 
-        Notes:
+        Notes
+        -----
         - This function **must** be called before training or inference.
-        - Any attempt to train or run the network without calling this first will result in errors.
+        - Attempting to train or use the network without calling this first will raise an error.
         """
         self.input_size = input_size
         self.A: Tensor = Tensor(np.zeros((self.input_size, 1)), requires_grad=False)
@@ -104,22 +112,22 @@ class NeuralNetwork:
         self.A.assign(np.array(input).T)
 
         # setup internal tensors
-        self.pre_setup_internal_tensors(current_batch_size, is_training=False)
+        self.pre_setup_tensors(current_batch_size, is_training=False)
 
         # forward pass
         self.output.forward()
 
         # post updates
-        self.post_setup_internal_tensors(is_training=True)
+        self.post_setup_tensors(is_training=True)
 
         if raw_ndarray_output:
             return self.output.evaluate()
         return self.output.evaluate().T.tolist() # vanilla list, not np.ndarray
 
-    def pre_setup_internal_tensors(self, batch_size: int, is_training = False):
+    def pre_setup_tensors(self, batch_size: int, is_training = False):
         for layer in self._layers:
             layer.pre_setup_tensors(batch_size, is_training=is_training)
 
-    def post_setup_internal_tensors(self, is_training = False):
+    def post_setup_tensors(self, is_training = False):
         for layer in self._layers:
             layer.post_setup_tensors(is_training=is_training)

@@ -59,9 +59,13 @@ class BatchNorm(RegularizableLayer):
 
         self.input_size = input_size
         self.neuron_count = input_size
-        
+
         # L2 lambda override
-        self._L2_lambda = weight_decay if self.weight_decay is None else self.weight_decay
+        self._L2_lambda = (
+            self.weight_decay if self.weight_decay is not None  # layer-specific
+            else weight_decay if weight_decay is not None       # global
+            else 0.0
+        )
 
         # learnable parameters
         self._gamma = Tensor(np.ones((self.neuron_count, 1))) # Scale
