@@ -19,7 +19,7 @@ def main():
         weight_decay=0.001
     )
     nn.build(input_size=4)
-    trainer = Trainer(nn, loss_function=Huber(delta=2.5), optimizer=Adam(learn_rate=0.02))
+    trainer = Trainer(nn, loss_function=Huber(delta=2.5), optimizer=Adam(learn_rate=0.01))
 
     # MULTILABEL
     # nn = NeuralNetwork(
@@ -60,7 +60,8 @@ def main():
     trainer.train(input_list=input_train_list,
                   output_list=output_train_list,
                   epoch=30,
-                  batch_size=64)
+                  batch_size=64,
+                  show_loss=False)
     # nn.utils.inspect_weights_and_biases()
 
     nn.metrics.check_accuracy(test_input=input_test_list, test_output=output_test_list)

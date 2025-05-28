@@ -17,6 +17,10 @@ class PrintUtils:
     @staticmethod
     def print_success(message: str) -> None:
         print(f"{PrintUtils.GREEN}{message}{PrintUtils.RESET}")
+    
+    @staticmethod
+    def print_loss_msg(current, total, loss, decimal_place = 4):
+        print(f"Epoch: {current:>5} / {total} | Loss: {loss:>10.{decimal_place}f}")
 
     @staticmethod
     def print_progress_bar(current, total):

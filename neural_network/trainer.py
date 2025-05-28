@@ -65,7 +65,8 @@ class Trainer:
               input_list: list,
               output_list: list,
               epoch: int = 100,
-              batch_size: int = 32) -> None:
+              batch_size: int = 32,
+              show_loss: bool = False) -> None:
         if len(input_list) == 0 or len(output_list) == 0:
             raise InputValidationError("Datasets can't be empty.")
         if len(input_list) != len(output_list):
@@ -96,46 +97,61 @@ class Trainer:
 
                 self.train_step(i_batch, o_batch)
 
-            self.print_progress(ep+1, epoch)
+            if show_loss:
+                self.model.A.assign(input_ndarray.T)
+                self.output_target.assign(output_ndarray.T)
+                loss: float = self.forward_pass_loss_track(data_size, False)
+                PrintUtils.print_loss_msg(ep+1, epoch, loss)
+            else:
+                self.print_progress(ep+1, epoch)
 
         PrintUtils.print_success("\n===== ===== ===== Training Completed ===== ===== =====")
 
     def train_step(self, i_batch: np.ndarray, o_batch: np.ndarray):
 
-            current_batch_size = len(i_batch)
+        current_batch_size = len(i_batch)
+        self.model.A.assign(i_batch.T)
+        self.output_target.assign(o_batch.T)
 
-            # input features
-            self.model.A.assign(i_batch.T)
+        self.training_pass(current_batch_size, is_training=True)
 
-            # target output
-            self.output_target.assign(o_batch.T)
+        # collect params to pass into optimizer
+        weights_and_grads = []
+        for layer in self.model._layers:
+            layer.prepare_grads()
+            weights_and_grads.extend(layer._get_weights_and_grads())
+            layer.zero_grads()
 
-            # setup internal tensors
-            self.pre_setup_tensors(current_batch_size, is_training=True)
+        # OPTIMIZATION: apply gradients
+        self.optimizer.step(weights_and_grads)
 
-            # FORWARD PASS: calculate forward values (LITTLE MAGIC)
-            # auto diff forward call
-            # situates all tensors/computation nodes with their values
-            self.loss_func.forward()
+    # for loss tracking only
+    def forward_pass_loss_track(self, batch_size: int, is_training = False) -> float:
 
-            # BACKPROPAGATION: calculate gradients (BIG MAGIC)
-            # auto diff reverse mode backward call
-            # situates all tensors with their gradients
-            seed: np.ndarray = np.ones_like(self.output_target.tensor)
-            self.loss_func.backward(seed)
+        self.pre_setup_tensors(batch_size, is_training)
+        
+        self.loss_func.forward()
+        loss: float = np.mean(self.loss_func.expression.tensor)
 
-            # post updates
-            self.post_setup_tensors(is_training=True)
+        self.post_setup_tensors(is_training)
 
-            # collect params to pass into optimizer
-            weights_and_grads = []
-            for layer in self.model._layers:
-                layer.prepare_grads()
-                weights_and_grads.extend(layer._get_weights_and_grads())
-                layer.zero_grads()
+        return loss
 
-            # OPTIMIZATION: apply gradients
-            self.optimizer.step(weights_and_grads)
+    def training_pass(self, batch_size: int, is_training = False):
+
+        self.pre_setup_tensors(batch_size, is_training)
+
+        # FORWARD PASS: calculate forward values (LITTLE MAGIC)
+        # auto diff forward call
+        # situates all tensors/computation nodes with their values
+        self.loss_func.forward()
+
+        # BACKPROPAGATION: calculate gradients (BIG MAGIC)
+        # auto diff reverse mode backward call
+        # situates all tensors with their gradients
+        self.loss_func.backward(seed=np.ones_like(self.output_target.tensor))
+
+        self.post_setup_tensors(is_training)
 
     def pre_setup_tensors(self, batch_size: int, is_training=False):
         for layer in self.model._layers:

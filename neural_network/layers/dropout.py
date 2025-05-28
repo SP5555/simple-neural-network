@@ -30,6 +30,8 @@ class Dropout(Layer):
         if dropout_rate > 0.5:
             PrintUtils.print_warning(f"Dropout Probability of {dropout_rate} is too high. Consider less than 0.5")
 
+        super().__init__()
+
         self.input_size = None
         self.neuron_count = None
 

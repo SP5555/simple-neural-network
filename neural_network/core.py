@@ -107,24 +107,23 @@ class NeuralNetwork:
             raise InputValidationError("Input array size does not match the neural network.")
         
         current_batch_size = len(input)
-
-        # activation
         self.A.assign(np.array(input).T)
 
-        # setup internal tensors
-        self.pre_setup_tensors(current_batch_size, is_training=False)
-
-        # forward pass
-        self.output.forward()
-
-        # post updates
-        self.post_setup_tensors(is_training=True)
+        self.forward_pass(current_batch_size, is_training=False)
 
         if raw_ndarray_output:
             return self.output.evaluate()
         return self.output.evaluate().T.tolist() # vanilla list, not np.ndarray
 
-    def pre_setup_tensors(self, batch_size: int, is_training = False):
+    def forward_pass(self, batch_size: int, is_training = False):
+
+        self.pre_setup_tensors(batch_size, is_training)
+        
+        self.output.forward()
+
+        self.post_setup_tensors(is_training)
+
+    def pre_setup_tensors(self, batch_size: int, is_training=False):
         for layer in self._layers:
             layer.pre_setup_tensors(batch_size, is_training=is_training)
 

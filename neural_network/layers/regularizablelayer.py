@@ -36,6 +36,8 @@ class RegularizableLayer(Layer):
                                         f"Regularization Strength {weight_decay:.3f} is strong. " +
                                         "Consider keeping it less than 0.01")
 
+        super().__init__()
+
         self.weight_decay = weight_decay
 
     def build(self, A: Tensor, input_size: int, weight_decay: float | None) -> tuple[Tensor, int]:
