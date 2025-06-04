@@ -118,7 +118,6 @@ class BatchNorm(RegularizableLayer):
         self._gamma_grad = np.sum(self._gamma.grad, axis=1, keepdims=True) / self._tmp_batch_size
         self._gamma_grad += self._gamma.tensor * self._L2_lambda
         self._beta_grad = np.sum(self._beta.grad, axis=1, keepdims=True) / self._tmp_batch_size
-        self._beta_grad += self._beta.tensor * self._L2_lambda
 
     def _get_weights_and_grads(self) -> list[ParamDict]:
         params = [

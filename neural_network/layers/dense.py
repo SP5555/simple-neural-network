@@ -103,7 +103,6 @@ class Dense(RegularizableLayer):
         if self._use_bias:
 
             self._B_grad = np.sum(self._B.grad, axis=1, keepdims=True) / self._tmp_batch_size
-            self._B_grad += self._B.tensor * self._L2_lambda
 
         if not self._is_linear and self._activation.is_learnable:
 
