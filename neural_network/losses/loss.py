@@ -64,15 +64,15 @@ class Huber(Loss):
 class BCE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
         bound = 1e-12
-        A_c = Clip(A, bound, 1-bound)
+        Y_c = Clip(Y, bound, 1-bound)  # clip predictions, not true labels
         one = Tensor(1.0, requires_grad=False)
-        
-        self.expression = -(Y * Log(A_c) + (one - Y) * Log(one - A_c))
+
+        self.expression = -(A * Log(Y_c) + (one - A) * Log(one - Y_c))
 
 # ===== Multiclass/Categorial Cross Entropy =====
 class CCE(Loss):
     def build_expression(self, A: Tensor, Y: Tensor):
         bound = 1e-12
-        A_c = Clip(A, bound, 1-bound)
+        Y_c = Clip(Y, bound, 1-bound)  # clip predictions, not true labels
 
-        self.expression = -(Y * Log(A_c))
+        self.expression = -(A * Log(Y_c))

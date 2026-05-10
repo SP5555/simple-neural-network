@@ -184,7 +184,7 @@ nn.metrics.compare_predictions(input=data_i, output=data_o)
 ## Performance & Testing
 This simple network delivers excellent results on basic regression and classification problems. Below is an example demonstrating its effectiveness.
 
-The **synthetic** data (artificial data created using algorithms) is used to test the model's ability to predict outcomes based on the input features. All tests were conducted with **4,000 training datasets**. The performance is then evaluated on **2,000 unseen test datasets** generated using the same method (*the predictions for 16 unseen test datasets are compared with the expected outputs below*). [How is synthetic data generated?](#synthetic-data-generation)
+The **synthetic** data (artificial data created using algorithms) is used to test the model's ability to predict outcomes based on the input features. All tests were conducted with **2,000 training samples**. The performance is then evaluated on **1,000 unseen test samples** generated using the same method (*the predictions for 16 unseen samples are compared with the expected outputs below*). [How is synthetic data generated?](#synthetic-data-generation)
 
 ### Multilabel Classification Performance
 **Multilabel classification** is where each input can belong to multiple classes simultaneously. This model uses **Sigmoid** activation in the output layer and **binary cross-entropy (BCE)** loss for training.
@@ -204,30 +204,34 @@ nn.build(input_size=4)
 trainer = Trainer(
     nn,
     loss_function=BCE(),
-    optimizer=Momentum(learn_rate=0.04, momentum=0.75)
+    optimizer=Adam(learn_rate=0.02)
 )
 ```
 ```
 Detected Sigmoid in the last layer. Running accuracy check for multilabel.
-Accuracy on 2,000 samples
-Accuracy per output:    91.20%   91.09%   93.57%
+Multilabel Metrics on 1,000 samples  (threshold = 0.5)
+             Precision    Recall        F1
+  Label  1       0.9571    0.9494    0.9533
+  Label  2       0.9078    0.8917    0.8997
+  Label  3       0.9355    0.9591    0.9472
+  Exact Match (all labels correct): 80.60%
           Expected |          Predicted | Input Data
-  0.00  0.00  1.00 |   0.01  0.28  0.81 |   2.38 -0.00 -2.95  0.73
-  0.00  1.00  1.00 |   0.70  0.94  0.98 |  -3.00  3.82  3.97 -5.05
-  1.00  1.00  1.00 |   0.87  0.98  0.41 |  -2.82 -0.08 -4.99 -0.71
-  0.00  0.00  1.00 |   0.01  0.13  0.97 |  -1.97 -4.38  1.59  5.41
-  0.00  1.00  1.00 |   0.35  0.98  0.97 |  -5.20  4.98  4.66  0.55
-  0.00  1.00  1.00 |   0.72  0.95  0.97 |  -2.91  5.77  4.59 -3.67
-  0.00  0.00  1.00 |   0.01  0.12  0.95 |  -3.01 -2.03  3.16 -2.76
-  0.00  0.00  1.00 |   0.02  0.08  0.98 |  -4.50 -5.34  4.79  4.15
-  1.00  0.00  0.00 |   0.96  0.09  0.00 |   2.64  6.10 -2.39  4.32
-  0.00  1.00  1.00 |   0.34  0.98  0.97 |  -4.54  4.06  4.56 -1.43
-  0.00  1.00  1.00 |   0.32  0.98  0.92 |  -4.74 -0.50  0.68  0.95
-  1.00  1.00  1.00 |   0.98  0.88  0.23 |  -2.00  5.34 -0.03  3.54
-  1.00  0.00  0.00 |   0.98  0.14  0.00 |  -3.27  5.76 -4.50 -1.82
-  1.00  0.00  0.00 |   0.95  0.18  0.71 |   2.53  2.36  4.29 -5.28
-  1.00  1.00  0.00 |   0.97  0.96  0.23 |  -3.91  1.68 -1.79  4.45
-  0.00  0.00  1.00 |   0.13  0.03  0.99 |   2.87 -5.87  4.61  3.88
+  0.00  1.00  0.00 |   0.00  0.95  0.02 |  -1.04 -5.49 -0.77  4.64
+  0.00  1.00  0.00 |   0.00  0.45  0.06 |  -6.00  0.11  5.22 -3.83
+  1.00  0.00  0.00 |   1.00  0.08  0.05 |   1.30  3.50 -0.18 -1.99
+  1.00  1.00  1.00 |   0.78  0.99  0.83 |  -3.01  1.07  0.13 -1.46
+  1.00  1.00  1.00 |   0.99  0.85  0.99 |   1.92  4.83  1.17 -3.89
+  0.00  0.00  1.00 |   0.02  0.02  0.96 |   3.34 -3.34  1.12  2.67
+  1.00  0.00  1.00 |   0.89  0.00  0.95 |   3.93 -2.78  0.56 -2.24
+  0.00  1.00  0.00 |   0.00  0.96  0.02 |  -1.67 -4.89 -1.40 -6.03
+  1.00  0.00  0.00 |   0.97  0.05  0.05 |   2.89  5.74 -0.57  0.31
+  0.00  0.00  1.00 |   0.01  0.02  0.96 |   1.35 -3.88  0.47  0.41
+  1.00  1.00  0.00 |   0.60  0.98  0.01 |  -3.09 -0.92 -2.14 -1.95
+  1.00  1.00  0.00 |   1.00  0.76  0.01 |  -4.76  3.97 -0.72  4.91
+  0.00  0.00  0.00 |   0.04  0.03  0.03 |   3.77  1.14 -3.81 -3.24
+  0.00  0.00  1.00 |   0.01  0.04  0.95 |  -3.08 -3.08  2.14 -0.21
+  1.00  0.00  0.00 |   0.81  0.02  0.04 |   5.26  1.63 -0.63 -1.23
+  1.00  1.00  0.00 |   0.98  0.98  0.02 |  -5.56  5.10 -1.59 -4.03
 ```
 
 ### Multiclass Classification Performance
@@ -254,26 +258,29 @@ trainer = Trainer(
 ```
 ```
 Detected Softmax in the last layer. Running accuracy check for multiclass.
-Accuracy on 2,000 samples
-Accuracy per output:    95.06%   91.16%   92.04%
-Overall categorization accuracy:    92.03%
+Multiclass Metrics on 1,000 samples
+             Precision    Recall        F1
+  Class  1       0.9164    0.9242    0.9203
+  Class  2       0.9000    0.9623    0.9301
+  Class  3       0.9635    0.8896    0.9250
+  Overall Accuracy: 92.50%
           Expected |          Predicted | Input Data
-  0.00  0.00  1.00 |   0.70  0.02  0.28 |   3.04  1.43  0.34  0.08 -0.90 -0.42
-  0.00  1.00  0.00 |   0.00  0.99  0.01 |   0.52 -0.46  5.91  3.83  0.82 -3.21
-  0.00  0.00  1.00 |   0.01  0.01  0.98 |   1.41  0.54  4.12 -0.17  2.32 -2.57
-  0.00  0.00  1.00 |   0.01  0.00  0.99 |   2.25  0.70  1.20 -1.19  0.68 -2.62
-  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.21  0.85  0.20 -3.40  1.36 -1.72
-  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.43 -0.90  2.41  0.97 -0.59  2.71
-  0.00  1.00  0.00 |   0.01  0.82  0.17 |  -0.15 -1.36  2.31  1.87  1.43 -2.10
-  0.00  1.00  0.00 |   0.01  0.40  0.59 |   1.53 -2.08  4.02  1.56  0.66 -0.22
-  0.00  1.00  0.00 |   0.30  0.64  0.06 |   3.50  1.01  1.33  2.18  1.96  0.68
-  1.00  0.00  0.00 |   0.99  0.00  0.01 |   0.19  3.21  0.91  0.86 -1.84  1.68
-  1.00  0.00  0.00 |   0.19  0.01  0.80 |   0.71  1.21  3.87 -1.40  0.90  1.30
-  1.00  0.00  0.00 |   1.00  0.00  0.00 |  -1.02  3.94  2.98  1.77 -1.66 -1.67
-  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.89  1.67 -1.47 -1.08  1.21 -2.23
-  0.00  0.00  1.00 |   0.00  0.00  1.00 |   1.88 -0.40 -1.96  1.03 -1.31 -0.79
-  1.00  0.00  0.00 |   0.99  0.01  0.00 |   0.74  4.68  2.27  3.44  1.10 -1.03
-  0.00  1.00  0.00 |   0.01  0.98  0.00 |   3.05  2.24  1.36  3.60  3.04 -4.69
+  0.00  0.00  1.00 |   0.49  0.07  0.44 |   0.89  1.03  2.69  0.71 -1.27 -2.37
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   2.01 -1.38 -0.98 -0.61 -0.42  3.65
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   0.71 -1.70 -0.21 -0.35  2.51 -1.14
+  0.00  0.00  1.00 |   0.00  0.00  1.00 |   0.58 -1.06  3.45 -3.48 -1.63  2.36
+  0.00  1.00  0.00 |   0.96  0.04  0.01 |   0.78  2.77  1.80  2.14  1.45 -0.39
+  0.00  1.00  0.00 |   0.00  1.00  0.00 |   3.14 -0.36  3.82  3.47  2.39 -4.11
+  1.00  0.00  0.00 |   1.00  0.00  0.00 |  -1.24  4.53  1.19  1.73 -2.63  1.73
+  0.00  1.00  0.00 |   0.00  1.00  0.00 |   0.06  0.43  4.17  2.75  3.58 -3.17
+  1.00  0.00  0.00 |   0.96  0.02  0.02 |   2.34  2.80  2.60  1.18  1.10  0.90
+  1.00  0.00  0.00 |   1.00  0.00  0.00 |   1.60  3.37  0.54  0.79 -2.76 -0.57
+  1.00  0.00  0.00 |   0.99  0.01  0.01 |  -0.94  1.60  0.66  2.32 -0.77  1.18
+  0.00  1.00  0.00 |   0.00  0.99  0.01 |  -0.11  2.88  2.00  1.76  3.76 -3.22
+  1.00  0.00  0.00 |   1.00  0.00  0.00 |   0.50  3.68  2.83 -3.00 -2.97  1.46
+  1.00  0.00  0.00 |   0.25  0.00  0.75 |  -0.46  1.30  3.97 -2.47  1.07  2.09
+  1.00  0.00  0.00 |   0.86  0.14  0.00 |  -0.62  1.65  2.07  4.70 -2.32 -1.39
+  1.00  0.00  0.00 |   0.95  0.01  0.04 |   1.05  1.89  3.55  2.18 -2.05  1.76
 ```
 
 ### Regression Performance
@@ -291,6 +298,7 @@ nn = NeuralNetwork(
         Dense(12, activation=Swish()),
         Dense(3,  activation=Linear())
     ],
+    weight_decay=0.001
 )
 nn.build(input_size=4)
 trainer = Trainer(
@@ -301,25 +309,28 @@ trainer = Trainer(
 ```
 ```
 Detected Linear in the last layer. Running accuracy check for regression.
-Mean Squared Error on 2,000 samples
-Mean Squared Error per output:    11.08    8.42    4.48
+Regression Metrics on 1,000 samples
+              RMSE       MAE        R2
+  Output 1   2.8721    2.2364    0.9325
+  Output 2   3.0447    2.3375    0.9221
+  Output 3   2.4687    1.9071    0.8858
           Expected |          Predicted | Input Data
--11.72-16.34  2.09 | -15.57-10.59  2.61 |  -3.38  0.01 -1.44  2.86
- -7.68  2.02  0.32 |  -8.75  5.31 -0.55 |   0.72 -1.09 -2.19 -3.32
- -9.34 15.14  2.49 |  -5.75 12.49  1.81 |   2.35  0.06  1.92  0.71
-  3.32-13.02 -9.56 |   2.96-11.97 -9.18 |  -1.35  0.89 -1.61 -3.08
- 10.08  5.93  4.09 |  12.10  8.26  6.45 |   0.14  2.12  0.85  0.28
- -5.01 -8.27 -6.09 |  -4.64 -7.49 -6.66 |  -2.10 -1.15 -0.79 -2.10
-  5.47 -1.34  0.42 |   9.19 -4.40 -2.19 |   1.20  0.36 -2.47 -0.80
-  8.95-11.25 -0.28 |  14.35 -7.06  0.93 |  -1.39  3.19 -0.77  2.70
--12.50  6.88 -7.94 | -10.31  4.32 -7.32 |   0.46 -0.70  2.33 -1.54
- 10.29 -2.65 -5.19 |  11.87 -2.09 -3.83 |   2.22  1.64 -1.53 -1.47
-  5.59-10.56 -2.58 |   8.12-10.48 -3.64 |  -1.28  1.51 -0.83  0.61
- -6.47 -5.90 -6.22 |  -3.36 -7.41 -5.43 |  -1.19 -1.63  1.56  0.77
-  6.83 -8.93 -3.85 |  10.41 -6.32 -3.68 |   0.65  1.01 -2.04 -0.44
-  5.73-11.66 -1.83 |  12.42-10.80 -4.17 |   0.63  0.84 -3.36  0.71
--17.51  2.04  5.06 | -17.70  4.08  2.89 |  -0.97 -3.47 -1.69 -1.39
--12.46 -9.34 -2.38 | -16.82 -8.20  2.31 |  -3.21 -2.15 -1.78 -2.03
+ 14.43  5.57  7.18 |  13.63  3.66  4.01 |  -2.37  1.40  1.57  0.91
+ -3.33 -2.15  0.96 |  -2.88  0.38  2.34 |  -0.09 -1.02 -0.89  0.02
+ -9.60  6.39  6.33 |  -6.77  5.36  6.15 |   0.58 -1.82 -2.08 -0.88
+-13.97 11.64 -4.14 | -12.83  9.82 -2.50 |   2.09 -0.25  1.76 -2.17
+ -9.17 -6.39-16.32 |  -5.85 -3.65-12.52 |  -0.61 -2.84  3.10 -0.22
+ 22.84  5.80  4.79 |  16.66 10.98  8.25 |   2.64  1.63 -0.40  2.30
+  2.69 -8.21 -2.30 |   7.04 -6.58 -2.48 |  -2.49  0.53  0.81 -0.31
+-13.66 -3.76  0.50 | -10.17 -3.71  1.16 |  -1.27 -1.50 -1.26 -1.28
+ -4.50 -4.51  9.15 |  -4.93 -2.52  8.82 |  -0.34 -0.99 -2.04  3.00
+-11.58-10.63  0.98 | -10.04 -9.76  1.49 |  -1.67 -0.48 -2.11  0.10
+-10.35  4.14 -2.62 | -12.87  4.92 -4.28 |   1.26 -1.65  1.17 -0.89
+  4.56 -9.70 -1.19 |   0.91-10.92 -2.45 |  -1.88  0.88 -0.69  0.96
+ 13.35 18.95 13.13 |  15.99 14.80 11.08 |   0.35  3.35  1.67  0.92
+  4.70 -8.60-15.31 |   3.28 -4.76-10.32 |  -1.96 -1.25  2.25 -2.66
+ -2.75  2.50 -0.92 |  -2.79  3.79  0.35 |   0.48 -0.62 -0.57 -1.15
+ -5.31 14.17  4.49 |  -0.52 15.68  6.59 |   2.28  0.12  1.98  1.88
 ```
 As shown, the neural network performs exceptionally well on the synthetic data. If real-world data exhibits similar relationships between inputs and outputs, the network is likely to perform equally well.
 
@@ -332,84 +343,72 @@ To note, we are NOT harvesting the full power of randomization as it would only 
 
 > *Monkey Language: The idea is, we define input-output relationships and generate data while heavily masking them with a reasonable level of randomness, making the patterns not immediately clear, even to humans. Then we evaluate the network's ability to cut through those random noise and uncover the underlying pattern.*
 
-For the above example runs, 4 input features `i1, i2, i3, i4` and 3 output targets `o1, o2, o3` are generated as follows.
+For the above example runs, the data is generated as follows. Multilabel and regression use 4 input features (`i1`-`i4`) with 3 outputs; multiclass uses 6 input features with 3 one-hot class outputs.
 ```python
 # For multilabel classification demonstration
-# Shape: (1, n)
-i1 = np.random.uniform(-6, 6, size=n)
-i2 = np.random.uniform(-6, 6, size=n)
-i3 = np.random.uniform(-6, 6, size=n)
-i4 = np.random.uniform(-6, 6, size=n)
+rng = np.random.default_rng(seed)
 
-# Shape: (1, n)
-# Define arbitrary relationships between inputs and outputs for demonstration
+i1 = rng.uniform(-6, 6, size=n)
+i2 = rng.uniform(-6, 6, size=n)
+i3 = rng.uniform(-6, 6, size=n)
+i4 = rng.uniform(-6, 6, size=n)
+
+# Define arbitrary relationships between inputs and outputs
 o1 = (i1*i4 - 5*i2 < 2*i1*i3 - i4).astype(float)
 o2 = (4*i1 - 2*i2*i3 + 0.4*i4*i2/i1 < -3*i3).astype(float)
 o3 = (-i1/i4 + 0.3*i2 - 8*i2*i2/i3 < 2*i4).astype(float)
 
-# Shape: (n, count of input features)
-input_list = np.column_stack((i1, i2, i3, i4))
-
-# Shape: (n, count of output targets)
-output_list = np.column_stack((o1, o2, o3))
+X = _add_noise(rng, np.column_stack((i1, i2, i3, i4)), noise=0.2)
+Y = np.column_stack((o1, o2, o3))
 ```
 ```python
 # For multiclass classification demonstration
-_input_features = 4
-_output_classes = 3
+rng = np.random.default_rng(seed)
 
-input_list = np.zeros((n, _input_features))
-output_list = np.zeros((n, _output_classes))
+n_inputs  = 6
+n_classes = 3
 
-# (1, n) shape array of random class labels
-class_labels = np.random.randint(0, _output_classes, size=n)
+X = np.zeros((n, n_inputs))
+Y = np.zeros((n, n_classes))
+
+class_labels = rng.integers(0, n_classes, size=n)
 
 # Define input data ranges for each class
-class_data = {
-    0: [(2, 5), (1, 5), (0, 4), (3, 5)],
-    1: [(1, 4), (1, 3), (3, 6), (1, 5)],
-    2: [(0, 3), (2, 6), (0, 5), (0, 2)],
+class_ranges = {
+    0: [(-2, 3), (1, 5), (0, 4), (-3, 5), (-3, 3), (-2, 2)],
+    1: [(-1, 4), (-2, 3), (1, 6), (1, 5),  (0, 6),  (-5, 1)],
+    2: [(0, 3),  (-2, 2), (-2, 5), (-4, 2), (-2, 4), (-3, 5)],
 }
 
-for c in range(_output_classes):
-    # extract indices of class c
-    indices = np.where(class_labels == c)[0]
+for c in range(n_classes):
+    idx = np.where(class_labels == c)[0]
+    for feature, (low, high) in enumerate(class_ranges[c]):
+        X[idx, feature] = rng.uniform(low, high, size=len(idx))
+    Y[idx, c] = 1.0
 
-    # generate/fill up data in input list
-    for i, (low, high) in enumerate(class_data[c]):
-        input_list[indices, i] = np.random.uniform(low, high, size=len(indices))
-    # set correct class
-    output_list[indices, c] = 1.0
+X = _add_noise(rng, X, noise=0.2)
 ```
 ```python
 # For regression demonstration
-# Shape: (1, n)
-i1 = np.random.uniform(-3, 3, size=n)
-i2 = np.random.uniform(-3, 3, size=n)
-i3 = np.random.uniform(-3, 3, size=n)
-i4 = np.random.uniform(-3, 3, size=n)
+rng = np.random.default_rng(seed)
 
-# Shape: (1, n)
-# Define arbitrary relationships between inputs and outputs for demonstration
-o1 = (i1*i4 + 5*i2 + 2*i1*i3 + i4)
-o2 = (4*i1 + 2*i2*i3 + 0.4*i4*i2 + 3*i3)
-o3 = (i1 + 0.3*i2 + 2*i3*i2 + 2*i4)
+i1 = rng.uniform(-3, 3, size=n)
+i2 = rng.uniform(-3, 3, size=n)
+i3 = rng.uniform(-3, 3, size=n)
+i4 = rng.uniform(-3, 3, size=n)
 
-# Shape: (n, count of input features)
-input_list = np.column_stack((i1, i2, i3, i4))
+# Define arbitrary relationships between inputs and outputs
+o1 = i1*i4 + 5*i2 - 2*i1*i3 + i4
+o2 = 4*i1 + 2*i2*i3 + 0.4*i4*i2 + 3*i3
+o3 = i1 + 0.3*i2 + 2*i3*i2 + 2*i4
 
-# Shape: (n, count of output targets)
-output_list = np.column_stack((o1, o2, o3))
+X = _add_noise(rng, np.column_stack((i1, i2, i3, i4)), noise=0.5)
+Y = np.column_stack((o1, o2, o3))
 ```
-In all data generation, input features (`i1, i2, i3, i4, ...`) are exposed to some noise to better mimic real-world scenarios.
+In all cases, input features are exposed to some noise to better mimic real-world scenarios.
 ```python
-# input noise
-input_list = self._add_noise(input_list, noise=0.2)
-```
-```python
-def _add_noise(self, data: np.ndarray, noise=0.5):
-    # Add uniform noise element-wise to the entire NumPy array
-    return data + np.random.uniform(-noise, noise, size=data.shape)
+def _add_noise(rng: np.random.Generator, data: np.ndarray, noise: float) -> np.ndarray:
+    return data + rng.uniform(-noise, noise, size=data.shape)
 ```
 
 ## Experiment!

@@ -1,3 +1,3 @@
-from .core import DataGenerator
+from .core import generate_regression, generate_multilabel, generate_multiclass
 
-__all__ = ["DataGenerator"]
+__all__ = ["generate_regression", "generate_multilabel", "generate_multiclass"]

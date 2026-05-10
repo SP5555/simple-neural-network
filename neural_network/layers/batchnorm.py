@@ -75,11 +75,11 @@ class BatchNorm(RegularizableLayer):
         self._running_mean = Tensor(np.zeros((self.neuron_count, 1)), requires_grad=False)
         self._running_vari = Tensor(np.ones((self.neuron_count, 1)), requires_grad=False)
 
-        # mean and variance for training
+        # mean and variance for training (per-neuron, over the batch dimension)
         # considered as constants within a given forward pass
         # therefore, don't require gradients
-        self._batch_mean = Mean(A, requires_grad=False)
-        self._batch_vari = Variance(A, requires_grad=False)
+        self._batch_mean = Mean(A, axis=1, keepdims=True, requires_grad=False)
+        self._batch_vari = Variance(A, axis=1, keepdims=True, requires_grad=False)
 
         # flags
         self._train_flag = Tensor(0.0, requires_grad=False)

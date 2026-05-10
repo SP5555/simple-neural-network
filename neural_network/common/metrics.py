@@ -19,111 +19,127 @@ class Metrics:
         if len(test_input[0]) != self.core._layers[0].input_size:
             raise InputValidationError("The input array size does not match the expected size for the neural network.")
 
-        if self.core._layers[-1]._activation.is_LL_regression_act:
-            PrintUtils.print_info(f"Detected {self.core._layers[-1]._activation.__class__.__name__} in the last layer. Running accuracy check for regression.")
+        last_layer = next((l for l in reversed(self.core._layers) if hasattr(l, '_activation')), None)
+
+        if last_layer is None:
+            PrintUtils.print_warning("The Accuracy Checker cannot find a layer with an activation function.")
+            return
+
+        if last_layer._activation.is_LL_regression_act:
+            PrintUtils.print_info(f"Detected {last_layer._activation.__class__.__name__} in the last layer. Running accuracy check for regression.")
             return self._regression_accuracy(test_input, test_output)
-        if self.core._layers[-1]._activation.is_LL_multilabel_act:
-            PrintUtils.print_info(f"Detected {self.core._layers[-1]._activation.__class__.__name__} in the last layer. Running accuracy check for multilabel.")
+        if last_layer._activation.is_LL_multilabel_act:
+            PrintUtils.print_info(f"Detected {last_layer._activation.__class__.__name__} in the last layer. Running accuracy check for multilabel.")
             return self._multilabel_accuracy(test_input, test_output)
-        if self.core._layers[-1]._activation.is_LL_multiclass_act:
-            PrintUtils.print_info(f"Detected {self.core._layers[-1]._activation.__class__.__name__} in the last layer. Running accuracy check for multiclass.")
+        if last_layer._activation.is_LL_multiclass_act:
+            PrintUtils.print_info(f"Detected {last_layer._activation.__class__.__name__} in the last layer. Running accuracy check for multiclass.")
             return self._multiclass_accuracy(test_input, test_output)
-        PrintUtils.print_warning("The Accuracy Checker cannot determine the task type based on the current model configuration.\n" \
+        PrintUtils.print_warning("The Accuracy Checker cannot determine the task type based on the current model configuration.\n"
                                  "Ensure the last layer activation matches the intended task.")
-    
+
     def _regression_accuracy(self, test_input: list, test_output: list) -> None:
         test_size = len(test_input)
-        num_classes = len(test_output[0])
+        n_outputs = len(test_output[0])
 
-        # accumulated squared error per target
-        ase = np.zeros(num_classes)
+        sse    = np.zeros(n_outputs)  # sum of squared errors  -> RMSE
+        sae    = np.zeros(n_outputs)  # sum of absolute errors -> MAE
+        sum_y  = np.zeros(n_outputs)  # sum of true values     \
+        sum_y2 = np.zeros(n_outputs)  # sum of true values^2   -> R2
 
-        index_start = 0
-        while index_start < test_size:
-            index_end = index_start + self._check_batch_size
-            if index_end > test_size:
-                index_end = test_size
+        i = 0
+        while i < test_size:
+            a    = np.array(test_input[i  : i + self._check_batch_size])
+            o    = np.array(test_output[i : i + self._check_batch_size])
+            pred = self.core.forward_batch(a, raw_ndarray_output=True).T
+            sse    += np.sum(np.square(pred - o), axis=0)
+            sae    += np.sum(np.abs(pred - o),    axis=0)
+            sum_y  += np.sum(o,            axis=0)
+            sum_y2 += np.sum(np.square(o), axis=0)
+            i += self._check_batch_size
 
-            a: np.ndarray = np.array(test_input[index_start: index_end])
-            o: np.ndarray = np.array(test_output[index_start: index_end])
+        rmse   = np.sqrt(sse / test_size)
+        mae    = sae / test_size
+        ss_tot = sum_y2 - (sum_y ** 2) / test_size
+        r2     = np.where(ss_tot > 0, 1.0 - sse / ss_tot, 0.0)
 
-            # forward pass
-            predictions = self.core.forward_batch(a, raw_ndarray_output=True).T
-
-            # accumulate squared error
-            ase += np.sum(np.square(np.abs(predictions - o)), axis=0)
-
-            index_start += self._check_batch_size
-        
-        mse = ase / test_size # mean squared error
-        PrintUtils.print_info(f"Mean Squared Error on {test_size:,} samples")
-        PrintUtils.print_info("Mean Squared Error per output: " + ''.join([f"{e:>8.2f}" for e in mse]))
+        w = 10
+        PrintUtils.print_info(f"Regression Metrics on {test_size:,} samples")
+        PrintUtils.print_info(f"  {'':10}{'RMSE':>{w}}{'MAE':>{w}}{'R2':>{w}}")
+        for i in range(n_outputs):
+            PrintUtils.print_info(f"  Output {i+1:<4}{rmse[i]:>{w}.4f}{mae[i]:>{w}.4f}{r2[i]:>{w}.4f}")
 
     def _multilabel_accuracy(self, test_input: list, test_output: list) -> None:
         test_size = len(test_input)
+        n_labels  = len(test_output[0])
 
-        correct_predictions_count = 0
-        index_start = 0
-        while index_start < test_size:
-            index_end = index_start + self._check_batch_size
-            if index_end > test_size:
-                index_end = test_size
+        tp          = np.zeros(n_labels)
+        fp          = np.zeros(n_labels)
+        fn          = np.zeros(n_labels)
+        exact_match = 0
 
-            a: np.ndarray = np.array(test_input[index_start: index_end])
-            o: np.ndarray = np.array(test_output[index_start: index_end])
+        i = 0
+        while i < test_size:
+            a      = np.array(test_input[i  : i + self._check_batch_size])
+            o      = np.array(test_output[i : i + self._check_batch_size])
+            pred   = self.core.forward_batch(a, raw_ndarray_output=True).T
+            binary = (pred >= 0.5).astype(float)
+            tp += np.sum((binary == 1) & (o == 1), axis=0)
+            fp += np.sum((binary == 1) & (o == 0), axis=0)
+            fn += np.sum((binary == 0) & (o == 1), axis=0)
+            exact_match += int(np.sum(np.all(binary == o, axis=1)))
+            i += self._check_batch_size
 
-            # forward pass
-            predictions = self.core.forward_batch(a, raw_ndarray_output=True).T
+        precision  = np.where(tp + fp > 0, tp / (tp + fp), 0.0)
+        recall     = np.where(tp + fn > 0, tp / (tp + fn), 0.0)
+        f1         = np.where(precision + recall > 0,
+                              2 * precision * recall / (precision + recall), 0.0)
+        exact_rate = exact_match / test_size * 100.0
 
-            # 1 if checks, 0 if not.
-            correct_predictions = np.abs(predictions - o) <= 0.5
-            correct_predictions_count += np.sum(correct_predictions, axis=0)
-
-            index_start += self._check_batch_size
-
-        accuracy = correct_predictions_count / test_size * 100
-        PrintUtils.print_info(f"Accuracy on {test_size:,} samples")
-        PrintUtils.print_info("Accuracy per output: " + ''.join([f"{a:>8.2f}%" for a in accuracy]))
+        w = 10
+        PrintUtils.print_info(f"Multilabel Metrics on {test_size:,} samples  (threshold = 0.5)")
+        PrintUtils.print_info(f"  {'':10}{'Precision':>{w}}{'Recall':>{w}}{'F1':>{w}}")
+        for i in range(n_labels):
+            PrintUtils.print_info(f"  Label  {i+1:<4}{precision[i]:>{w}.4f}{recall[i]:>{w}.4f}{f1[i]:>{w}.4f}")
+        PrintUtils.print_info(f"  Exact Match (all labels correct): {exact_rate:.2f}%")
 
     def _multiclass_accuracy(self, test_input: list, test_output: list) -> None:
         test_size = len(test_input)
-        num_classes = len(test_output[0])
+        n_classes = len(test_output[0])
 
-        per_class_correct = np.zeros(num_classes)
-        per_class_total = np.zeros(num_classes)
+        tp              = np.zeros(n_classes)
+        fp              = np.zeros(n_classes)
+        fn              = np.zeros(n_classes)
+        overall_correct = 0
 
-        correctly_categorized = 0
-        index_start = 0
-        while index_start < test_size:
-            index_end = index_start + self._check_batch_size
-            if index_end > test_size:
-                index_end = test_size
+        i = 0
+        while i < test_size:
+            a         = np.array(test_input[i  : i + self._check_batch_size])
+            o         = np.array(test_output[i : i + self._check_batch_size])
+            pred      = self.core.forward_batch(a, raw_ndarray_output=True).T
+            actual    = np.argmax(o,    axis=1)
+            predicted = np.argmax(pred, axis=1)
+            overall_correct += int(np.sum(actual == predicted))
+            for c in range(n_classes):
+                tp[c] += np.sum((predicted == c) & (actual == c))
+                fp[c] += np.sum((predicted == c) & (actual != c))
+                fn[c] += np.sum((predicted != c) & (actual == c))
+            i += self._check_batch_size
 
-            a: np.ndarray = np.array(test_input[index_start: index_end])
-            o: np.ndarray = np.array(test_output[index_start: index_end])
+        precision   = np.where(tp + fp > 0, tp / (tp + fp), 0.0)
+        recall      = np.where(tp + fn > 0, tp / (tp + fn), 0.0)
+        f1          = np.where(precision + recall > 0,
+                               2 * precision * recall / (precision + recall), 0.0)
+        overall_acc = overall_correct / test_size * 100.0
 
-            # forward pass
-            predictions = self.core.forward_batch(a, raw_ndarray_output=True).T
-
-            actual_class = np.argmax(o, axis=1)
-            predicted_class = np.argmax(predictions, axis=1)
-            correct_predictions = actual_class == predicted_class
-            correctly_categorized += np.sum(correct_predictions, axis=0)
-
-            for i in range(num_classes):
-                per_class_correct[i] = np.sum((actual_class == i) & correct_predictions)
-                per_class_total[i] = np.sum((actual_class == i))
-
-            index_start += self._check_batch_size
-
-        per_class_accuracy = per_class_correct / per_class_total * 100.0
-        PrintUtils.print_info(f"Accuracy on {test_size:,} samples")
-        PrintUtils.print_info("Accuracy per output: " + ''.join([f"{a:>8.2f}%" for a in per_class_accuracy]))
-        cat_accuracy = correctly_categorized / test_size * 100.0
-        PrintUtils.print_info(f"Overall categorization accuracy: {cat_accuracy:>8.2f}%")
+        w = 10
+        PrintUtils.print_info(f"Multiclass Metrics on {test_size:,} samples")
+        PrintUtils.print_info(f"  {'':10}{'Precision':>{w}}{'Recall':>{w}}{'F1':>{w}}")
+        for i in range(n_classes):
+            PrintUtils.print_info(f"  Class  {i+1:<4}{precision[i]:>{w}.4f}{recall[i]:>{w}.4f}{f1[i]:>{w}.4f}")
+        PrintUtils.print_info(f"  Overall Accuracy: {overall_acc:.2f}%")
 
     def compare_predictions(self, input: list, output: list) -> None:
-        width_num = 6
+        width_num    = 6
         format_width = len(output[0]) * width_num
         print(f"{'Expected':>{format_width}} | {'Predicted':>{format_width}} | Input Data")
 
